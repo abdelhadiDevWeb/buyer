@@ -1,0 +1,611 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --max-width: 1100px;
+  --border-radius: 12px;
+  --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
+    "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro",
+    "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
+
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+
+  --primary-glow: conic-gradient(
+    from 180deg at 50% 50%,
+    #16abff33 0deg,
+    #0885ff33 55deg,
+    #54d6ff33 120deg,
+    #0071ff33 160deg,
+    transparent 360deg
+  );
+  --secondary-glow: radial-gradient(
+    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0)
+  );
+
+  --tile-start-rgb: 239, 245, 249;
+  --tile-end-rgb: 228, 232, 233;
+  --tile-border: conic-gradient(
+    #00000080,
+    #00000040,
+    #00000030,
+    #00000020,
+    #00000010,
+    #00000010,
+    #00000080
+  );
+
+  --callout-rgb: 238, 240, 241;
+  --callout-border-rgb: 172, 175, 176;
+  --card-rgb: 180, 185, 188;
+  --card-border-rgb: 131, 134, 135;
+
+  /* Custom color variables */
+  --primary-color: #0063b1;
+  --primary-color-opc: 0, 99, 177;
+  --primary-color2: #0B0C0C;
+  --primary-color2-opc: 11, 12, 12;
+  --primary-color3: #D8762D;
+  --primary-color3-opc: 216, 118, 45;
+  --primary-color4: #2453D4;
+  --primary-color4-opc: 36, 83, 212;
+  --primary-color5: #DCF263;
+  --primary-color5-opc: 220, 242, 99;
+  --primary-color6: #3C5037;
+  --primary-color6-opc: 60, 80, 55;
+  --primary-color7: #63AB45;
+  --primary-color7-opc: 99, 171, 69;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+
+    --primary-glow: radial-gradient(rgba(1, 65, 255, 0.4), rgba(1, 65, 255, 0));
+    --secondary-glow: linear-gradient(
+      to bottom right,
+      rgba(1, 65, 255, 0),
+      rgba(1, 65, 255, 0),
+      rgba(1, 65, 255, 0.3)
+    );
+
+    --tile-start-rgb: 2, 13, 46;
+    --tile-end-rgb: 2, 5, 19;
+    --tile-border: conic-gradient(
+      #ffffff80,
+      #ffffff40,
+      #ffffff30,
+      #ffffff20,
+      #ffffff10,
+      #ffffff10,
+      #ffffff80
+    );
+
+    --callout-rgb: 20, 20, 20;
+    --callout-border-rgb: 108, 108, 108;
+    --card-rgb: 100, 100, 100;
+    --card-border-rgb: 200, 200, 200;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Ensure all elements respect viewport width */
+* {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Prevent horizontal overflow */
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-dmsans), sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  /* Better text rendering on mobile */
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Improve touch targets on mobile */
+  touch-action: manipulation;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+
+@layer components {
+  .primary-btn {
+    @apply bg-primary text-white font-medium py-2 px-4 rounded-md transition-all duration-300 hover:bg-secondary;
+  }
+  
+  .secondary-btn {
+    @apply bg-secondary text-white font-medium py-2 px-4 rounded-md transition-all duration-300 hover:bg-primary;
+  }
+  
+  .search-input {
+    @apply px-4 py-2 rounded-full bg-gray-100 focus:bg-white focus:shadow-custom-focus transition-all duration-300 outline-none;
+  }
+  
+  .form-input {
+    @apply px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300;
+  }
+  
+  .nav-link {
+    @apply hover:text-primary transition-colors duration-300;
+  }
+  
+  .active-nav-link {
+    @apply text-primary font-medium;
+  }
+
+  /* Responsive Container Classes */
+  .container-responsive {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-full {
+    @apply w-full px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Responsive Grid Classes */
+  .grid-responsive-1 {
+    @apply grid grid-cols-1;
+  }
+
+  .grid-responsive-2 {
+    @apply grid grid-cols-1 md:grid-cols-2;
+  }
+
+  .grid-responsive-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .grid-responsive-4 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .grid-responsive-auto {
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6;
+  }
+
+  /* Responsive Flex Classes */
+  .flex-responsive-col {
+    @apply flex flex-col md:flex-row;
+  }
+
+  .flex-responsive-row {
+    @apply flex flex-row flex-wrap;
+  }
+
+  /* Responsive Text Classes */
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl;
+  }
+
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl;
+  }
+
+  /* Responsive Spacing Classes */
+  .spacing-responsive-sm {
+    @apply space-y-2 sm:space-y-4;
+  }
+
+  .spacing-responsive-md {
+    @apply space-y-4 sm:space-y-6 lg:space-y-8;
+  }
+
+  .spacing-responsive-lg {
+    @apply space-y-6 sm:space-y-8 lg:space-y-12;
+  }
+
+  /* Responsive Padding Classes */
+  .padding-responsive-sm {
+    @apply p-4 sm:p-6;
+  }
+
+  .padding-responsive-md {
+    @apply p-6 sm:p-8 lg:p-12;
+  }
+
+  .padding-responsive-lg {
+    @apply p-8 sm:p-12 lg:p-16;
+  }
+
+  /* Responsive Margin Classes */
+  .margin-responsive-sm {
+    @apply m-4 sm:m-6;
+  }
+
+  .margin-responsive-md {
+    @apply m-6 sm:m-8 lg:m-12;
+  }
+
+  .margin-responsive-lg {
+    @apply m-8 sm:m-12 lg:m-16;
+  }
+
+  /* Card Responsive Classes */
+  .card-responsive {
+    @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden;
+  }
+
+  .card-responsive-padding {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+
+  /* Button Responsive Classes */
+  .btn-responsive {
+    @apply px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base font-medium rounded-lg transition-all duration-300;
+  }
+
+  .btn-responsive-lg {
+    @apply px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-medium rounded-lg transition-all duration-300;
+  }
+
+  /* Form Responsive Classes */
+  .form-responsive {
+    @apply w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300;
+  }
+
+  /* Image Responsive Classes */
+  .img-responsive {
+    @apply w-full h-auto object-cover;
+  }
+
+  .img-responsive-square {
+    @apply w-full aspect-square object-cover;
+  }
+
+  .img-responsive-video {
+    @apply w-full aspect-video object-cover;
+  }
+
+  /* Hide/Show Classes */
+  .hide-mobile {
+    @apply hidden md:block;
+  }
+
+  .hide-tablet {
+    @apply block md:hidden lg:block;
+  }
+
+  .hide-desktop {
+    @apply block lg:hidden;
+  }
+
+  .show-mobile {
+    @apply block md:hidden;
+  }
+
+  .show-tablet {
+    @apply hidden md:block lg:hidden;
+  }
+
+  .show-desktop {
+    @apply hidden lg:block;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Improve tap targets */
+  button, 
+  [role="button"], 
+  input[type="button"], 
+  input[type="submit"], 
+  input[type="reset"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better form controls on mobile */
+  input, 
+  textarea, 
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Reduce motion for better mobile performance */
+  * {
+    animation-duration: 0.3s !important;
+    transition-duration: 0.3s !important;
+  }
+
+  /* Better scrolling on mobile */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+
+  /* Safe area insets for notched devices */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Tablet-specific optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Tablet-specific styles */
+  .tablet-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .tablet-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}
+
+/* Desktop and larger screens */
+@media (min-width: 1025px) {
+  /* Enable hover effects only on non-touch devices */
+  @media (hover: hover) {
+    .hover-scale:hover {
+      transform: scale(1.05);
+    }
+
+    .hover-lift:hover {
+      transform: translateY(-2px);
+    }
+
+    .hover-shadow:hover {
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+/* High resolution displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* High DPI optimizations */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .auto-dark {
+    background: #1a1a1a;
+    color: #ffffff;
+  }
+
+  .auto-dark-card {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+}
+
+/* Prevent horizontal overflow - Critical fixes */
+html, body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+/* Ensure all containers respect viewport width */
+.container-responsive,
+.container-full,
+.container {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+/* Fix any elements that might cause horizontal scroll */
+section, div, main, article, aside, nav, header, footer {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Prevent images from causing overflow */
+img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Fix any absolute positioned elements */
+.absolute, .fixed {
+  max-width: 100vw !important;
+}
+
+/* Ensure flex containers don't overflow */
+.flex, .flex-col, .flex-row {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Fix grid containers */
+.grid {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Additional overflow prevention */
+* {
+  box-sizing: border-box !important;
+}
+
+/* Fix any potential overflow from positioned elements */
+.relative, .absolute, .fixed {
+  max-width: 100vw !important;
+}
+
+/* Ensure all text content doesn't cause overflow */
+p, h1, h2, h3, h4, h5, h6, span, div {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+}
+
+/* Fix any potential overflow from transforms */
+.transform, .translate, .scale, .rotate {
+  max-width: 100vw !important;
+}
+
+/* Ensure Swiper and carousel components don't overflow */
+.swiper, .swiper-container, .swiper-wrapper {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Fix any potential overflow from animations */
+@keyframes, @media {
+  max-width: 100vw !important;
+}
+
+/* Critical overflow prevention - Force all elements to respect viewport */
+* {
+  max-width: 100vw !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure no element can cause horizontal scroll */
+html, body, #__next, main, section, div, article, aside, nav, header, footer {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+}
+
+/* Fix any potential issues with positioned elements */
+.absolute, .fixed, .sticky {
+  max-width: 100vw !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+/* Ensure all containers are properly constrained */
+.container, .container-fluid, .container-responsive, .container-full {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Fix any potential overflow from transforms and animations */
+.transform, .translate, .scale, .rotate, .skew {
+  max-width: 100vw !important;
+}
+
+/* Ensure all images and media respect viewport */
+img, video, iframe, embed, object {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Fix any potential overflow from text content */
+p, h1, h2, h3, h4, h5, h6, span, div, a, button, input, textarea, select {
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+}
+
+/* Ensure flex and grid containers don't overflow */
+.flex, .flex-col, .flex-row, .grid, .grid-cols-1, .grid-cols-2, .grid-cols-3, .grid-cols-4 {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Fix any potential overflow from Swiper components */
+.swiper, .swiper-container, .swiper-wrapper, .swiper-slide {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Ensure all pseudo-elements respect viewport */
+::before, ::after {
+  max-width: 100vw !important;
+}
+
+/* Fix any potential overflow from CSS animations */
+@keyframes slideInFromLeft, @keyframes slideInFromRight, @keyframes fadeInUp, @keyframes scaleIn {
+  max-width: 100vw !important;
+}
+
+
+
+
+

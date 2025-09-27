@@ -1,0 +1,191 @@
+{
+    "products": [
+      {
+        "auctionId": 1,
+        "imageUrl": "/assets/img/home1/auction-img1.jpg",
+        "auctionDetailsUrl": "/auction-details",
+        "status": "live",
+       
+        "countdown": "2024-10-23 12:00:00",
+        "title": "Zenith auto elevating driving your experience",
+        "currentBid": 2898,
+        "lotNumber": "25896742",
+        "author": {
+          "name": "Maverick Dylan",
+          "profileUrl": "/store-details",
+          "imageUrl": "/assets/img/home1/auction-card-author-img1.png"
+        },
+        "bidUrl": "/auction-details"
+      }
+      ,
+      {
+        "auctionId": 2,
+        "imageUrl": "/assets/img/home1/auction-img2.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "upcoming",
+        
+        "countdown": "2024-07-09 10:00:00",
+        "title": "Luxury timepiece for discerning collectors",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Avery Johnson",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img2.png"
+        },
+        "bidUrl": "/auction-details2"
+      }
+      ,
+      {
+        "auctionId": 3,
+        "imageUrl": "/assets/img/home1/auction-img3.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "upcoming",
+        "countdown": "2024-08-01 18:00:00",
+        "title": "Zenith auto elevating driving your experience",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Maverick Dylan",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img3.png"
+        },
+        "bidUrl": "/auction-details2"
+      }
+      ,
+      {
+        "auctionId": 4,
+        "imageUrl": "/assets/img/home1/auction-img4.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "upcoming",
+        "countdown": "2024-08-01 15:00:00",
+        "title": "Heritage had curating watch time treasures.",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Wyatt Matthew",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img4.png"
+        },
+        "bidUrl": "/auction-details2"
+      }
+      ,
+      {
+        "auctionId": 5,
+        "imageUrl": "/assets/img/home1/auction-img5.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "upcoming",
+        "countdown": "2024-09-01 1:00:00",
+        "title": "Canvas code redefining art in the digital realm.",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Julian Gabriel",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img5.png"
+        },
+        "bidUrl": "/auction-details2"
+      }
+      ,
+      {
+        "auctionId": 6,
+        "imageUrl": "/assets/img/home1/auction-img6.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "live",
+        "countdown": "2024-09-01 1:00:00",
+        "title": "Canvas & culture brush withn elegance auction.",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Julian Gabriel",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img6.png"
+        },
+        "bidUrl": "/auction-details2"
+      }
+      ,
+      {
+        "auctionId": 7,
+        "imageUrl": "/assets/img/home1/auction-img7.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "live",
+        "countdown": "2024-09-01 1:00:00",
+        "title": "Nostalgian hookup memories reside in every piece.",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Julian Gabriel",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img7.png"
+        },
+        "bidUrl": "/auction-details2"
+      }
+      ,
+      {
+        "auctionId": 8,
+        "imageUrl": "/assets/img/home1/auction-img8.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "live",
+        "countdown": "2024-09-01 1:00:00",
+        "title": "Nostalgian hookup memories reside in every piece.",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Julian Gabriel",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img8.png"
+        },
+        "bidUrl": "/auction-details2"
+      }
+      ,
+      {
+        "auctionId": 13,
+        "imageUrl": "/assets/img/home1/auction-img13.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "upcoming",
+        "countdown": "2024-09-01 1:00:00",
+        "title": "Velocity Visions Performance Meets Precision.",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Julian Gabriel",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img8.png"
+        },
+        "bidUrl": "/auction-details2"
+      },
+      {
+        "auctionId": 14,
+        "imageUrl": "/assets/img/home1/auction-img14.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "upcoming",
+        "countdown": "2024-09-01 1:00:00",
+        "title": "Performance Empowering Your Drive Prime.",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Julian Gabriel",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img8.png"
+        },
+        "bidUrl": "/auction-details2"
+      },
+      {
+        "auctionId": 17,
+        "imageUrl": "/assets/img/home1/auction-img17.jpg",
+        "auctionDetailsUrl": "/auction-details2",
+        "status": "upcoming",
+        "countdown": "2024-09-01 1:00:00",
+        "title": "Horizon Motors an Expanding Your Journey.",
+        "currentBid": 15300,
+        "lotNumber": "38912750",
+        "author": {
+          "name": "Julian Gabriel",
+          "profileUrl": "/store-details2",
+          "imageUrl": "/assets/img/home1/auction-card-author-img8.png"
+        },
+        "bidUrl": "/auction-details2"
+      }
+    ]
+  }
+  

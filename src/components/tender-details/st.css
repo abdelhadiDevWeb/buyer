@@ -1,0 +1,44 @@
+.review-star-container {
+    display: inline-flex;
+    gap: 5px;
+}
+
+
+.review-star {
+    font-size: 1.2rem;
+    color: #ffc107; /* Initial star color (gold) */
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out; /* Smooth animation for hover */
+}
+
+
+.review-star:hover,
+.review-star.active {
+    transform: scale(1.2); /* Slight scale-up on hover/active */
+    color: #f8b300; /* Darker gold on hover/active */
+}
+
+
+/* Optional: Add a subtle 'pop' animation when a star is clicked */
+@keyframes star-pop {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.4);
+    }
+    100% {
+        transform: scale(1.2);
+    }
+}
+
+
+.review-star.selected {
+    animation: star-pop 0.3s ease-in-out;
+}
+
+
+/* Style for filled stars */
+.review-star.filled {
+    color: #f8b300;
+}

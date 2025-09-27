@@ -1,0 +1,299 @@
+/* RTL Support for Arabic */
+
+/* Basic RTL styles */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl * {
+  direction: rtl;
+}
+
+/* Flexbox adjustments for RTL */
+.rtl .flex {
+  flex-direction: row-reverse;
+}
+
+.rtl .justify-between {
+  justify-content: space-between;
+}
+
+.rtl .justify-start {
+  justify-content: flex-end;
+}
+
+.rtl .justify-end {
+  justify-content: flex-start;
+}
+
+/* Text alignment */
+.rtl .text-left {
+  text-align: right;
+}
+
+.rtl .text-right {
+  text-align: left;
+}
+
+/* Margins and padding adjustments */
+.rtl .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.rtl .mr-auto {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.rtl .pl-4 {
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+.rtl .pr-4 {
+  padding-right: 0;
+  padding-left: 1rem;
+}
+
+/* Border radius adjustments */
+.rtl .rounded-l {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.rtl .rounded-r {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+}
+
+/* Position adjustments */
+.rtl .left-0 {
+  left: auto;
+  right: 0;
+}
+
+.rtl .right-0 {
+  right: auto;
+  left: 0;
+}
+
+/* Header adjustments */
+.rtl .header-logo {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.rtl .nav-item {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+/* Form inputs */
+.rtl input,
+.rtl textarea,
+.rtl select {
+  text-align: right;
+}
+
+.rtl input::placeholder,
+.rtl textarea::placeholder {
+  text-align: right;
+}
+
+/* Dropdown menus */
+.rtl .dropdown-menu {
+  left: auto;
+  right: 0;
+}
+
+/* Button icon adjustments */
+.rtl .btn-icon-left {
+  flex-direction: row-reverse;
+}
+
+.rtl .btn-icon-left svg {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+/* Language switcher adjustments */
+.rtl .language-switcher {
+  left: auto;
+  right: 20px;
+}
+
+/* Modal and popup adjustments */
+.rtl .modal-dialog {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Navigation adjustments */
+.rtl .navbar-nav {
+  flex-direction: row-reverse;
+}
+
+.rtl .nav-link {
+  padding-left: 0;
+  padding-right: 0.75rem;
+}
+
+/* Card layout adjustments */
+.rtl .card-body {
+  text-align: right;
+}
+
+.rtl .card-title {
+  text-align: right;
+}
+
+/* List adjustments */
+.rtl ul,
+.rtl ol {
+  padding-left: 0;
+  padding-right: 2rem;
+}
+
+.rtl li {
+  text-align: right;
+}
+
+/* Footer adjustments */
+.rtl .footer-links {
+  text-align: right;
+}
+
+.rtl .footer-social {
+  flex-direction: row-reverse;
+}
+
+/* Hero section adjustments */
+.rtl .hero-content {
+  text-align: right;
+}
+
+.rtl .hero-cta-buttons {
+  flex-direction: row-reverse;
+}
+
+/* Auction card adjustments */
+.rtl .auction-card {
+  text-align: right;
+}
+
+.rtl .auction-card .price {
+  text-align: right;
+}
+
+/* Profile page adjustments */
+.rtl .profile-sidebar {
+  left: auto;
+  right: 0;
+}
+
+.rtl .profile-content {
+  margin-left: 0;
+  margin-right: 250px;
+}
+
+/* Search adjustments */
+.rtl .search-input {
+  text-align: right;
+  padding-left: 2.5rem;
+  padding-right: 1rem;
+}
+
+.rtl .search-icon {
+  left: 0.75rem;
+  right: auto;
+}
+
+/* Animation adjustments for RTL */
+.rtl .slide-in-left {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.rtl .slide-in-right {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive RTL adjustments */
+@media (max-width: 768px) {
+  .rtl .mobile-menu {
+    text-align: right;
+  }
+  
+  .rtl .mobile-search {
+    text-align: right;
+  }
+}
+
+/* Typography adjustments for Arabic */
+.rtl h1,
+.rtl h2,
+.rtl h3,
+.rtl h4,
+.rtl h5,
+.rtl h6 {
+  font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
+  text-align: right;
+}
+
+.rtl p,
+.rtl span,
+.rtl div {
+  font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
+  text-align: right;
+}
+
+/* Arabic number formatting */
+.rtl .price,
+.rtl .number {
+  font-variant-numeric: lining-nums;
+}
+
+/* Custom scrollbar for RTL */
+.rtl::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rtl::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.rtl::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.rtl::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

@@ -1,0 +1,548 @@
+/* RTL Support Styles */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] .header-container {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .header-container nav {
+  margin-right: 40px;
+  margin-left: 0;
+}
+
+[dir="rtl"] .header-container nav ul {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .header-container .right-section {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] input[type="text"] {
+  text-align: right;
+}
+
+[dir="rtl"] .search-button {
+  right: auto;
+  left: 5px;
+}
+
+[dir="rtl"] .dropdown-menu {
+  right: auto;
+  left: 0;
+}
+
+[dir="rtl"] .notification-badge {
+  right: auto;
+  left: -8px;
+}
+
+[dir="rtl"] .mobile-menu-toggle {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .mobile-menu {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .mobile-menu nav ul li a {
+  border-left: none;
+  border-right: 3px solid transparent;
+}
+
+[dir="rtl"] .mobile-menu nav ul li a.active {
+  border-right-color: #0063b1;
+}
+
+/* RTL for language switcher */
+[dir="rtl"] .language-switcher button {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .language-switcher .dropdown {
+  right: auto;
+  left: 0;
+}
+
+/* RTL for account dropdown */
+[dir="rtl"] .account-dropdown {
+  right: auto;
+  left: 0;
+}
+
+/* RTL for chat dropdown */
+[dir="rtl"] .chat-dropdown {
+  right: auto;
+  left: 0;
+}
+
+/* RTL for notification dropdown */
+[dir="rtl"] .notification-dropdown {
+  right: auto;
+  left: 0;
+}
+
+/* RTL for general layout */
+[dir="rtl"] .container {
+  direction: rtl;
+}
+
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+[dir="rtl"] .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .mr-auto {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+[dir="rtl"] .pl-0 {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+[dir="rtl"] .pr-0 {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+/* RTL for icons and buttons */
+[dir="rtl"] .icon-left {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
+[dir="rtl"] .icon-right {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+/* RTL for forms */
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}
+
+[dir="rtl"] .form-group label {
+  text-align: right;
+}
+
+/* RTL for cards and containers */
+[dir="rtl"] .card-header {
+  text-align: right;
+}
+
+[dir="rtl"] .card-body {
+  text-align: right;
+}
+
+/* RTL for navigation */
+[dir="rtl"] .nav-link {
+  text-align: right;
+}
+
+[dir="rtl"] .navbar-nav {
+  flex-direction: row-reverse;
+}
+
+/* RTL for modals */
+[dir="rtl"] .modal-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .modal-footer {
+  flex-direction: row-reverse;
+}
+
+/* RTL for tables */
+[dir="rtl"] .table th,
+[dir="rtl"] .table td {
+  text-align: right;
+}
+
+/* RTL for lists */
+[dir="rtl"] .list-group-item {
+  text-align: right;
+}
+
+/* RTL for badges and labels */
+[dir="rtl"] .badge {
+  margin-left: 0;
+  margin-right: 4px;
+}
+
+/* RTL for buttons with icons */
+[dir="rtl"] .btn-icon {
+  flex-direction: row-reverse;
+}
+
+/* RTL for dropdowns */
+[dir="rtl"] .dropdown-toggle::after {
+  margin-left: 0;
+  margin-right: 0.255em;
+}
+
+/* RTL for breadcrumbs */
+[dir="rtl"] .breadcrumb-item + .breadcrumb-item::before {
+  content: "\\";
+  padding-left: 0;
+  padding-right: 0.5rem;
+}
+
+/* RTL for pagination */
+[dir="rtl"] .pagination {
+  flex-direction: row-reverse;
+}
+
+/* RTL for progress bars */
+[dir="rtl"] .progress-bar {
+  float: right;
+}
+
+/* RTL for alerts */
+[dir="rtl"] .alert {
+  text-align: right;
+}
+
+/* RTL for tooltips */
+[dir="rtl"] .tooltip {
+  text-align: right;
+}
+
+/* RTL for popovers */
+[dir="rtl"] .popover {
+  text-align: right;
+}
+
+/* RTL for carousels */
+[dir="rtl"] .carousel-control-prev {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .carousel-control-next {
+  left: 0;
+  right: auto;
+}
+
+/* RTL for accordions */
+[dir="rtl"] .accordion-button {
+  text-align: right;
+}
+
+[dir="rtl"] .accordion-button::after {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* RTL for tabs */
+[dir="rtl"] .nav-tabs {
+  flex-direction: row-reverse;
+}
+
+/* RTL for sidebars */
+[dir="rtl"] .sidebar {
+  right: 0;
+  left: auto;
+}
+
+/* RTL for offcanvas */
+[dir="rtl"] .offcanvas {
+  right: 0;
+  left: auto;
+}
+
+/* RTL for toasts */
+[dir="rtl"] .toast {
+  text-align: right;
+}
+
+/* RTL for spinners */
+[dir="rtl"] .spinner-border {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* RTL for input groups */
+[dir="rtl"] .input-group-text {
+  border-left: 0;
+  border-right: 1px solid #ced4da;
+}
+
+[dir="rtl"] .input-group > .form-control {
+  border-right: 0;
+  border-left: 1px solid #ced4da;
+}
+
+/* RTL for buttons in input groups */
+[dir="rtl"] .input-group > .btn {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+[dir="rtl"] .input-group > .form-control:not(:last-child) {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+/* RTL for floating labels */
+[dir="rtl"] .form-floating > label {
+  left: auto;
+  right: 0;
+}
+
+/* RTL for checkboxes and radios */
+[dir="rtl"] .form-check {
+  padding-left: 0;
+  padding-right: 1.5em;
+}
+
+[dir="rtl"] .form-check-input {
+  margin-left: 0;
+  margin-right: -1.5em;
+}
+
+/* RTL for switches */
+[dir="rtl"] .form-switch {
+  padding-left: 0;
+  padding-right: 2.5em;
+}
+
+[dir="rtl"] .form-switch .form-check-input {
+  margin-left: 0;
+  margin-right: -2.5em;
+}
+
+/* RTL for ranges */
+[dir="rtl"] .form-range {
+  direction: rtl;
+}
+
+/* RTL for file inputs */
+[dir="rtl"] .form-control[type="file"] {
+  text-align: right;
+}
+
+/* RTL for select elements */
+[dir="rtl"] .form-select {
+  background-position: left 0.75rem center;
+  padding-left: 2.25rem;
+  padding-right: 0.75rem;
+}
+
+/* RTL for validation */
+[dir="rtl"] .valid-feedback {
+  text-align: right;
+}
+
+[dir="rtl"] .invalid-feedback {
+  text-align: right;
+}
+
+/* RTL for help text */
+[dir="rtl"] .form-text {
+  text-align: right;
+}
+
+/* RTL for custom file inputs */
+[dir="rtl"] .form-control[type="file"]::file-selector-button {
+  margin-left: 0;
+  margin-right: -0.5rem;
+}
+
+/* RTL for input group buttons */
+[dir="rtl"] .input-group > .btn:not(:last-child) {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+[dir="rtl"] .input-group > .btn:not(:first-child) {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+/* RTL for button groups */
+[dir="rtl"] .btn-group > .btn:not(:last-child):not(.dropdown-toggle) {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+[dir="rtl"] .btn-group > .btn:not(:first-child) {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+/* RTL for button toolbars */
+[dir="rtl"] .btn-toolbar {
+  flex-direction: row-reverse;
+}
+
+/* RTL for button groups in toolbars */
+[dir="rtl"] .btn-toolbar > .btn-group {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* RTL for vertical button groups */
+[dir="rtl"] .btn-group-vertical > .btn:not(:last-child):not(.dropdown-toggle) {
+  border-radius: 0 0 0.375rem 0.375rem;
+}
+
+[dir="rtl"] .btn-group-vertical > .btn:not(:first-child) {
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+
+/* RTL for split button dropdowns */
+[dir="rtl"] .btn-group > .btn-group:not(:last-child) > .btn {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+[dir="rtl"] .btn-group > .btn-group:not(:first-child) > .btn {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+/* RTL for dropdown menus */
+[dir="rtl"] .dropdown-menu {
+  text-align: right;
+}
+
+[dir="rtl"] .dropdown-item {
+  text-align: right;
+}
+
+/* RTL for dropdown dividers */
+[dir="rtl"] .dropdown-divider {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* RTL for dropdown headers */
+[dir="rtl"] .dropdown-header {
+  text-align: right;
+}
+
+/* RTL for dropdown text */
+[dir="rtl"] .dropdown-item-text {
+  text-align: right;
+}
+
+/* RTL for navbar */
+[dir="rtl"] .navbar-brand {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+[dir="rtl"] .navbar-nav {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .navbar-nav .nav-link {
+  padding-left: 0;
+  padding-right: 0.5rem;
+}
+
+/* RTL for navbar toggler */
+[dir="rtl"] .navbar-toggler {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* RTL for navbar text */
+[dir="rtl"] .navbar-text {
+  text-align: right;
+}
+
+/* RTL for navbar collapse */
+[dir="rtl"] .navbar-collapse {
+  flex-direction: row-reverse;
+}
+
+/* RTL for navbar nav */
+[dir="rtl"] .navbar-nav .dropdown-menu {
+  right: auto;
+  left: 0;
+}
+
+/* RTL for navbar brand */
+[dir="rtl"] .navbar-brand {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+/* RTL for navbar toggler icon */
+[dir="rtl"] .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* RTL for navbar toggler border */
+[dir="rtl"] .navbar-toggler {
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: none;
+}
+
+/* RTL for navbar toggler focus */
+[dir="rtl"] .navbar-toggler:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* RTL for navbar toggler disabled */
+[dir="rtl"] .navbar-toggler:disabled {
+  opacity: 0.25;
+}
+
+/* RTL for navbar toggler collapsed */
+[dir="rtl"] .navbar-toggler.collapsed {
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: none;
+}
+
+/* RTL for navbar toggler expanded */
+[dir="rtl"] .navbar-toggler:not(.collapsed) {
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: none;
+}
+
+/* RTL for navbar toggler icon */
+[dir="rtl"] .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* RTL for navbar toggler border */
+[dir="rtl"] .navbar-toggler {
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: none;
+}
+
+/* RTL for navbar toggler focus */
+[dir="rtl"] .navbar-toggler:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* RTL for navbar toggler disabled */
+[dir="rtl"] .navbar-toggler:disabled {
+  opacity: 0.25;
+}
+
+/* RTL for navbar toggler collapsed */
+[dir="rtl"] .navbar-toggler.collapsed {
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: none;
+}
+
+/* RTL for navbar toggler expanded */
+[dir="rtl"] .navbar-toggler:not(.collapsed) {
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: none;
+} 

@@ -1,0 +1,139 @@
+{
+    "blog_grid": [
+        {
+            "blog_id": "1",
+            "blog_title": "Exploring the hrils tales and trends in the world of auctions.",
+            "blog_content": "Blog Content 1",
+            "blog_image": "/assets/img/home1/blog-img1.jpg",
+            "blog_url": "blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "ANTIQUES",
+            "blog_status": "1",
+            "blog_comment": "0"
+        },
+        {
+            "blog_id": "2",
+            "blog_title": "Bidder's Beat off Insights from the Auction Floor This.",
+            "blog_content": "Blog Content 2",
+            "blog_image": "/assets/img/inner-pages/blog-img1.jpg",
+            "blog_url": "blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "Porcelain",
+            "blog_status": "2",
+            "blog_comment": "0"
+        },
+        {
+            "blog_id": "3",
+            "blog_title": "Bidding chronicles unveling behind stories remarkable.",
+            "blog_content": "Blog Content 3",
+            "blog_image": "/assets/img/home1/blog-img3.jpg",
+            "blog_url": "blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "BOOKS & COMICS",
+            "blog_status": "3",
+            "blog_comment": "25"
+        },
+        {
+            "blog_id": "4",
+            "blog_title": "Auctions Adventures Stories froms the Bidding Battlefield.",
+            "blog_content": "Blog Content 4",
+            "blog_image": "/assets/img/inner-pages/blog-img2.jpg",
+            "blog_url": "blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "Renaissance",
+            "blog_status": "4",
+            "blog_comment": "55"
+        },
+        {
+            "blog_id": "5",
+            "blog_title": "Bidding Buzzs Exploring the World of Auctions art.",
+            "blog_content": "Blog Content 5",
+            "blog_image": "/assets/img/inner-pages/blog-img5.jpg",
+            "blog_url": "blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "Baroque",
+            "blog_status": "5",
+            "blog_comment": "55"
+        },
+        {
+            "blog_id": "6",
+            "blog_title": "Auctione Angle Behind the Scenes of the Bidding Process.",
+            "blog_content": "Blog Content 6",
+            "blog_image": "/assets/img/inner-pages/blog-img6.jpg",
+            "blog_url": "blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "Baroque",
+            "blog_status": "6",
+            "blog_comment": "55"
+        },
+        {
+            "blog_id": "7",
+            "blog_title": "Winning Whispers Tips and Tricks for Successful Bidding.",
+            "blog_content": "Blog Content 7",
+            "blog_image": "/assets/img/inner-pages/blog-img7.jpg",
+            "blog_url": "blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "Baroque",
+            "blog_status": "7",
+            "blog_comment": "55"
+        },
+        {
+            "blog_id": "8",
+            "blog_title": "Hamer Highlight Unveiling Auction Standouts antique.",
+            "blog_content": "Blog Content 8",
+            "blog_image": "/assets/img/inner-pages/blog-img1.jpg",
+            "blog_url": "blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "Manuscripts",
+            "blog_status": "8",
+            "blog_comment": "55"
+        },
+        {
+            "blog_id": "9",
+            "blog_title": "Auction Avenue Your Roadmap to Winning Deals open.",
+            "blog_content": "Blog Content 9",
+            "blog_image": "/assets/img/inner-pages/blog-img7.jpg",
+            "blog_url": "blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "Romanticism",
+            "blog_status": "9",
+            "blog_comment": "55"
+        }
+    ],
+
+    "home1-blog":[
+        {
+            "blog_id": "1",
+            "blog_title": "Exploring the hrils tales and trends in the world of auctions.",
+            "blog_content": "Blog Content 1",
+            "blog_image": "/assets/img/home1/blog-img1.jpg",
+            "blog_url": "/blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "ANTIQUES",
+            "blog_status": "1",
+            "blog_comment": "0"
+        },
+        {
+            "blog_id": "2",
+            "blog_title": "Bidder's Beat off Insights from the Auction Floor This.",
+            "blog_content": "Blog Content 2",
+            "blog_image": "/assets/img/inner-pages/blog-img1.jpg",
+            "blog_url": "/blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "Porcelain",
+            "blog_status": "2",
+            "blog_comment": "0"
+        },
+        {
+            "blog_id": "3",
+            "blog_title": "Bidding chronicles unveling behind stories remarkable.",
+            "blog_content": "Blog Content 3",
+            "blog_image": "/assets/img/home1/blog-img3.jpg",
+            "blog_url": "/blog-details",
+            "blog_date": "03 January, 2024",
+            "blog_category": "BOOKS & COMICS",
+            "blog_status": "3",
+            "blog_comment": "25"
+        }
+    ]
+}

@@ -1,0 +1,46 @@
+.AllPages{
+    width: 100%;
+    height: 100vh;
+    z-index: 1000;
+    position: relative;
+}
+.AllPages::before{
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    z-index: 1001;
+}
+
+/* Custom scrollbar for a more modern look */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #0063b1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #004a8c;
+}
+
+/* Animation for page transitions */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.page-transition {
+    animation: fadeIn 0.3s ease-in-out;
+}

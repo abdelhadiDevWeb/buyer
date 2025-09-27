@@ -1,0 +1,124 @@
+{
+    "sellerList": [
+        {
+            "sellerId": "1",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img1.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img1.png",
+            "total_item": "45,533",
+            "name": "Sebastian Daniel",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        },
+        {
+            "sellerId": "2",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img2.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img2.png",
+            "total_item": "45,478",
+            "name": "Alexander Owen",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        },
+        {
+            "sellerId": "3",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img3.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img3.png",
+            "total_item": "45,478",
+            "name": "Asher Samuel",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        },
+        {
+            "sellerId": "4",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img4.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img4.png",
+            "total_item": "45,478",
+            "name": "Jack Michael",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        },
+        {
+            "sellerId": "5",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img5.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img5.png",
+            "total_item": "45,478",
+            "name": "Jackson Mason",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        },
+        {
+            "sellerId": "6",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img6.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img6.png",
+            "total_item": "45,478",
+            "name": "John Hudson",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        },
+        {
+            "sellerId": "7",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img7.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img7.png",
+            "total_item": "45,478",
+            "name": "Joseph David",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        },
+        {
+            "sellerId": "8",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img8.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img8.png",
+            "total_item": "45,478",
+            "name": "Julian Gabriel",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        },
+        {
+            "sellerId": "9",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img9.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img9.png",
+            "total_item": "45,478",
+            "name": "Matthew Maverik",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        },
+        {
+            "sellerId": "10",
+            "coverPhoto": "/assets/img/inner-pages/store-card-cover-img10.jpg",
+            "profile_photo": "/assets/img/inner-pages/store-profile-img10.png",
+            "total_item": "45,478",
+            "name": "Anthony Thomas",
+            "address": "House 168/170, Road 02, Avenue 01, Mirpur DOHS, Dhaka.",
+            "phone": [
+                "+880 123 456 789",
+                "+990-737 621 432"
+            ]
+        }
+    ]
+}

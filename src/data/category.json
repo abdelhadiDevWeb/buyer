@@ -1,0 +1,142 @@
+{
+
+    "auction-category":[
+        {
+            "id": 1,
+            "name": "Automotive",
+            "item": "45,533",
+            "image": "/assets/img/home1/category-img1.jpg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 2,
+            "name": "Antiques",
+            "item": "45,680",
+            "image": "/assets/img/home1/category-img2.jpg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 3,
+            "name": "Digital Art",
+            "item": "45,680",
+            "image": "/assets/img/home1/category-img3.jpg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 4,
+            "name": "Books&Comic",
+            "item": "45,680",
+            "image": "/assets/img/home1/category-img4.jpg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 5,
+            "name": "Old Coin",
+            "item": "45,680",
+            "image": "/assets/img/home1/category-img5.jpg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 6,
+            "name": "Gadget",
+            "item": "45,680",
+            "image": "/assets/img/home1/category-img6.jpg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 7,
+            "name": "Jewelry",
+            "item": "45,680",
+            "image": "/assets/img/home1/category-img7.jpg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 8,
+            "name": "Real Estate",
+            "item": "45,680",
+            "image": "/assets/img/home1/category-img8.jpg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 9,
+            "name": "Fashion",
+            "item": "45,680",
+            "image": "/assets/img/home1/category-img9.jpg",
+            "car_type": "car"
+        }
+        
+    ],
+    "car-auction-category":[
+        {
+            "id": 1,
+            "name": "Mercedes",
+            "item": "45,533",
+            "image": "../assets/img/home2/icon/mercedes-logo.svg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 2,
+            "name": "Toyota Camry",
+            "item": "45,680",
+            "image": "../assets/img/home2/icon/toyota-logo.svg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 3,
+            "name": "BMW",
+            "item": "45,680",
+            "image": "../assets/img/home2/icon/bmw-logo.svg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 4,
+            "name": "Tesla",
+            "item": "45,680",
+            "image": "../assets/img/home2/icon/tesla-logo.svg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 5,
+            "name": "Old Coin",
+            "item": "45,680",
+            "image": "../assets/img/home2/icon/hyundai-logo.svg",
+            "car_type": "hyundai"
+        }
+        ,
+        {
+            "id": 6,
+            "name": "Honda",
+            "item": "45,680",
+            "image": "../assets/img/home2/icon/nissan-logo.svg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 7,
+            "name": "Chevrolet",
+            "item": "45,680",
+            "image": "../assets/img/home2/icon/chevrolet-logo.svg",
+            "car_type": "car"
+        }
+        ,
+        {
+            "id": 8,
+            "name": "Land Rover",
+            "item": "45,680",
+            "image": "../assets/img/home2/icon/land-rover-logo.svg",
+            "car_type": "car"
+        }
+    ]
+}
