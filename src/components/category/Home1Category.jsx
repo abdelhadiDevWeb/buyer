@@ -188,7 +188,7 @@ const Home1Category = () => {
               transition: 'all 0.3s ease',
             }}>
               <img
-                src={subcategory.thumb ? `${app.route}${subcategory.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+                src={subcategory.thumb ? `${app.imageBaseURL}${subcategory.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
                 alt={subcategory.name}
                 style={{
                   width: '100%',
@@ -348,7 +348,7 @@ const Home1Category = () => {
                 justifyContent: 'center',
               }}>
                 <img
-                  src={category.thumb ? `${app.route}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+                  src={category.thumb ? `${app.imageBaseURL}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
                   alt={name}
                   style={{
                     width: '90%',

@@ -42,7 +42,44 @@ const useAuctionTimers = (auctions) => {
 };
 
 const MultipurposeAuctionSidebar = () => {
-    const t = (key, opts) => key;
+    const t = (key, opts) => {
+        const translations = {
+            'auctionSidebar.defaultSort': 'Trier par défaut',
+            'auctionSidebar.priceAsc': 'Prix croissant',
+            'auctionSidebar.priceDesc': 'Prix décroissant',
+            'auctionSidebar.failedToLoadAuctions': 'Échec du chargement des enchères',
+            'auctionSidebar.discoverAuctions': 'Découvrez nos enchères',
+            'auctionSidebar.chooseDescription': 'Choisissez parmi des milliers d\'enchères de produits et de services',
+            'auctionSidebar.searchAuctionPlaceholder': 'Rechercher une enchère...',
+            'auctionSidebar.categories': 'Catégories',
+            'auctionSidebar.loadingCategories': 'Chargement des catégories...',
+            'auctionSidebar.noCategoryAvailable': 'Aucune catégorie disponible',
+            'auctionSidebar.clearCategoryFilter': 'Effacer le filtre',
+            'auctionSidebar.display': 'Affichage',
+            'auctionSidebar.loadingAuctions': 'Chargement des enchères...',
+            'auctionSidebar.liveBadge': 'EN DIRECT',
+            'auctionSidebar.daysAbbr': 'J',
+            'auctionSidebar.hoursAbbr': 'H',
+            'auctionSidebar.minutesAbbr': 'M',
+            'auctionSidebar.secondsAbbr': 'S',
+            'auctionSidebar.noTitle': 'Sans titre',
+            'auctionSidebar.auctionEnded': 'Enchère terminée',
+            'auctionSidebar.currentBid': 'Offre actuelle',
+            'auctionSidebar.seller': 'Vendeur',
+            'auctionSidebar.active': 'ACTIF',
+            'auctionSidebar.placeBid': 'Placer une offre',
+            'auctionSidebar.noAuctionsFound': 'Aucune enchère trouvée',
+            'auctionSidebar.modifyFiltersOrSearch': 'Modifiez vos filtres ou votre recherche',
+            'auctionSidebar.page01': 'Page 1',
+            'auctionSidebar.page02': 'Page 2',
+            'auctionSidebar.page03': 'Page 3',
+            'auctions.products': 'Produits',
+            'auctions.discoverProducts': 'Découvrez nos produits',
+            'auctions.services': 'Services',
+            'auctions.accessServices': 'Accédez à nos services'
+        };
+        return translations[key] || key;
+    };
     const router = useRouter();
     // Default countdown timer for the page (fallback)
     const defaultTimer = useCountdownTimer("2024-08-23 11:42:00");
@@ -204,7 +241,7 @@ const MultipurposeAuctionSidebar = () => {
 
                         {/* Category Image - Clickable for filter selection */}
                         <img
-                            src={category.thumb ? `${app.route}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+                            src={category.thumb ? `${app.imageBaseURL}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
                             alt={category.name}
                             style={{
                                 width: level === 0 ? '40px' : '32px',
@@ -1274,7 +1311,7 @@ const MultipurposeAuctionSidebar = () => {
                                                             <img
                                                                 src={
                                                                     auction.thumbs && auction.thumbs.length > 0
-                                                                        ? `${app.route}${auction.thumbs[0].url}`
+                                                                        ? `${app.imageBaseURL}${auction.thumbs[0].url}`
                                                                         : DEFAULT_AUCTION_IMAGE
                                                                 }
                                                                 alt={auction.title || "Auction Item"}
@@ -1502,7 +1539,7 @@ const MultipurposeAuctionSidebar = () => {
                                                                     <img
                                                                         src={
                                                                             (auction.owner?.avatar?.url) // Use owner.avatar.url
-                                                                                ? `${app.route}${auction.owner.avatar.url}`
+                                                                                ? `${app.imageBaseURL}${auction.owner.avatar.url}`
                                                                                 : DEFAULT_PROFILE_IMAGE
                                                                         }
                                                                         alt="Owner"
@@ -1527,8 +1564,12 @@ const MultipurposeAuctionSidebar = () => {
                                                                         fontWeight: '500',
                                                                     }}>
                                                                         {(() => {
-                                                                            // Check if seller is hidden (anonymous)
-                                                                            if (auction.hidden === true) {
+                                                                            // Check if seller is hidden (anonymous) - check multiple possible fields
+                                                                            if (auction.hidden === true || 
+                                                                                auction.owner?.hidden === true || 
+                                                                                auction.seller?.hidden === true ||
+                                                                                auction.owner?.isAnonymous === true ||
+                                                                                auction.seller?.isAnonymous === true) {
                                                                                 return t('common.anonymous');
                                                                             }
                                                                             
@@ -1547,6 +1588,14 @@ const MultipurposeAuctionSidebar = () => {
                                                                             // Try just firstName
                                                                             if (auction.owner?.firstName) {
                                                                                 return auction.owner.firstName;
+                                                                            }
+                                                                            // Try seller firstName + lastName
+                                                                            if (auction.seller?.firstName && auction.seller?.lastName) {
+                                                                                return `${auction.seller.firstName} ${auction.seller.lastName}`;
+                                                                            }
+                                                                            // Try seller firstName
+                                                                            if (auction.seller?.firstName) {
+                                                                                return auction.seller.firstName;
                                                                             }
                                                                             // Default fallback
                                                                             return t('auctionSidebar.seller');

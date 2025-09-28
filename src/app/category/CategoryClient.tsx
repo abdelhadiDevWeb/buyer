@@ -294,7 +294,7 @@ export default function CategoryClient() {
               </div>
             )}
             <img
-              src={category.thumb ? `${app.route}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+              src={category.thumb ? `${app.imageBaseURL}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
               alt={category.name}
               style={{
                 width: level === 0 ? '48px' : '40px',
@@ -430,7 +430,7 @@ export default function CategoryClient() {
         }}>
           <img
             src={auction.thumbs && auction.thumbs.length > 0 
-              ? `${app.route}${auction.thumbs[0].url}` 
+              ? `${app.imageBaseURL}${auction.thumbs[0].url}` 
               : DEFAULT_AUCTION_IMAGE}
             alt={auction.title}
             style={{
@@ -539,7 +539,7 @@ export default function CategoryClient() {
             }}>
               <img
                 src={auction.owner?.avatar?.url 
-                  ? `${app.route}${auction.owner.avatar.url}` 
+                  ? `${app.imageBaseURL}${auction.owner.avatar.url}` 
                   : '/assets/images/avatar.jpg'}
                 alt="Owner"
                 style={{

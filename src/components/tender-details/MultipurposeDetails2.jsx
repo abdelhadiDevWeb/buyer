@@ -51,7 +51,14 @@ function getTimeRemaining(endDate) {
 }
 
 const MultipurposeDetails2 = () => {
-  const t = (key, opts) => key;
+  const t = (key, opts) => {
+    const translations = {
+      'auctionDetails.reviews': 'Avis',
+      'auctionDetails.reviewWarning': 'Vous devez être connecté pour laisser un avis',
+      'common.anonymous': 'Anonyme'
+    };
+    return translations[key] || key;
+  };
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -1341,7 +1348,7 @@ const handleBidSubmit = async (e) => {
                   <div className="main-image-container" style={{ position: 'relative' }}>
                     {showVideo && safeVideos.length > 0 ? (
                       <video
-                        src={`${app.route}${safeVideos[selectedVideoIndex]?.url}`}
+                        src={`${app.imageBaseURL}${safeVideos[selectedVideoIndex]?.url}`}
                         controls
                         className="main-video"
                         crossOrigin="use-credentials"
@@ -1362,7 +1369,7 @@ const handleBidSubmit = async (e) => {
                     <img
                       src={
                         safeAttachments.length > 0
-                          ? `${app.route}${safeAttachments[selectedImageIndex]?.url}`
+                          ? `${app.imageBaseURL}${safeAttachments[selectedImageIndex]?.url}`
                           : DEFAULT_AUCTION_IMAGE
                       }
                       alt={safeTitle}
@@ -1439,7 +1446,7 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                             >
                               <img
-                                src={`${app.route}${attachment.url}`}
+                                src={`${app.imageBaseURL}${attachment.url}`}
                               alt={`${safeTitle} - Image ${index + 1}`}
                                 onError={(e) => {
                                   e.target.onerror = null;
@@ -1479,7 +1486,7 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                           >
                             <video
-                              src={`${app.route}${video.url}`}
+                              src={`${app.imageBaseURL}${video.url}`}
                               style={{
                                 width: '100%',
                                 height: '80px',
@@ -2943,7 +2950,7 @@ const handleBidSubmit = async (e) => {
                                   <img
                                     src={
                                       offer.user?.avatar?.url
-                                        ? `${app.route}${offer.user.avatar.url}`
+                                        ? `${app.imageBaseURL}${offer.user.avatar.url}`
                                         : DEFAULT_USER_AVATAR
                                     }
                                     alt={offer.user?.firstName || "User"}
@@ -3184,7 +3191,7 @@ const handleBidSubmit = async (e) => {
                                           src={
                                             tender.attachments &&
                                             tender.attachments.length > 0
-                                              ? `${app.route}${tender.attachments[0].url}`
+                                              ? `${app.imageBaseURL}${tender.attachments[0].url}`
                                               : DEFAULT_AUCTION_IMAGE
                                           }
                                           alt={tender.title || "Appel d'offres"}
@@ -3536,7 +3543,7 @@ const handleBidSubmit = async (e) => {
                                             <img
                                               src={
                                                 tender.owner?.avatar?.url
-                                                  ? `${app.route}${tender.owner.avatar.url}`
+                                                  ? `${app.imageBaseURL}${tender.owner.avatar.url}`
                                                   : DEFAULT_PROFILE_IMAGE
                                               }
                                               alt="Owner"
@@ -3568,8 +3575,12 @@ const handleBidSubmit = async (e) => {
                                               }}
                                             >
                                               {(() => {
-                                                // Check if tender is hidden (anonymous)
-                                                if (tender.hidden === true) {
+                                                // Check if tender is hidden (anonymous) - check multiple possible fields
+                                                if (tender.hidden === true || 
+                                                    tender.owner?.hidden === true || 
+                                                    tender.seller?.hidden === true ||
+                                                    tender.owner?.isAnonymous === true ||
+                                                    tender.seller?.isAnonymous === true) {
                                                   return t('common.anonymous');
                                                 }
                                                 
@@ -3587,6 +3598,18 @@ const handleBidSubmit = async (e) => {
                                                 // Try seller name
                                                 if (tender.seller?.name) {
                                                   return tender.seller.name;
+                                                }
+                                                // Try just firstName
+                                                if (tender.owner?.firstName) {
+                                                  return tender.owner.firstName;
+                                                }
+                                                // Try seller firstName + lastName
+                                                if (tender.seller?.firstName && tender.seller?.lastName) {
+                                                  return `${tender.seller.firstName} ${tender.seller.lastName}`;
+                                                }
+                                                // Try seller firstName
+                                                if (tender.seller?.firstName) {
+                                                  return tender.seller.firstName;
                                                 }
                                                 // Default fallback
                                                 return 'Acheteur';

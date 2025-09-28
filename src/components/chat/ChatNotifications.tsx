@@ -11,7 +11,26 @@ interface ChatNotificationsProps {
 }
 
 export default function ChatNotifications({ variant = 'header', onOpenChange }: ChatNotificationsProps) {
-  const t = (key: string, _opts?: any) => key;
+  const t = (key: string, _opts?: any) => {
+    const translations = {
+      'chat.justNow': 'À l\'instant',
+      'chat.minutesAgo': `Il y a ${_opts?.minutes || 0} minutes`,
+      'chat.hoursAgo': `Il y a ${_opts?.hours || 0} heures`,
+      'chat.daysAgo': `Il y a ${_opts?.days || 0} jours`,
+      'chat.messages': 'Messages',
+      'chat.markAllAsRead': 'Marquer tout comme lu',
+      'chat.loading': 'Chargement...',
+      'chat.noMessages': 'Aucun message',
+      'chat.messagesWillAppear': 'Vos messages apparaîtront ici',
+      'chat.newConversations': 'Nouvelles conversations',
+      'chat.unknown': 'Inconnu',
+      'chat.newConversationStarted': 'Nouvelle conversation démarrée',
+      'chat.recentMessages': 'Messages récents',
+      'chat.newMessage': 'Nouveau message',
+      'chat.viewAllMessages': 'Voir tous les messages'
+    };
+    return translations[key] || key;
+  };
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   

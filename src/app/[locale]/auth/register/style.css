@@ -234,6 +234,11 @@
   }
 }
 
+/* Second section styling */
+.auth-card-decoration {
+  width: 100%;
+}
+
 /* Override any old styles that might conflict */
 .PageRegister,
 .boxRegister,

@@ -51,7 +51,23 @@ function getTimeRemaining(endDate) {
 }
 
 const MultipurposeDetails1 = () => {
-  const t = (key, opts) => key;
+  const t = (key, opts) => {
+    const translations = {
+      'auctionDetails.auctionNotFound': 'Enchère non trouvée',
+      'auctionDetails.noDataReceived': 'Aucune donnée reçue',
+      'auctionDetails.failedToLoad': 'Échec du chargement',
+      'auctionDetails.loading': 'Chargement...',
+      'auctionDetails.loadingDetails': 'Chargement des détails...',
+      'auctionDetails.reviews': 'Avis',
+      'auctionDetails.reviewWarning': 'Vous devez être connecté pour laisser un avis',
+      'auctionDetails.anonymousUser': 'Utilisateur anonyme',
+      'auctionDetails.noSimilarAuctions': 'Aucune enchère similaire trouvée',
+      'auctionDetails.checkMainPage': 'Consultez notre page principale pour plus d\'enchères',
+      'common.anonymous': 'Anonyme',
+      'liveAuction.seller': 'Vendeur'
+    };
+    return translations[key] || key;
+  };
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -1079,7 +1095,7 @@ const handleBidSubmit = async (e) => {
                   <div className="main-image-container" style={{ position: 'relative' }}>
                     {showVideo && safeVideos.length > 0 ? (
                       <video
-                        src={`${app.route}${safeVideos[selectedVideoIndex]?.url}`}
+                        src={`${app.imageBaseURL}${safeVideos[selectedVideoIndex]?.url}`}
                         controls
                         className="main-video"
                         crossOrigin="use-credentials"
@@ -1100,7 +1116,7 @@ const handleBidSubmit = async (e) => {
                     <img
                       src={
                         safeThumbs.length > 0
-                          ? `${app.route}${safeThumbs[selectedImageIndex]?.url}`
+                          ? `${app.imageBaseURL}${safeThumbs[selectedImageIndex]?.url}`
                           : DEFAULT_AUCTION_IMAGE
                       }
                       alt={safeTitle}
@@ -1177,7 +1193,7 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                             >
                               <img
-                                src={`${app.route}${thumb.url}`}
+                                src={`${app.imageBaseURL}${thumb.url}`}
                               alt={`${safeTitle} - Image ${index + 1}`}
                                 onError={(e) => {
                                   e.target.onerror = null;
@@ -1217,7 +1233,7 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                           >
                             <video
-                              src={`${app.route}${video.url}`}
+                              src={`${app.imageBaseURL}${video.url}`}
                               style={{
                                 width: '100%',
                                 height: '80px',
@@ -2507,7 +2523,7 @@ const handleBidSubmit = async (e) => {
                                   <img
                                     src={
                                       offer.user?.avatar?.url
-                                        ? `${app.route}${offer.user.avatar.url}`
+                                        ? `${app.imageBaseURL}${offer.user.avatar.url}`
                                         : DEFAULT_USER_AVATAR
                                     }
                                     alt={offer.user?.firstName || "User"}
@@ -2748,7 +2764,7 @@ const handleBidSubmit = async (e) => {
                                           src={
                                             auction.thumbs &&
                                             auction.thumbs.length > 0
-                                              ? `${app.route}${auction.thumbs[0].url}`
+                                              ? `${app.imageBaseURL}${auction.thumbs[0].url}`
                                               : DEFAULT_AUCTION_IMAGE
                                           }
                                           alt={auction.title || "Auction Item"}
@@ -3100,7 +3116,7 @@ const handleBidSubmit = async (e) => {
                                             <img
                                               src={
                                                 auction.owner?.avatar?.url
-                                                  ? `${app.route}${auction.owner.avatar.url}`
+                                                  ? `${app.imageBaseURL}${auction.owner.avatar.url}`
                                                   : DEFAULT_PROFILE_IMAGE
                                               }
                                               alt="Owner"
@@ -3132,8 +3148,12 @@ const handleBidSubmit = async (e) => {
                                               }}
                                             >
                                               {(() => {
-                                                // Check if seller is hidden (anonymous)
-                                                if (auction.hidden === true) {
+                                                // Check if seller is hidden (anonymous) - check multiple possible fields
+                                                if (auction.hidden === true || 
+                                                    auction.owner?.hidden === true || 
+                                                    auction.seller?.hidden === true ||
+                                                    auction.owner?.isAnonymous === true ||
+                                                    auction.seller?.isAnonymous === true) {
                                                   return t('common.anonymous');
                                                 }
                                                 
@@ -3151,6 +3171,18 @@ const handleBidSubmit = async (e) => {
                                                 // Try seller name
                                                 if (auction.seller?.name) {
                                                   return auction.seller.name;
+                                                }
+                                                // Try just firstName
+                                                if (auction.owner?.firstName) {
+                                                  return auction.owner.firstName;
+                                                }
+                                                // Try seller firstName + lastName
+                                                if (auction.seller?.firstName && auction.seller?.lastName) {
+                                                  return `${auction.seller.firstName} ${auction.seller.lastName}`;
+                                                }
+                                                // Try seller firstName
+                                                if (auction.seller?.firstName) {
+                                                  return auction.seller.firstName;
                                                 }
                                                 // Default fallback
                                                 return t('liveAuction.seller');

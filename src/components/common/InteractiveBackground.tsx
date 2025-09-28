@@ -74,25 +74,25 @@ const InteractiveBackground: React.FC<InteractiveBackgroundProps> = ({
       particleColor: [99, 102, 241], // Blue
       trailColor: [99, 102, 241, 0.4],
       waveColor: [99, 102, 241, 0.06],
-      dotColors: ['rgba(59, 130, 246, 0.8)', 'rgba(99, 102, 241, 0.7)', 'rgba(139, 92, 246, 0.6)'],
+      dotColors: ['rgba(59, 130, 246, 0.8)', 'rgba(99, 102, 241, 0.7)', 'rgba(37, 99, 235, 0.6)'],
       geometryColor: [99, 102, 241, 0.15],
       connectionColor: [99, 102, 241, 0.2]
     },
     dark: {
       background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 50%, rgba(51, 65, 85, 0.85) 100%)',
-      particleColor: [139, 92, 246], // Purple
-      trailColor: [139, 92, 246, 0.5],
-      waveColor: [139, 92, 246, 0.08],
-      dotColors: ['rgba(139, 92, 246, 0.9)', 'rgba(168, 85, 247, 0.8)', 'rgba(59, 130, 246, 0.7)'],
-      geometryColor: [139, 92, 246, 0.2],
-      connectionColor: [139, 92, 246, 0.25]
+      particleColor: [59, 130, 246], // Blue
+      trailColor: [59, 130, 246, 0.5],
+      waveColor: [59, 130, 246, 0.08],
+      dotColors: ['rgba(59, 130, 246, 0.9)', 'rgba(99, 102, 241, 0.8)', 'rgba(37, 99, 235, 0.7)'],
+      geometryColor: [59, 130, 246, 0.2],
+      connectionColor: [59, 130, 246, 0.25]
     },
     gradient: {
-      background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.15) 30%, rgba(59, 130, 246, 0.12) 60%, rgba(168, 85, 247, 0.1) 100%)',
+      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(99, 102, 241, 0.15) 30%, rgba(37, 99, 235, 0.12) 60%, rgba(29, 78, 216, 0.1) 100%)',
       particleColor: [59, 130, 246],
       trailColor: [59, 130, 246, 0.4],
       waveColor: [59, 130, 246, 0.08],
-      dotColors: ['rgba(59, 130, 246, 0.8)', 'rgba(139, 92, 246, 0.7)', 'rgba(168, 85, 247, 0.6)'],
+      dotColors: ['rgba(59, 130, 246, 0.8)', 'rgba(99, 102, 241, 0.7)', 'rgba(37, 99, 235, 0.6)'],
       geometryColor: [59, 130, 246, 0.18],
       connectionColor: [59, 130, 246, 0.22]
     }
@@ -581,3 +581,4 @@ const InteractiveBackground: React.FC<InteractiveBackgroundProps> = ({
 };
 
 export default InteractiveBackground;
+

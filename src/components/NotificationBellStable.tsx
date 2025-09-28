@@ -13,7 +13,17 @@ interface NotificationBellStableProps {
 const NotificationBellStable = memo(function NotificationBellStable({ variant = 'header', onOpenChange }: NotificationBellStableProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const t = (key: string, _opts?: any) => key;
+  const t = (key: string, _opts?: any) => {
+    const translations = {
+      'notifications.title': 'Notifications',
+      'notifications.markAllAsRead': 'Marquer tout comme lu',
+      'notifications.loading': 'Chargement des notifications...',
+      'notifications.noNotifications': 'Aucune notification',
+      'notifications.noNotificationsDesc': 'Vos notifications apparaîtront ici',
+      'notifications.showingCount': `Affichage de 10 sur ${_opts?.total || 0} notifications`
+    };
+    return translations[key] || key;
+  };
   
   // Get notification data
   const { totalUnreadCount, refreshAll } = useTotalNotifications();

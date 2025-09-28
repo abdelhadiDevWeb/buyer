@@ -53,7 +53,12 @@ export function calculateTimeRemaining(endDate: string): Timer {
 }
 
 const Home1LiveTenders = () => {
-  const t = (key: string, _opts?: any) => key;
+  const t = (key: string, _opts?: any) => {
+    const translations = {
+      'liveTenders.buyer': 'Acheteur'
+    };
+    return translations[key] || key;
+  };
   const [liveTenders, setLiveTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -395,7 +400,7 @@ const Home1LiveTenders = () => {
                         }}>
                           {tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url ? (
                             <img
-                              src={`${app.route}${tender.attachments[0].url}`}
+                              src={`${app.imageBaseURL}${tender.attachments[0].url}`}
                               alt={tender.title || 'Tender'}
                               style={{
                                 width: '100%',

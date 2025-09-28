@@ -236,7 +236,7 @@ function LoginComponent() {
               <div className="auth-footer">
                 <p>
                   Vous n'avez pas de compte?{" "}
-                  <a href="http://localhost:3001/auth/register" className="signup-link">
+                  <a href="/auth/register" className="signup-link">
                     S'inscrire
                   </a>
                 </p>

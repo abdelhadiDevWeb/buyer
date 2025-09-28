@@ -588,7 +588,7 @@ const ProfessionalAuctions: React.FC = () => {
                           <img
                             src={
                               auction.thumbs && auction.thumbs.length > 0
-                                ? `${app.route}${auction.thumbs[0].url}`
+                                ? `${app.imageBaseURL}${auction.thumbs[0].url}`
                                 : DEFAULT_AUCTION_IMAGE
                             }
                             alt={auction.title}
@@ -682,9 +682,9 @@ const ProfessionalAuctions: React.FC = () => {
                             <img
                               src={
                                 auction.seller?.profileImage?.url
-                                  ? `${app.route}${auction.seller.profileImage.url}`
+                                  ? `${app.imageBaseURL}${auction.seller.profileImage.url}`
                                   : auction.owner?.profileImage?.url
-                                  ? `${app.route}${auction.owner.profileImage.url}`
+                                  ? `${app.imageBaseURL}${auction.owner.profileImage.url}`
                                   : auction.seller?.photoURL
                                   ? `${app.route}${auction.seller.photoURL}`
                                   : auction.owner?.photoURL

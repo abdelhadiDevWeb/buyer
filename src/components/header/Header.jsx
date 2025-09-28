@@ -188,7 +188,7 @@ export const Header = () => {
     }else{
        setSwitchAccount(true)
        window.localStorage.setItem('switch' , "1")
-       windowRef.current = window.open('http://localhost:3002')
+       windowRef.current = window.open('https://mazad-click-seller.vercel.app')
     }
   }
   useEffect(()=>{

@@ -10,6 +10,7 @@ const app = {
   socket: 'https://mazad-click-server.onrender.com/',
   route: "https://mazad-click-server.onrender.com",
   baseURL: "https://mazad-click-server.onrender.com/",
+  imageBaseURL: "https://mazad-click-server.onrender.com/static",
 
   // socket: 'http://localhost:3001/',
   // route: "http://localhost:3001/",

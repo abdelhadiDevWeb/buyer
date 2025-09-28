@@ -65,7 +65,7 @@ export interface StorePayment {
  */
 function getBaseUrl(): string {
   // Determine the correct base URL for the application
-  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
+  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mazad-click-buyer.vercel.app';
   
   // Check if we're in development mode (localhost)
   const isLocalhost = baseUrl.includes('localhost') || 

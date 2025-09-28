@@ -324,7 +324,7 @@ export default function CategoryPage() {
                 width: '28px',
                 height: '28px',
                 borderRadius: '50%',
-                background: isExpanded ? '#6366f1' : '#f1f5f9',
+                  background: isExpanded ? '#0063b1' : '#f1f5f9',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -345,7 +345,7 @@ export default function CategoryPage() {
 
             {/* Category Image - Clickable for filter selection */}
             <img
-              src={category.thumb ? `${app.route}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+              src={category.thumb ? `${app.imageBaseURL}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
               alt={category.name}
               style={{
                 width: level === 0 ? '48px' : '40px',
@@ -393,8 +393,8 @@ export default function CategoryPage() {
                   selectCategory(category);
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))';
-                  e.currentTarget.style.color = '#6366f1';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 99, 177, 0.1), rgba(0, 163, 224, 0.1))';
+                  e.currentTarget.style.color = '#0063b1';
                   e.currentTarget.style.transform = 'translateX(4px)';
                 }}
                 onMouseLeave={(e) => {
@@ -420,7 +420,7 @@ export default function CategoryPage() {
             {/* Subcategory Count Badge */}
             {hasSubcategories && (
               <span style={{
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
                 color: 'white',
                 fontSize: '12px',
                 fontWeight: '600',
@@ -493,7 +493,7 @@ export default function CategoryPage() {
         }}>
           <img
             src={auction.thumbs && auction.thumbs.length > 0 
-              ? `${app.route}${auction.thumbs[0].url}` 
+              ? `${app.imageBaseURL}${auction.thumbs[0].url}` 
               : DEFAULT_AUCTION_IMAGE}
             alt={auction.title}
             style={{
@@ -509,7 +509,7 @@ export default function CategoryPage() {
             position: 'absolute',
             top: '12px',
             left: '12px',
-            background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+            background: 'linear-gradient(90deg, #0063b1, #00a3e0)',
             color: 'white',
             padding: '6px 12px',
             borderRadius: '20px',
@@ -582,7 +582,7 @@ export default function CategoryPage() {
               fontSize: '20px',
               fontWeight: '700',
               margin: 0,
-              background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+              background: 'linear-gradient(90deg, #0063b1, #00a3e0)',
               WebkitBackgroundClip: 'text',
               backgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -612,7 +612,7 @@ export default function CategoryPage() {
             }}>
               <img
                 src={auction.owner?.avatar?.url 
-                  ? `${app.route}${auction.owner.avatar.url}` 
+                  ? `${app.imageBaseURL}${auction.owner.avatar.url}` 
                   : '/assets/images/avatar.jpg'}
                 alt="Owner"
                 style={{
@@ -642,7 +642,7 @@ export default function CategoryPage() {
             style={{
               width: '100%',
               padding: '12px 20px',
-              background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+              background: 'linear-gradient(90deg, #0063b1, #00a3e0)',
               color: 'white',
               border: 'none',
               borderRadius: '12px',
@@ -656,11 +656,11 @@ export default function CategoryPage() {
               gap: '8px',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(90deg, #8b5cf6, #6366f1)';
+                e.currentTarget.style.background = 'linear-gradient(90deg, #00a3e0, #0063b1)';
               e.currentTarget.style.transform = 'translateY(-2px)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(90deg, #6366f1, #8b5cf6)';
+              e.currentTarget.style.background = 'linear-gradient(90deg, #0063b1, #00a3e0)';
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
@@ -687,7 +687,7 @@ Place Bid
               fontSize: 'clamp(2rem, 4vw, 3rem)',
               fontWeight: '700',
               marginBottom: '16px',
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -723,7 +723,7 @@ Place Bid
                   background: 'rgba(255, 255, 255, 0.9)',
                   border: '1px solid rgba(99, 102, 241, 0.2)',
                   borderRadius: '12px',
-                  color: '#6366f1',
+                   color: '#0063b1',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
@@ -732,13 +732,13 @@ Place Bid
                   WebkitBackdropFilter: 'blur(10px)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#6366f1';
+                    e.currentTarget.style.background = '#0063b1';
                   e.currentTarget.style.color = 'white';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-                  e.currentTarget.style.color = '#6366f1';
+                    e.currentTarget.style.color = '#0063b1';
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
@@ -786,7 +786,7 @@ Back to Categories
                     right: '20px',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    color: '#6366f1',
+                    color: '#0063b1',
                     pointerEvents: 'none'
                   }}
                   width="20" 
@@ -813,7 +813,7 @@ Back to Categories
               }}>
                 <p style={{
                   fontSize: '14px',
-                  color: '#6366f1',
+                   color: '#0063b1',
                   margin: 0,
                   fontWeight: '600',
                   textAlign: 'center',
@@ -833,13 +833,13 @@ Back to Categories
                   width: '50px',
                   height: '50px',
                   border: '3px solid rgba(99, 102, 241, 0.2)',
-                  borderTop: '3px solid #6366f1',
+                    borderTop: '3px solid #0063b1',
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite',
                   marginBottom: '20px'
                 }}
               ></div>
-              <p style={{ fontSize: '16px', fontWeight: '500', color: '#6366f1' }}>
+                <p style={{ fontSize: '16px', fontWeight: '500', color: '#0063b1' }}>
                 {loading ? 'Loading categories...' : 'Loading auctions...'}
               </p>
             </div>
@@ -865,7 +865,7 @@ Back to Categories
                       margin: '0 auto'
                     }}>
                       <div style={{ fontSize: '48px', marginBottom: '20px', opacity: 0.6 }}>📂</div>
-                      <h3 style={{ marginBottom: '15px', color: '#6366f1', fontSize: '24px', fontWeight: '700' }}>
+                      <h3 style={{ marginBottom: '15px', color: '#0063b1', fontSize: '24px', fontWeight: '700' }}>
 No categories found
                       </h3>
                       <p style={{ color: '#64748b', fontSize: '16px' }}>
@@ -902,7 +902,7 @@ Try adjusting your search terms or filters
                       margin: '0 auto'
                     }}>
                       <div style={{ fontSize: '48px', marginBottom: '20px', opacity: 0.6 }}>🏷️</div>
-                      <h3 style={{ marginBottom: '15px', color: '#6366f1', fontSize: '24px', fontWeight: '700' }}>
+                      <h3 style={{ marginBottom: '15px', color: '#0063b1', fontSize: '24px', fontWeight: '700' }}>
 No auctions found
                       </h3>
                       <p style={{ color: '#64748b', fontSize: '16px' }}>
@@ -945,7 +945,7 @@ No active auctions in this category at the moment
                 gap: '10px',
                 borderRadius: '12px',
                 border: '1px solid rgba(99, 102, 241, 0.2)',
-                color: '#6366f1',
+                   color: '#0063b1',
                 background: 'rgba(255, 255, 255, 0.9)',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
@@ -954,13 +954,13 @@ No active auctions in this category at the moment
                 textDecoration: 'none',
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.background = '#6366f1';
+                    e.currentTarget.style.background = '#0063b1';
                 e.currentTarget.style.color = 'white';
                 e.currentTarget.style.transform = 'translateY(-2px)';
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-                e.currentTarget.style.color = '#6366f1';
+                    e.currentTarget.style.color = '#0063b1';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

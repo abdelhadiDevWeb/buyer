@@ -152,7 +152,7 @@ export default function BecomeResellerPage() {
       
       if (avatarData?.user && (avatarData.user as any).avatar?.url) {
         console.log('Avatar from user object:', (avatarData.user as any).avatar.url);
-        const fullAvatarUrl = `${app.route}${(avatarData.user as any).avatar.url}`;
+        const fullAvatarUrl = `${app.imageBaseURL}${(avatarData.user as any).avatar.url}`;
         console.log('Full avatar URL:', fullAvatarUrl);
         
         set({

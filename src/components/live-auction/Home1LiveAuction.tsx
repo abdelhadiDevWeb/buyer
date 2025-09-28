@@ -78,7 +78,12 @@ export function calculateTimeRemaining(endDate: string): Timer {
 }
 
 const Home1LiveAuction = () => {
-  const t = (key: string, _opts?: any) => key;
+  const t = (key: string, _opts?: any) => {
+    const translations = {
+      'liveAuction.viewAll': 'Voir tout'
+    };
+    return translations[key] || key;
+  };
   const [liveAuctions, setLiveAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -431,7 +436,7 @@ const Home1LiveAuction = () => {
                         }}>
                           <img
                             src={auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url
-                              ? `${app.route}${auction.thumbs[0].url}`
+                              ? `${app.imageBaseURL}${auction.thumbs[0].url}`
                               : DEFAULT_AUCTION_IMAGE}
                             alt={auction.title || auction.name || 'Auction'}
                             style={{
