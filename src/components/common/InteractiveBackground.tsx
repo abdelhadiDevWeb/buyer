@@ -581,4 +581,3 @@ const InteractiveBackground: React.FC<InteractiveBackgroundProps> = ({
 };
 
 export default InteractiveBackground;
-
