@@ -13,6 +13,9 @@
     "rebuild": "npm run clean && npm run build && npm run dev"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.2.0",
@@ -25,9 +28,7 @@
     "notistack": "^3.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    
     "react-icons": "^5.5.0",
-    
     "react-toastify": "^11.0.5",
     "socket.io-client": "^4.8.1",
     "swiper": "^11.2.6",

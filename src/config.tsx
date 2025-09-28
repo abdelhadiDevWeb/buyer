@@ -9,8 +9,11 @@ const app = {
 
   socket: 'https://mazad-click-server.onrender.com/',
   route: "https://mazad-click-server.onrender.com",
-
   baseURL: "https://mazad-click-server.onrender.com/",
+
+  // socket: 'http://localhost:3001/',
+  // route: "http://localhost:3001/",
+  // baseURL: "http://localhost:3001/",
 
   apiKey: '8f2a61c94d7e3b5f9c0a8d2e6b4f1c7a',
 };

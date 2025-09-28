@@ -56,7 +56,6 @@ interface Auction {
 }
 
 export default function CategoryPage() {
-  const t = (key: string, _opts?: any) => key;
   const searchParams = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -412,8 +411,8 @@ export default function CategoryPage() {
                 margin: 0,
               }}>
                 {hasSubcategories 
-                  ? `${category.children!.length} ${t('category.subcategories')} • ${t('category.clickRowToExpand')}` 
-                  : t('category.clickToViewAuctions')
+                  ? `${category.children!.length} subcategories • Click row to expand` 
+                  : 'Click to view auctions'
                 }
               </p>
             </div>
@@ -633,7 +632,7 @@ export default function CategoryPage() {
               }}>
                 {auction.owner?.firstName && auction.owner?.lastName
                   ? `${auction.owner.firstName} ${auction.owner.lastName}`
-                  : auction.owner?.name || t('common.anonymous')}
+                  : auction.owner?.name || 'Anonymous'}
               </p>
             </div>
           </div>
@@ -665,7 +664,7 @@ export default function CategoryPage() {
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-{t('auctions.placeBid')}
+Place Bid
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M8.59 16.59L10 18L16 12L10 6L8.59 7.41L13.17 12Z"/>
             </svg>
@@ -695,8 +694,8 @@ export default function CategoryPage() {
               lineHeight: '1.2',
             }}>
               {viewMode === 'categories' 
-                ? t('category.browseCategories') 
-                : `${selectedCategoryName} ${t('auctions.auctions')}`
+                ? 'Browse Categories' 
+                : `${selectedCategoryName} Auctions`
               }
             </h1>
             <p style={{
@@ -707,8 +706,8 @@ export default function CategoryPage() {
               lineHeight: '1.6',
             }}>
               {viewMode === 'categories' 
-                ? t('category.exploreCategories')
-                : t('category.discoverAuctionsIn', { category: selectedCategoryName })
+                ? 'Explore our diverse categories to find exactly what you\'re looking for'
+                : `Discover amazing auctions in ${selectedCategoryName}`
               }
             </p>
             
@@ -746,7 +745,7 @@ export default function CategoryPage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-{t('category.backToCategories')}
+Back to Categories
               </button>
             )}
             
@@ -765,8 +764,8 @@ export default function CategoryPage() {
                 <input
                   type="text"
                   placeholder={viewMode === 'categories' 
-                    ? t('category.searchCategories') 
-                    : t('category.searchAuctions')
+                    ? 'Search categories...' 
+                    : 'Search auctions...'
                   }
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -819,7 +818,7 @@ export default function CategoryPage() {
                   fontWeight: '600',
                   textAlign: 'center',
                 }}>
-                  {t('category.foundAuctions', { count: filteredAuctions.length, category: selectedCategoryName })}
+                  Found {filteredAuctions.length} auctions in {selectedCategoryName}
                 </p>
               </div>
             )}
@@ -841,7 +840,7 @@ export default function CategoryPage() {
                 }}
               ></div>
               <p style={{ fontSize: '16px', fontWeight: '500', color: '#6366f1' }}>
-                {loading ? t('category.loadingCategories') : t('category.loadingAuctions')}
+                {loading ? 'Loading categories...' : 'Loading auctions...'}
               </p>
             </div>
           ) : (
@@ -867,10 +866,10 @@ export default function CategoryPage() {
                     }}>
                       <div style={{ fontSize: '48px', marginBottom: '20px', opacity: 0.6 }}>📂</div>
                       <h3 style={{ marginBottom: '15px', color: '#6366f1', fontSize: '24px', fontWeight: '700' }}>
-{t('category.noCategoriesFound')}
+No categories found
                       </h3>
                       <p style={{ color: '#64748b', fontSize: '16px' }}>
-{t('category.tryAdjustingSearch')}
+Try adjusting your search terms or filters
                       </p>
                     </div>
                   )}
@@ -904,10 +903,10 @@ export default function CategoryPage() {
                     }}>
                       <div style={{ fontSize: '48px', marginBottom: '20px', opacity: 0.6 }}>🏷️</div>
                       <h3 style={{ marginBottom: '15px', color: '#6366f1', fontSize: '24px', fontWeight: '700' }}>
-{t('category.noAuctionsFound')}
+No auctions found
                       </h3>
                       <p style={{ color: '#64748b', fontSize: '16px' }}>
-{t('category.noActiveAuctions')}
+No active auctions in this category at the moment
                       </p>
                     </div>
                   )}

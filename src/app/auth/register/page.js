@@ -23,7 +23,6 @@ import { CLIENT_TYPE } from "@/types/User";
 import InteractiveBackground from "@/components/common/InteractiveBackground";
 
 export default function Register() {
-  const t = (key, opts) => key;
   const [data, setData] = useState({
     firstname: "",
     lastname: "",
@@ -92,7 +91,7 @@ export default function Register() {
       // Format the terms content for display
       const formattedContent = `
         <div style="line-height: 1.6; color: #333;">
-          <h2 style="color: #FFD700; margin-bottom: 16px;">${title}</h2>
+          <h2 style="color: white; margin-bottom: 16px;">${title}</h2>
           <div>${content}</div>
           ${termsData.updatedAt || termsData.updated_at ? `
             <p style="margin-top: 32px; font-style: italic; color: #666;">
@@ -112,7 +111,7 @@ export default function Register() {
       if (content) {
         const formattedContent = `
           <div style="line-height: 1.6; color: #333;">
-            <h2 style="color: #FFD700; margin-bottom: 16px;">${title}</h2>
+            <h2 style="color: white; margin-bottom: 16px;">${title}</h2>
             <div>${content}</div>
             ${firstTerm.updatedAt || firstTerm.updated_at ? `
               <p style="margin-top: 32px; font-style: italic; color: #666;">
@@ -176,7 +175,7 @@ export default function Register() {
   const handleSubmit = async () => {
     // Check if terms are accepted
     if (!termsAccepted) {
-      setSnackbarMessage(t('validation.required'));
+      setSnackbarMessage('Please accept the terms and conditions to continue.');
       setSnackbarSeverity("warning");
       setSnackbarOpen(true);
       return;
@@ -205,7 +204,7 @@ export default function Register() {
       // Check if phone verification is required
       if (responseData && responseData.user && responseData.requiresPhoneVerification) {
         console.log('Phone verification required, redirecting to OTP...');
-        setSnackbarMessage(t('auth.registerSuccess'));
+        setSnackbarMessage('Registration successful! Please verify your phone number.');
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
         
@@ -233,7 +232,7 @@ export default function Register() {
         };
         
         set(authData);
-        setSnackbarMessage(t('auth.registerSuccess'));
+        setSnackbarMessage('Registration successful! Please verify your phone number.');
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
         
@@ -248,7 +247,7 @@ export default function Register() {
       // Handle case where user is created but no phone verification required
       else if (responseData && responseData.user) {
         console.log('User created without phone verification requirement');
-        setSnackbarMessage(t('auth.registerSuccess'));
+        setSnackbarMessage('Registration successful! Please verify your phone number.');
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
         
@@ -259,7 +258,7 @@ export default function Register() {
       }
       else {
         console.error('Invalid response structure:', responseData);
-        setSnackbarMessage(t('auth.registerSuccess'));
+        setSnackbarMessage('Registration successful! Please verify your phone number.');
         setSnackbarSeverity("warning");
         setSnackbarOpen(true);
       }
@@ -267,7 +266,7 @@ export default function Register() {
       console.error('Signup error:', error);
       const errorMessage = error?.response?.data?.message || 
                           error?.message || 
-                          t('errors.somethingWentWrong');
+                          'Something went wrong. Please try again.';
       
       setSnackbarMessage(errorMessage);
       setSnackbarSeverity("error");
@@ -302,20 +301,20 @@ export default function Register() {
               <div className="auth-logo">
                 <Image src="/assets/images/logo-dark.png" alt="MazadClick Logo" width={150} height={50} />
               </div>
-              <h1>{t('auth.createAccount')}</h1>
-              <p>{t('auth.registerSuccess')}</p>
+              <h1>Create Your Account</h1>
+              <p>Join our auction community and start bidding today</p>
             </div>
 
             <div className="auth-form">
               <div className="form-row">
                 <div className="form-group half">
-                  <label htmlFor="firstname">{t('auth.firstName')}</label>
+                  <label htmlFor="firstname">First Name</label>
                   <div className="input-wrapper">
                     <FiUser className="input-icon" />
                     <input
                       id="firstname"
                       type="text"
-                      placeholder={t('profile.enterFirstName')}
+                      placeholder="Enter your first name"
                       name="firstname"
                       value={data.firstname}
                       onChange={changeData}
@@ -324,13 +323,13 @@ export default function Register() {
                   </div>
                 </div>
                 <div className="form-group half">
-                  <label htmlFor="lastname">{t('auth.lastName')}</label>
+                  <label htmlFor="lastname">Last Name</label>
                   <div className="input-wrapper">
                     <FiUser className="input-icon" />
                     <input
                       id="lastname"
                       type="text"
-                      placeholder={t('profile.enterLastName')}
+                      placeholder="Enter your last name"
                       name="lastname"
                       value={data.lastname}
                       onChange={changeData}
@@ -342,13 +341,13 @@ export default function Register() {
 
               <div className="form-row">
                 <div className="form-group half">
-                  <label htmlFor="phone">{t('auth.phone')}</label>
+                  <label htmlFor="phone">Phone Number</label>
                   <div className="input-wrapper">
                     <FiPhone className="input-icon" />
                     <input
                       id="phone"
                       type="text"
-                      placeholder={t('profile.enterPhone')}
+                      placeholder="Enter your phone number"
                       name="phone"
                       value={data.phone}
                       onChange={changeData}
@@ -357,13 +356,13 @@ export default function Register() {
                   </div>
                 </div>
                 <div className="form-group half">
-                  <label htmlFor="email">{t('auth.email')}</label>
+                  <label htmlFor="email">Email Address</label>
                   <div className="input-wrapper">
                     <FiMail className="input-icon" />
                     <input
                       id="email"
                       type="email"
-                      placeholder={t('profile.enterEmail')}
+                      placeholder="Enter your email address"
                       name="email"
                       value={data.email}
                       onChange={changeData}
@@ -374,7 +373,7 @@ export default function Register() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="gender">{t('auth.gender')}</label>
+                <label htmlFor="gender">Gender</label>
                 <div className="input-wrapper">
                   <FiUsers className="input-icon" />
                   <select
@@ -384,21 +383,21 @@ export default function Register() {
                     onChange={changeData}
                     className="select-input"
                   >
-                    <option value="" disabled>{t('auth.selectGender')}</option>
-                    <option value="MALE">{t('auth.male')}</option>
-                    <option value="FEMALE">{t('auth.female')}</option>
+                    <option value="" disabled>Select your gender</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
                   </select>
                 </div>
               </div>
 
               <div className="form-group">
-                <label htmlFor="password">{t('auth.password')}</label>
+                <label htmlFor="password">Password</label>
                 <div className="input-wrapper">
                   <FiLock className="input-icon" />
                   <input
                     id="password"
                     type="password"
-                      placeholder={t('auth.createStrongPassword')}
+                      placeholder="Create a strong password"
                     name="password"
                     value={data.password}
                     onChange={changeData}
@@ -409,77 +408,228 @@ export default function Register() {
 
               {/* Terms and Conditions Section */}
               <div className="terms-agreement-section" style={{
-                padding: '20px',
-                borderRadius: '8px',
-                border: '1px solid #e0e0e0',
-                backgroundColor: '#f9f9f9',
-                marginTop: '15px',
-                marginBottom: '15px'
+                padding: '24px',
+                borderRadius: '16px',
+                border: `2px solid ${termsAccepted ? '#10b981' : '#e5e7eb'}`,
+                background: termsAccepted 
+                  ? 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)' 
+                  : 'linear-gradient(135deg, #fafafa 0%, #f9fafb 100%)',
+                marginTop: '20px',
+                marginBottom: '20px',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s ease',
+                boxShadow: termsAccepted 
+                  ? '0 8px 25px rgba(16, 185, 129, 0.15)' 
+                  : '0 4px 15px rgba(0, 0, 0, 0.05)'
               }}>
+                {/* Background decoration */}
+                <div style={{
+                  position: 'absolute',
+                  top: '-50%',
+                  right: '-20%',
+                  width: '100px',
+                  height: '100px',
+                  background: termsAccepted 
+                    ? 'radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)' 
+                    : 'radial-gradient(circle, rgba(156, 163, 175, 0.1) 0%, transparent 70%)',
+                  borderRadius: '50%',
+                  pointerEvents: 'none'
+                }} />
+                
                 <div style={{ 
                   display: 'flex', 
                   alignItems: 'flex-start',
-                  gap: '10px'
+                  gap: '16px',
+                  position: 'relative',
+                  zIndex: 1
                 }}>
+                  {/* Custom checkbox */}
+                  <div style={{ position: 'relative', marginTop: '2px' }}>
                   <input
                     type="checkbox"
                     id="termsAccepted"
                     checked={termsAccepted}
                     onChange={(e) => setTermsAccepted(e.target.checked)}
                     style={{
-                      marginTop: '2px',
-                      transform: 'scale(1.2)'
-                    }}
-                  />
+                        width: '20px',
+                        height: '20px',
+                        margin: 0,
+                        opacity: 0,
+                        position: 'absolute',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <div className="terms-checkbox" style={{
+                      width: '20px',
+                      height: '20px',
+                      border: `2px solid ${termsAccepted ? '#10b981' : '#d1d5db'}`,
+                      borderRadius: '6px',
+                      background: termsAccepted ? '#10b981' : 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: termsAccepted 
+                        ? '0 2px 8px rgba(16, 185, 129, 0.3)' 
+                        : '0 2px 4px rgba(0, 0, 0, 0.1)'
+                    }}>
+                      {termsAccepted && (
+                        <svg 
+                          width="12" 
+                          height="12" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          style={{ 
+                            color: 'white',
+                            animation: 'checkmark 0.3s ease'
+                          }}
+                        >
+                          <path 
+                            d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" 
+                            fill="currentColor"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div style={{ flex: 1 }}>
                   <label htmlFor="termsAccepted" style={{
-                    fontSize: '14px',
-                    lineHeight: '1.5',
-                    color: '#333',
-                    cursor: 'pointer'
-                  }}>
-                    {t('auth.termsAgreement')}{' '}
+                      fontSize: '15px',
+                      lineHeight: '1.6',
+                      color: termsAccepted ? '#065f46' : '#374151',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                      display: 'block'
+                    }}>
+                      I agree to the{' '}
                     <span
+                        className="terms-link"
                       onClick={handleOpenTerms}
                       style={{
-                        color: 'var(--primary-color, #FFD700)',
-                        textDecoration: 'underline',
+                          color: '#6366f1',
+                          textDecoration: 'none',
                         cursor: 'pointer',
-                        fontWeight: '600'
-                      }}
-                    >
-                      {t('auth.termsAndConditions')}
+                          fontWeight: '600',
+                          padding: '2px 4px',
+                          borderRadius: '4px',
+                          background: 'rgba(99, 102, 241, 0.1)',
+                          transition: 'all 0.2s ease',
+                          borderBottom: '2px solid transparent'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(99, 102, 241, 0.2)';
+                          e.target.style.borderBottom = '2px solid #6366f1';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'rgba(99, 102, 241, 0.1)';
+                          e.target.style.borderBottom = '2px solid transparent';
+                        }}
+                      >
+                        Terms and Conditions
                     </span>
-                    {' '}{t('auth.and')}{' '}
+                      {' '}and{' '}
                     <span
+                        className="terms-link"
                       onClick={handleOpenTerms}
                       style={{
-                        color: 'var(--primary-color, #FFD700)',
-                        textDecoration: 'underline',
+                          color: '#6366f1',
+                          textDecoration: 'none',
                         cursor: 'pointer',
-                        fontWeight: '600'
-                      }}
-                    >
-                      {t('auth.privacyPolicy')}
+                          fontWeight: '600',
+                          padding: '2px 4px',
+                          borderRadius: '4px',
+                          background: 'rgba(99, 102, 241, 0.1)',
+                          transition: 'all 0.2s ease',
+                          borderBottom: '2px solid transparent'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(99, 102, 241, 0.2)';
+                          e.target.style.borderBottom = '2px solid #6366f1';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'rgba(99, 102, 241, 0.1)';
+                          e.target.style.borderBottom = '2px solid transparent';
+                        }}
+                      >
+                        Privacy Policy
                     </span>
-                    .
+                      {' '}to create my account.
                   </label>
+                    
+                    {/* Success message when accepted */}
+                    {termsAccepted && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '12px 16px',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        animation: 'fadeIn 0.3s ease'
+                      }}>
+                        <svg 
+                          width="16" 
+                          height="16" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          style={{ color: '#10b981', minWidth: '16px' }}
+                        >
+                          <path 
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
+                            fill="currentColor"
+                          />
+                        </svg>
+                        <span style={{ 
+                          fontSize: '13px', 
+                          color: '#065f46',
+                          fontWeight: '500'
+                        }}>
+                          Great! You can now proceed with registration.
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
+                {/* Warning message when not accepted */}
                 {!termsAccepted && (
                   <div style={{
-                    marginTop: '12px',
-                    padding: '10px',
-                    backgroundColor: '#fff3cd',
-                    border: '1px solid #ffeaa7',
-                    borderRadius: '4px',
+                    marginTop: '16px',
+                    padding: '12px 16px',
+                    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                    border: '1px solid rgba(251, 191, 36, 0.3)',
+                    borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '10px',
+                    animation: 'fadeIn 0.3s ease'
                   }}>
-                    <FiAlertCircle style={{ color: '#856404', minWidth: '16px' }} />
-                    <span style={{ fontSize: '13px', color: '#856404' }}>
-                      {t('auth.mustAcceptTerms')}
-                    </span>
+                    <FiAlertCircle style={{ 
+                      color: '#f59e0b', 
+                      minWidth: '18px',
+                      fontSize: '18px'
+                    }} />
+                    <div>
+                      <div style={{ 
+                        fontSize: '14px', 
+                        color: '#92400e',
+                        fontWeight: '600',
+                        marginBottom: '2px'
+                      }}>
+                        Terms Required
+                      </div>
+                      <div style={{ 
+                        fontSize: '13px', 
+                        color: '#a16207'
+                      }}>
+                        Please read and accept our terms to continue with registration.
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -494,7 +644,7 @@ export default function Register() {
                 }}
               >
                 <div className="btn-content">
-                  <span>{loading ? t('auth.registering') : t('auth.register')}</span>
+                  <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
                   {!loading && (
                     <FiArrowRight size={20} />
                   )}
@@ -508,28 +658,108 @@ export default function Register() {
           </div>
           
           <div className="auth-card-decoration">
-            <div className="decoration-content">
-              <h2>{t('auth.joinAuctionCommunity')}</h2>
-              <p>{t('auth.discoverUniqueProducts')}</p>
-              <div className="decoration-badges">
-                <div className="badge">
+            {/* Background decorative elements */}
+            <div className="decoration-background">
+              <div className="floating-icon auction-hammer">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z" fill="rgba(255, 255, 255, 0.1)"/>
+                  <path d="M12 6v6l4 4" stroke="rgba(255, 255, 255, 0.8)" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="floating-icon money-bag">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C8.69 2 6 4.69 6 8c0 2.5 1.5 4.5 3.5 5.5v3c0 .55.45 1 1 1s1-.45 1-1v-3c2-.5 3.5-2.5 3.5-5 0-3.31-2.69-6-6-6z" fill="rgba(255, 255, 255, 0.1)"/>
+                  <path d="M10 11h4c.55 0 1 .45 1 1s-.45 1-1 1h-4c-.55 0-1-.45-1-1s.45-1 1-1z" fill="rgba(255, 255, 255, 0.8)"/>
+                </svg>
+              </div>
+              <div className="floating-icon trophy">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 2v6c0 2.97 2.16 5.43 5 5.91V19H8c-.55 0-1 .45-1 1s.45 1 1 1h8c.55 0 1-.45 1-1s-.45-1-1-1h-3v-3.09c2.84-.48 5-2.94 5-5.91V2H6z" fill="rgba(255, 255, 255, 0.1)"/>
+                  <path d="M10 6h4v2h-4V6z" fill="rgba(255, 255, 255, 0.8)"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Main content */}
+            <div className="decoration-main-content">
+              {/* Welcome Badge */}
+              <div className="welcome-badge">
                   <span className="badge-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M19.06 18.67L16.92 14.4L14.78 18.67M8.5 11L6.36 6.73L4.22 11M2 9V4C2 3.45 2.45 3 3 3H11C11.55 3 12 3.45 12 4V9C12 9.55 11.55 10 11 10H3C2.45 10 2 9.55 2 9ZM12 20V15C12 14.45 12.45 14 13 14H21C21.55 14 22 14.45 22 15V20C22 20.55 21.55 21 21 21H13C12.45 21 12 20.55 12 20Z" stroke="white" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/>
+                  </svg>
+                </span>
+                <span>Welcome to MazadClick</span>
+              </div>
+
+              {/* Main Title */}
+              <h2 className="decoration-title">
+                Join Our <span className="highlight-text">Auction</span><br/>
+                Community
+              </h2>
+              
+              {/* Subtitle */}
+              <p className="decoration-subtitle">
+                Discover unique products, bid on amazing deals, and win auctions at incredible prices. 
+                Your journey to amazing finds starts here!
+              </p>
+
+              {/* Feature Highlights */}
+              <div className="feature-highlights">
+                <div className="feature-item">
+                  <div className="feature-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M21 11.5C21.8284 11.5 22.5 10.8284 22.5 10C22.5 9.17157 21.8284 8.5 21 8.5C20.1716 8.5 19.5 9.17157 19.5 10C19.5 10.8284 20.1716 11.5 21 11.5Z" fill="currentColor"/>
+                      <path d="M3 11.5C3.82843 11.5 4.5 10.8284 4.5 10C4.5 9.17157 3.82843 8.5 3 8.5C2.17157 8.5 1.5 9.17157 1.5 10C1.5 10.8284 2.17157 11.5 3 11.5Z" fill="currentColor"/>
+                      <path d="M12 22.5C12.8284 22.5 13.5 21.8284 13.5 21C13.5 20.1716 12.8284 19.5 12 19.5C11.1716 19.5 10.5 20.1716 10.5 21C10.5 21.8284 11.1716 22.5 12 22.5Z" fill="currentColor"/>
+                      <path d="M12 4.5C12.8284 4.5 13.5 3.82843 13.5 3C13.5 2.17157 12.8284 1.5 12 1.5C11.1716 1.5 10.5 2.17157 10.5 3C10.5 3.82843 11.1716 4.5 12 4.5Z" fill="currentColor"/>
                     </svg>
-                  </span>
-                  <span className="badge-text">{t('auth.attractivePrices')}</span>
+                  </div>
+                  <div className="feature-content">
+                    <h4>Live Auctions</h4>
+                    <p>Real-time bidding experience</p>
+                  </div>
                 </div>
-                <div className="badge">
-                  <span className="badge-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9.5 13.75C9.5 14.72 10.25 15.5 11.17 15.5H13.05C13.85 15.5 14.5 14.82 14.5 13.97C14.5 13.06 14.1 12.73 13.51 12.52L10.5 11.47C9.91 11.26 9.51001 10.94 9.51001 10.02C9.51001 9.18 10.16 8.49 10.96 8.49H12.84C13.76 8.49 14.51 9.27 14.51 10.24M12 7.5V16.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M17 3V7H21" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M22 2L17 7" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                
+                <div className="feature-item">
+                  <div className="feature-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9.5 13.75C9.5 14.72 10.25 15.5 11.17 15.5H13.05C13.85 15.5 14.5 14.82 14.5 13.97C14.5 13.06 14.1 12.73 13.51 12.52L10.5 11.47C9.91 11.26 9.51001 10.94 9.51001 10.02C9.51001 9.18 10.16 8.49 10.96 8.49H12.84C13.76 8.49 14.51 9.27 14.51 10.24M12 7.5V16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                  </span>
-                  <span className="badge-text">{t('auth.secureTransactions')}</span>
+                  </div>
+                  <div className="feature-content">
+                    <h4>Secure Payments</h4>
+                    <p>Safe and encrypted transactions</p>
+                  </div>
+                </div>
+                
+                <div className="feature-item">
+                  <div className="feature-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M19.06 18.67L16.92 14.4L14.78 18.67M8.5 11L6.36 6.73L4.22 11M2 9V4C2 3.45 2.45 3 3 3H11C11.55 3 12 3.45 12 4V9C12 9.55 11.55 10 11 10H3C2.45 10 2 9.55 2 9ZM12 20V15C12 14.45 12.45 14 13 14H21C21.55 14 22 14.45 22 15V20C22 20.55 21.55 21 21 21H13C12.45 21 12 20.55 12 20Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div className="feature-content">
+                    <h4>Best Prices</h4>
+                    <p>Competitive auction pricing</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Community Stats */}
+              <div className="community-stats">
+                <div className="stat-item">
+                  <div className="stat-number">10K+</div>
+                  <div className="stat-label">Active Users</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-number">50K+</div>
+                  <div className="stat-label">Items Sold</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-number">99%</div>
+                  <div className="stat-label">Happy Customers</div>
                 </div>
               </div>
             </div>
@@ -553,7 +783,7 @@ export default function Register() {
           fontSize: '1.25rem',
           padding: '16px 24px'
         }}>
-          {t('auth.termsAndConditions')}
+          Terms and Conditions
         </DialogTitle>
         <DialogContent dividers style={{ padding: 0 }}>
           <Box style={{ 
@@ -571,7 +801,7 @@ export default function Register() {
               }}>
                 <CircularProgress size={40} />
                 <Typography style={{ marginTop: '16px' }}>
-                  {t('common.loading')}
+                  Loading...
                 </Typography>
               </Box>
             ) : termsContent ? (
@@ -586,7 +816,7 @@ export default function Register() {
               <Box style={{ textAlign: 'center', padding: '32px' }}>
                 <FiAlertCircle size={48} style={{ color: '#ff9800', marginBottom: '16px' }} />
                 <Typography style={{ color: '#666' }}>
-                  {t('errors.somethingWentWrong')}
+                  Something went wrong
                 </Typography>
               </Box>
             )}
@@ -594,7 +824,7 @@ export default function Register() {
         </DialogContent>
         <DialogActions style={{ padding: '16px 24px', gap: '8px' }}>
           <Button onClick={handleCloseTerms} variant="contained">
-            {t('common.close')}
+            Close
           </Button>
         </DialogActions>
       </Dialog>

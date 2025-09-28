@@ -23,7 +23,6 @@ import { CLIENT_TYPE } from "@/types/User";
 import InteractiveBackground from "@/components/common/InteractiveBackground";
 
 export default function Register() {
-  const t = (key, opts) => key;
   const [data, setData] = useState({
     firstname: "",
     lastname: "",
@@ -176,7 +175,7 @@ export default function Register() {
   const handleSubmit = async () => {
     // Check if terms are accepted
     if (!termsAccepted) {
-      setSnackbarMessage(t('validation.required'));
+      setSnackbarMessage('Please accept the terms and conditions to continue.');
       setSnackbarSeverity("warning");
       setSnackbarOpen(true);
       return;
@@ -205,7 +204,7 @@ export default function Register() {
       // Check if phone verification is required
       if (responseData && responseData.user && responseData.requiresPhoneVerification) {
         console.log('Phone verification required, redirecting to OTP...');
-        setSnackbarMessage(t('auth.registerSuccess'));
+        setSnackbarMessage('Registration successful! Please verify your phone number.');
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
         
@@ -233,7 +232,7 @@ export default function Register() {
         };
         
         set(authData);
-        setSnackbarMessage(t('auth.registerSuccess'));
+        setSnackbarMessage('Registration successful! Please verify your phone number.');
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
         
@@ -248,7 +247,7 @@ export default function Register() {
       // Handle case where user is created but no phone verification required
       else if (responseData && responseData.user) {
         console.log('User created without phone verification requirement');
-        setSnackbarMessage(t('auth.registerSuccess'));
+        setSnackbarMessage('Registration successful! Please verify your phone number.');
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
         
@@ -259,7 +258,7 @@ export default function Register() {
       }
       else {
         console.error('Invalid response structure:', responseData);
-        setSnackbarMessage(t('auth.registerSuccess'));
+        setSnackbarMessage('Registration successful! Please verify your phone number.');
         setSnackbarSeverity("warning");
         setSnackbarOpen(true);
       }
@@ -267,7 +266,7 @@ export default function Register() {
       console.error('Signup error:', error);
       const errorMessage = error?.response?.data?.message || 
                           error?.message || 
-                          t('errors.somethingWentWrong');
+                          'Something went wrong. Please try again.';
       
       setSnackbarMessage(errorMessage);
       setSnackbarSeverity("error");
@@ -302,20 +301,20 @@ export default function Register() {
               <div className="auth-logo">
                 <Image src="/assets/images/logo-dark.png" alt="MazadClick Logo" width={150} height={50} />
               </div>
-              <h1>{t('auth.createAccount')}</h1>
-              <p>{t('auth.registerSuccess')}</p>
+              <h1>Create Your Account</h1>
+              <p>Join our auction community and start bidding today</p>
             </div>
 
             <div className="auth-form">
               <div className="form-row">
                 <div className="form-group half">
-                  <label htmlFor="firstname">{t('auth.firstName')}</label>
+                  <label htmlFor="firstname">First Name</label>
                   <div className="input-wrapper">
                     <FiUser className="input-icon" />
                     <input
                       id="firstname"
                       type="text"
-                      placeholder={t('profile.enterFirstName')}
+                      placeholder="Enter your first name"
                       name="firstname"
                       value={data.firstname}
                       onChange={changeData}
@@ -324,13 +323,13 @@ export default function Register() {
                   </div>
                 </div>
                 <div className="form-group half">
-                  <label htmlFor="lastname">{t('auth.lastName')}</label>
+                  <label htmlFor="lastname">Last Name</label>
                   <div className="input-wrapper">
                     <FiUser className="input-icon" />
                     <input
                       id="lastname"
                       type="text"
-                      placeholder={t('profile.enterLastName')}
+                      placeholder="Enter your last name"
                       name="lastname"
                       value={data.lastname}
                       onChange={changeData}
@@ -342,13 +341,13 @@ export default function Register() {
 
               <div className="form-row">
                 <div className="form-group half">
-                  <label htmlFor="phone">{t('auth.phone')}</label>
+                  <label htmlFor="phone">Phone Number</label>
                   <div className="input-wrapper">
                     <FiPhone className="input-icon" />
                     <input
                       id="phone"
                       type="text"
-                      placeholder={t('profile.enterPhone')}
+                      placeholder="Enter your phone number"
                       name="phone"
                       value={data.phone}
                       onChange={changeData}
@@ -357,13 +356,13 @@ export default function Register() {
                   </div>
                 </div>
                 <div className="form-group half">
-                  <label htmlFor="email">{t('auth.email')}</label>
+                  <label htmlFor="email">Email Address</label>
                   <div className="input-wrapper">
                     <FiMail className="input-icon" />
                     <input
                       id="email"
                       type="email"
-                      placeholder={t('profile.enterEmail')}
+                      placeholder="Enter your email address"
                       name="email"
                       value={data.email}
                       onChange={changeData}
@@ -374,7 +373,7 @@ export default function Register() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="gender">{t('auth.gender')}</label>
+                <label htmlFor="gender">Gender</label>
                 <div className="input-wrapper">
                   <FiUsers className="input-icon" />
                   <select
@@ -384,21 +383,21 @@ export default function Register() {
                     onChange={changeData}
                     className="select-input"
                   >
-                    <option value="" disabled>{t('auth.selectGender')}</option>
-                    <option value="MALE">{t('auth.male')}</option>
-                    <option value="FEMALE">{t('auth.female')}</option>
+                    <option value="" disabled>Select your gender</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
                   </select>
                 </div>
               </div>
 
               <div className="form-group">
-                <label htmlFor="password">{t('auth.password')}</label>
+                <label htmlFor="password">Password</label>
                 <div className="input-wrapper">
                   <FiLock className="input-icon" />
                   <input
                     id="password"
                     type="password"
-                      placeholder={t('auth.createStrongPassword')}
+                      placeholder="Create a strong password"
                     name="password"
                     value={data.password}
                     onChange={changeData}
@@ -437,7 +436,7 @@ export default function Register() {
                     color: '#333',
                     cursor: 'pointer'
                   }}>
-                    {t('auth.termsAgreement')}{' '}
+                    I agree to the{' '}
                     <span
                       onClick={handleOpenTerms}
                       style={{
@@ -447,9 +446,9 @@ export default function Register() {
                         fontWeight: '600'
                       }}
                     >
-                      {t('auth.termsAndConditions')}
+                      Terms and Conditions
                     </span>
-                    {' '}{t('auth.and')}{' '}
+                    {' '}and{' '}
                     <span
                       onClick={handleOpenTerms}
                       style={{
@@ -459,7 +458,7 @@ export default function Register() {
                         fontWeight: '600'
                       }}
                     >
-                      {t('auth.privacyPolicy')}
+                      Privacy Policy
                     </span>
                     .
                   </label>
@@ -478,7 +477,7 @@ export default function Register() {
                   }}>
                     <FiAlertCircle style={{ color: '#856404', minWidth: '16px' }} />
                     <span style={{ fontSize: '13px', color: '#856404' }}>
-                      {t('auth.mustAcceptTerms')}
+                      You must accept the terms and conditions to continue
                     </span>
                   </div>
                 )}
@@ -494,7 +493,7 @@ export default function Register() {
                 }}
               >
                 <div className="btn-content">
-                  <span>{loading ? t('auth.registering') : t('auth.register')}</span>
+                  <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
                   {!loading && (
                     <FiArrowRight size={20} />
                   )}
@@ -509,8 +508,8 @@ export default function Register() {
           
           <div className="auth-card-decoration">
             <div className="decoration-content">
-              <h2>{t('auth.joinAuctionCommunity')}</h2>
-              <p>{t('auth.discoverUniqueProducts')}</p>
+              <h2>Join Our Auction Community</h2>
+              <p>Discover unique products and amazing deals</p>
               <div className="decoration-badges">
                 <div className="badge">
                   <span className="badge-icon">
@@ -518,7 +517,7 @@ export default function Register() {
                       <path d="M19.06 18.67L16.92 14.4L14.78 18.67M8.5 11L6.36 6.73L4.22 11M2 9V4C2 3.45 2.45 3 3 3H11C11.55 3 12 3.45 12 4V9C12 9.55 11.55 10 11 10H3C2.45 10 2 9.55 2 9ZM12 20V15C12 14.45 12.45 14 13 14H21C21.55 14 22 14.45 22 15V20C22 20.55 21.55 21 21 21H13C12.45 21 12 20.55 12 20Z" stroke="white" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </span>
-                  <span className="badge-text">{t('auth.attractivePrices')}</span>
+                  <span className="badge-text">Attractive Prices</span>
                 </div>
                 <div className="badge">
                   <span className="badge-icon">
@@ -529,7 +528,7 @@ export default function Register() {
                       <path d="M22 2L17 7" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </span>
-                  <span className="badge-text">{t('auth.secureTransactions')}</span>
+                  <span className="badge-text">Secure Transactions</span>
                 </div>
               </div>
             </div>
@@ -553,7 +552,7 @@ export default function Register() {
           fontSize: '1.25rem',
           padding: '16px 24px'
         }}>
-          {t('auth.termsAndConditions')}
+          Terms and Conditions
         </DialogTitle>
         <DialogContent dividers style={{ padding: 0 }}>
           <Box style={{ 
@@ -571,7 +570,7 @@ export default function Register() {
               }}>
                 <CircularProgress size={40} />
                 <Typography style={{ marginTop: '16px' }}>
-                  {t('common.loading')}
+                  Loading...
                 </Typography>
               </Box>
             ) : termsContent ? (
@@ -586,7 +585,7 @@ export default function Register() {
               <Box style={{ textAlign: 'center', padding: '32px' }}>
                 <FiAlertCircle size={48} style={{ color: '#ff9800', marginBottom: '16px' }} />
                 <Typography style={{ color: '#666' }}>
-                  {t('errors.somethingWentWrong')}
+                  Something went wrong
                 </Typography>
               </Box>
             )}
@@ -594,7 +593,7 @@ export default function Register() {
         </DialogContent>
         <DialogActions style={{ padding: '16px 24px', gap: '8px' }}>
           <Button onClick={handleCloseTerms} variant="contained">
-            {t('common.close')}
+            Close
           </Button>
         </DialogActions>
       </Dialog>

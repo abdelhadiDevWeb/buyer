@@ -34,7 +34,6 @@ function LoginWrapper() {
 }
 
 function LoginComponent() {
-  const t = (key, opts) => key;
   const router = useRouter();
   const [data, setData] = useState({
     login: "",
@@ -85,7 +84,7 @@ function LoginComponent() {
         
         // Check if user is banned (keeping this for security)
         if (user.isBanned) {
-          setSnackbarMessage(t('auth.accountBanned'));
+          setSnackbarMessage('Your account has been banned. Please contact support.');
           setSnackbarSeverity("error");
           setSnackbarOpen(true);
           return;
@@ -134,7 +133,7 @@ function LoginComponent() {
           console.log('🔐 localStorage after login:', localStorageAuth);
         }, 100);
         
-        setSnackbarMessage(t('auth.loginSuccess'));
+        setSnackbarMessage('Login successful! Welcome back.');
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
 
@@ -144,11 +143,11 @@ function LoginComponent() {
       } else {
         // Log the actual response structure for debugging
         console.error("Unexpected response structure:", response);
-        throw new Error(t('auth.invalidCredentials'));
+        throw new Error('Invalid credentials. Please check your email/phone and password.');
       }
     } catch (error) {
       console.error("Erreur de connexion:", error);
-      let errorMessage = t('errors.somethingWentWrong');
+      let errorMessage = 'Something went wrong. Please try again.';
       if (error.response && error.response.data) {
         errorMessage = error.response.data.message || JSON.stringify(error.response.data);
       } else if (error.message) {
@@ -181,13 +180,13 @@ function LoginComponent() {
               <div className="auth-logo">
                 <Image src="/assets/images/logo-dark.png" alt="MazadClick Logo" width={150} height={50} />
               </div>
-              <h1>{t('auth.welcomeBack')}</h1>
-              <p>{t('auth.loginToAccess')}</p>
+              <h1>Welcome Back!</h1>
+              <p>Sign in to access your account and continue bidding</p>
             </div>
 
             <div className="auth-form">
               <div className="form-group">
-                <label htmlFor="login">{t('auth.emailOrPhone')}</label>
+                <label htmlFor="login">Email or Phone</label>
                 <div className="input-wrapper">
                   <FiMail className="input-icon" />
                   <input

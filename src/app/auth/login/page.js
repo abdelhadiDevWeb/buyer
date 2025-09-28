@@ -34,7 +34,6 @@ function LoginWrapper() {
 }
 
 function LoginComponent() {
-  const t = (key, opts) => key;
   const router = useRouter();
   const [data, setData] = useState({
     login: "",
@@ -181,13 +180,13 @@ function LoginComponent() {
               <div className="auth-logo">
                 <Image src="/assets/images/logo-dark.png" alt="MazadClick Logo" width={150} height={50} />
               </div>
-              <h1>{t('auth.welcomeBack')}</h1>
-              <p>{t('auth.loginToAccess')}</p>
+              <h1>Welcome Back!</h1>
+              <p>Sign in to access your account and continue bidding</p>
             </div>
 
             <div className="auth-form">
               <div className="form-group">
-                <label htmlFor="login">{t('auth.emailOrPhone')}</label>
+                <label htmlFor="login">Email or Phone</label>
                 <div className="input-wrapper">
                   <FiMail className="input-icon" />
                   <input
