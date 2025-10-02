@@ -236,7 +236,7 @@ function LoginComponent() {
               <div className="auth-footer">
                 <p>
                   Vous n&apos;avez pas de compte?{" "}
-                  <a href="http://localhost:3001/auth/register" className="signup-link">
+                  <a href="https://buyer-mazad.vercel.app/auth/register" className="signup-link">
                     S&apos;inscrire
                   </a>
                 </p>
