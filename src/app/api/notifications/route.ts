@@ -1,7 +1,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import app from '@/config';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazadclick-server.onrender.com';
+const API_BASE_URL = app.baseURL;
 
 export async function GET(req: NextRequest) {
   try {

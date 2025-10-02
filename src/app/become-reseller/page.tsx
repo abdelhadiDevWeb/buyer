@@ -7,6 +7,7 @@ import Footer from "@/components/footer/Footer";
 import useAuth from '@/hooks/useAuth';
 import { useSnackbar } from 'notistack';
 import RequestProvider from '@/contexts/RequestContext';
+import app from '@/config';
 import { motion } from "framer-motion";
 import './styles.css';
 import { UserAPI } from '@/app/api/users';
@@ -221,12 +222,12 @@ export default function BecomeResellerPage() {
       }
       
       if (url.startsWith('/static/')) {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazadclick-server.onrender.com';
+        const apiBaseUrl = app.baseURL;
         return `${apiBaseUrl}${url}`;
       }
       
       if (!url.startsWith('/')) {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazadclick-server.onrender.com';
+        const apiBaseUrl = app.baseURL;
         return `${apiBaseUrl}/static/${url}`;
       }
       
@@ -501,7 +502,7 @@ export default function BecomeResellerPage() {
       
       console.log('Testing server connectivity...');
       try {
-        const testResponse = await fetch('https://mazadclick-server.onrender.com/health');
+        const testResponse = await fetch(`${app.baseURL}/health`);
         console.log('Server health check status:', testResponse.status);
       } catch (testError) {
         console.warn('Server health check failed:', testError);

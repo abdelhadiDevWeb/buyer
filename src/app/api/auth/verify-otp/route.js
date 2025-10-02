@@ -1,5 +1,6 @@
 // File: buyer/src/app/api/auth/verify-otp/route.js
 import { NextResponse } from 'next/server';
+import app from '@/config';
 
 export async function POST(request) {
   try {
@@ -14,7 +15,7 @@ export async function POST(request) {
     }
 
     // Call your backend API to verify OTP
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mazadclick-server.onrender.com';
+    const backendUrl = app.baseURL;
     const response = await fetch(`${backendUrl}/otp/confirm-phone`, {
       method: 'POST',
       headers: {

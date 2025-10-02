@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import app from '@/config';
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     }
 
     // Call the real backend API
-    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazadclick-server.onrender.com';
+    const backendUrl = app.baseURL;
     console.log('Calling backend:', `${backendUrl}/users/change-password`);
     console.log('Token:', token ? 'Present' : 'Missing');
     

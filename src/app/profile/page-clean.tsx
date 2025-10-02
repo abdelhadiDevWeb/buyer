@@ -46,7 +46,9 @@ interface AvatarData {
   filename?: string;
 }
 
-const API_BASE_URL = 'https://mazadclick-server.onrender.com';
+import app from '@/config';
+
+const API_BASE_URL = app.baseURL;
 
 function ProfilePage() {
   const { t } = useTranslation();

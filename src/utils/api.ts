@@ -1,5 +1,6 @@
 import axios from "axios";
 import { authStore } from "@/contexts/authStore";
+import app from "@/config";
 
 export const loginFunction = async (data: { login: string; password: string }) => {
   console.log(data);
@@ -9,7 +10,7 @@ export const loginFunction = async (data: { login: string; password: string }) =
 
   try {
     const res = await axios.post(
-      `https://mazadclick-server.onrender.com/auth/signin`,
+      `${app.baseURL}/auth/signin`,
       { login: data.login, password: data.password },
       {
         withCredentials: true,
@@ -75,7 +76,7 @@ export const registerFunction = async (data: {
   }
   try {
     const res = await axios.post(
-      `https://mazadclick-server.onrender.com/auth/signup`,
+      `${app.baseURL}/auth/signup`,
       {
         email: data.email,
         firstName: data.firstname,
@@ -109,7 +110,7 @@ export const registerFunction = async (data: {
 
 export const getAuction = async () => {
   try {
-    const res = await axios.get(`https://mazadclick-server.onrender.com/bid`, {
+    const res = await axios.get(`${app.baseURL}/bid`, {
       headers: {
         "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
       }
@@ -127,7 +128,7 @@ export const getDeatilsAuction = async (id: string) => {
     const { auth } = authStore.getState();
     const token = auth?.tokens?.accessToken;
 
-    const res = await axios.get(`https://mazadclick-server.onrender.com/bid/${id}`, {
+    const res = await axios.get(`${app.baseURL}/bid/${id}`, {
       headers: {
         Authorization: token ? `Bearer ${token}` : '',
         "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
@@ -146,7 +147,7 @@ export const sendOffer = async (data: { id: string; offer: number }) => {
     const { auth } = authStore.getState();
     const token = auth?.tokens?.accessToken;
 
-    const res = await axios.post(`https://mazadclick-server.onrender.com/offers/${data.id}`, {
+    const res = await axios.post(`${app.baseURL}/offers/${data.id}`, {
       offer: data.offer
     }, {
       headers: {

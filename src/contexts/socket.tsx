@@ -1,5 +1,6 @@
 import React, { createContext, useEffect, useState, useContext, ReactNode, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+import app from '@/config';
 
 interface Props {
   children?: ReactNode;
@@ -59,7 +60,7 @@ const SocketProvider: React.FC<Props> = (props = {}) => {
 
         console.log('Creating socket connection for user:', userId);
 
-        currentSocket = io('https://mazadclick-server.onrender.com', {
+        currentSocket = io(app.socket, {
           query: { userId },
           transports: ['websocket', 'polling'],
           timeout: 20000,
