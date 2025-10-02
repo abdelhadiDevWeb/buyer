@@ -67,7 +67,14 @@ function LoginComponent() {
 
       const response = await AuthAPI.signin(credentials);
       console.log("API response:", response);
+     
       console.log("Full response structure:", JSON.stringify(response, null, 2));
+
+      // Check for HTTP error status codes
+      if (response?.status && response.status >= 400) {
+        const errorMessage = response?.data?.message || `HTTP Error ${response.status}`;
+        throw new Error(errorMessage);
+      }
 
       // Handle error response from API
       if (response?.error || response?.message) {
@@ -137,6 +144,7 @@ function LoginComponent() {
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
 
+        // Only redirect on successful login
         setTimeout(() => {
           router.push("/");
         }, 1000);

@@ -481,12 +481,11 @@ export default function Register() {
               )}
 
               <button
-                className={`auth-button ${loading ? 'loading' : ''} ${!termsAccepted ? 'disabled' : ''}`}
+                className={`auth-button ${loading ? 'loading' : ''}`}
                 onClick={handleSubmit}
-                disabled={loading || !termsAccepted}
+                disabled={loading || (hasTermsAvailable && !termsAccepted)}
                 style={{
-                  opacity: !termsAccepted ? 0.6 : 1,
-                  cursor: !termsAccepted ? 'not-allowed' : 'pointer'
+                  cursor: (hasTermsAvailable && !termsAccepted) ? 'not-allowed' : 'pointer'
                 }}
               >
                 <div className="btn-content">

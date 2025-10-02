@@ -90,21 +90,26 @@ instance.interceptors.response.use(
       console.warn('🔒 401 Unauthorized - Token may be expired');
       originalRequest._retry = true;
       
-      // Clear auth data on 401
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth');
-        
-        // Try to get authStore and logout
-        try {
-          const { authStore } = await import('@/contexts/authStore');
-          authStore.getState().logout();
-        } catch (e) {
-          console.warn('Could not access auth store for logout');
-        }
-        
-        // Redirect to login if not already there
-        if (window.location.pathname !== '/auth/signin') {
-          window.location.href = '/auth/signin';
+      // Only redirect if this is NOT a login/signup request (to avoid redirecting during login attempts)
+      const isLoginRequest = originalRequest.url?.includes('auth/signin') || originalRequest.url?.includes('auth/signup');
+      
+      if (!isLoginRequest) {
+        // Clear auth data on 401 (only for non-login requests)
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth');
+          
+          // Try to get authStore and logout
+          try {
+            const { authStore } = await import('@/contexts/authStore');
+            authStore.getState().logout();
+          } catch (e) {
+            console.warn('Could not access auth store for logout');
+          }
+          
+          // Redirect to login if not already there
+          if (window.location.pathname !== '/auth/login' && window.location.pathname !== '/auth/signin') {
+            window.location.href = '/auth/login';
+          }
         }
       }
     }

@@ -32,6 +32,7 @@ export const AuthAPI = {
       console.log('🔐 Full axios response:', res);
       console.log('🔐 Response data:', res.data);
       
+      
       // Since returnFullResponse = true, we get the full axios response
       // The actual data is in res.data
       const responseData = res.data;
