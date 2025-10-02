@@ -13,6 +13,7 @@ import SocketProvider from "@/contexts/socket";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import InteractiveBackground from "@/components/common/InteractiveBackground";
+import { getFrontendBaseUrl } from "@/config";
 
 // Create a wrapper component with SocketProvider
 function LoginWrapper() {
@@ -244,7 +245,7 @@ function LoginComponent() {
               <div className="auth-footer">
                 <p>
                   Vous n&apos;avez pas de compte?{" "}
-                  <a href="https://buyer-mazad.vercel.app/auth/register" className="signup-link">
+                  <a href={`${getFrontendBaseUrl()}/auth/register`} className="signup-link">
                     S&apos;inscrire
                   </a>
                 </p>

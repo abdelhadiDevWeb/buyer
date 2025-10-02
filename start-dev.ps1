@@ -23,6 +23,6 @@ Start-ServerInNewWindow -Directory "$ProjectRoot\buyer" -Command "npm run dev" -
 
 Write-Host "`nBoth servers are starting..." -ForegroundColor Green
 Write-Host "Backend: http://localhost:3000" -ForegroundColor Cyan
-Write-Host "Frontend: http://localhost:3001" -ForegroundColor Cyan
+Write-Host "Frontend: https://buyer-mazad.vercel.app" -ForegroundColor Cyan
 Write-Host "`nPress any key to exit this script..." -ForegroundColor Gray
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

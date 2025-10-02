@@ -1,3 +1,5 @@
+import { getFrontendBaseUrl } from '@/config';
+
 // Slickpay API v2 configuration (for Algerian payments)
 interface SlickpayConfig {
   publicKey: string;
@@ -64,19 +66,8 @@ export interface StorePayment {
  * Get the correct base URL for the application
  */
 function getBaseUrl(): string {
-  // Determine the correct base URL for the application
-  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
-  
-  // Check if we're in development mode (localhost)
-  const isLocalhost = baseUrl.includes('localhost') || 
-                     process.env.NODE_ENV === 'development' ||
-                     process.env.NEXT_PUBLIC_BASE_URL?.includes('localhost');
-  
-  if (isLocalhost) {
-    // Use HTTP for localhost development
-    baseUrl = baseUrl.replace('https://', 'http://');
-  }
-  
+  // Use the dynamic frontend URL from config
+  const baseUrl = getFrontendBaseUrl();
   console.log('[getBaseUrl] Generated base URL:', baseUrl);
   return baseUrl;
 }

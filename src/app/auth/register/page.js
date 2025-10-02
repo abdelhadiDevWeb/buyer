@@ -21,6 +21,7 @@ import { TermsAPI } from "@/app/api/terms";
 import useAuth from "@/hooks/useAuth";
 import { CLIENT_TYPE } from "@/types/User";
 import InteractiveBackground from "@/components/common/InteractiveBackground";
+import { getFrontendBaseUrl } from "@/config";
 
 export default function Register() {
   const [data, setData] = useState({
@@ -265,7 +266,7 @@ export default function Register() {
         
         // Redirect to OTP verification for phone verification
         setTimeout(() => {
-          const baseUrl = `${window.location.protocol}//${window.location.hostname}:3001`;
+          const baseUrl = getFrontendBaseUrl();
           const otpUrl = `${baseUrl}/otp-verification?phone=${encodeURIComponent(userData.phone)}&fromBuyer=true`;
           console.log('Redirecting to:', otpUrl);
           window.location.href = otpUrl;
