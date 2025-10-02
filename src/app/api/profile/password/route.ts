@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     }
 
     // Call the real backend API
-    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazad-click-server.onrender.com';
+    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazadclick-server.onrender.com';
     console.log('Calling backend:', `${backendUrl}/users/change-password`);
     console.log('Token:', token ? 'Present' : 'Missing');
     

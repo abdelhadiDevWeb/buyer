@@ -1,25 +1,26 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Snackbar, Alert } from "@mui/material";
+import type { AlertColor } from "@mui/material/Alert";
 import useAuth from "@/hooks/useAuth";
 
-function OTPVerificationContent() {
+export default function OTPVerification() {
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<AlertColor>("success");
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
   const [canResend, setCanResend] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [animationStep, setAnimationStep] = useState(0);
 
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { set } = useAuth();
@@ -63,7 +64,7 @@ function OTPVerificationContent() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleSnackbarClose = (event: any, reason?: string) => {
+  const handleSnackbarClose = (_event: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === "clickaway") return;
     setSnackbarOpen(false);
   };
@@ -82,14 +83,14 @@ function OTPVerificationContent() {
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
       setFocusedIndex(index - 1);
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text/plain");
     if (/^\d{5}$/.test(pastedData)) {
@@ -102,8 +103,8 @@ function OTPVerificationContent() {
   const handleVerifyOTP = async () => {
     const otpCode = otp.join("");
 
-      if (otpCode.length !== 5) {
-      setSnackbarMessage("Veuillez entrer le code complet.");
+    if (otpCode.length !== 5) {
+      setSnackbarMessage("Please enter the complete OTP code");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
       return;
@@ -152,11 +153,12 @@ function OTPVerificationContent() {
           }, 2000);
         }
       } else {
-        throw new Error(data.message || "Code OTP invalide.");
+        throw new Error(data.message || "Invalid OTP code");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("OTP verification error:", error);
-      setSnackbarMessage((error as any).message || "Erreur lors de la vérification du code.");
+      const errMsg = (error as { message?: string })?.message || "Error verifying OTP code";
+      setSnackbarMessage(errMsg);
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
 
@@ -195,11 +197,12 @@ function OTPVerificationContent() {
         inputRefs.current[0]?.focus();
         setFocusedIndex(0);
       } else {
-        throw new Error(data.message || "Erreur lors de l'envoi du code.");
+        throw new Error(data.message || "Error sending OTP code");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("OTP resend error:", error);
-      setSnackbarMessage((error as any).message || "Erreur lors du renvoi du code.");
+      const errMsg = (error as { message?: string })?.message || "Error resending OTP code";
+      setSnackbarMessage(errMsg);
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     } finally {
@@ -207,7 +210,7 @@ function OTPVerificationContent() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && isComplete) {
       handleVerifyOTP();
     }
@@ -897,10 +900,10 @@ function OTPVerificationContent() {
                     </svg>
                     <span>
                       {resendLoading
-                ? "Envoi..."
-                : canResend
-                        ? "Renvoyer le code"
-                        : `Renvoyer dans ${formatTime(timeLeft)}`}
+                        ? "Sending..."
+                        : canResend
+                        ? "Resend Code"
+                        : `Resend in ${formatTime(timeLeft)}`}
                     </span>
                   </button>
                 </div>
@@ -925,7 +928,7 @@ function OTPVerificationContent() {
         >
           <Alert
             onClose={handleSnackbarClose}
-            severity={snackbarSeverity as any}
+            severity={snackbarSeverity}
             sx={{
               width: "100%",
               borderRadius: "12px",
@@ -937,13 +940,5 @@ function OTPVerificationContent() {
         </Snackbar>
     </div>
     </>
-  );
-}
-
-export default function OTPVerification() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <OTPVerificationContent />
-    </Suspense>
   );
 }

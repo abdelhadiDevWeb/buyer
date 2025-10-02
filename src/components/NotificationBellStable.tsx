@@ -3,7 +3,7 @@ import { BsBell, BsHammer, BsTrophy, BsExclamationCircle, BsChat } from 'react-i
 import useTotalNotifications from '@/hooks/useTotalNotifications';
 import useNotification from '@/hooks/useNotification';
 import { useAdminMessageNotifications } from '@/hooks/useAdminMessageNotifications';
-import type { Notification } from '@/types';
+import { useTranslation } from 'react-i18next';
 
 interface NotificationBellStableProps {
   variant?: 'header' | 'sidebar';
@@ -13,17 +13,7 @@ interface NotificationBellStableProps {
 const NotificationBellStable = memo(function NotificationBellStable({ variant = 'header', onOpenChange }: NotificationBellStableProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const t = (key: string, _opts?: any) => {
-    const translations = {
-      'notifications.title': 'Notifications',
-      'notifications.markAllAsRead': 'Marquer tout comme lu',
-      'notifications.loading': 'Chargement des notifications...',
-      'notifications.noNotifications': 'Aucune notification',
-      'notifications.noNotificationsDesc': 'Vos notifications apparaîtront ici',
-      'notifications.showingCount': `Affichage de 10 sur ${_opts?.total || 0} notifications`
-    };
-    return translations[key] || key;
-  };
+  const { t } = useTranslation();
   
   // Get notification data
   const { totalUnreadCount, refreshAll } = useTotalNotifications();
@@ -56,9 +46,9 @@ const NotificationBellStable = memo(function NotificationBellStable({ variant = 
 
   // Combine all notifications
   const allNotifications = [
-    ...generalNotifications.map((n): Notification & { source: 'general' } => ({ ...(n as Notification), source: 'general' })),
-    ...adminNotifications.map((n): Notification & { source: 'admin' } => ({ ...(n as Notification), source: 'admin' }))
-  ].sort((a, b) => new Date(a.createdAt).getTime() < new Date(b.createdAt).getTime() ? 1 : -1);
+    ...generalNotifications.map(n => ({ ...n, source: 'general' })),
+    ...adminNotifications.map(n => ({ ...n, source: 'admin' }))
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Debug logging
   useEffect(() => {
@@ -337,7 +327,7 @@ const NotificationBellStable = memo(function NotificationBellStable({ variant = 
                 </span>
               </div>
             ) : (
-              allNotifications.slice(0, 10).map((notification: Notification & { source: 'general' | 'admin' }) => (
+              allNotifications.slice(0, 10).map((notification) => (
                 <div
                   key={notification._id}
                   onClick={() => handleMarkAsRead(notification)}
@@ -386,7 +376,10 @@ const NotificationBellStable = memo(function NotificationBellStable({ variant = 
                         {notification.message}
                       </div>
                       {/* Sender Information */}
-                      {(((notification as any)?.senderName) || notification.data?.senderName || notification.data?.winnerName || notification.data?.buyerName) && (
+                      {(() => {
+                        const senderName = (notification as any).senderName || (notification as any).data?.senderName || (notification as any).data?.winnerName || (notification as any).data?.buyerName;
+                        const senderEmail = (notification as any).senderEmail;
+                        return senderName ? (
                         <div style={{
                           fontSize: '12px',
                           color: '#0063b1',
@@ -397,20 +390,15 @@ const NotificationBellStable = memo(function NotificationBellStable({ variant = 
                           gap: '4px'
                         }}>
                           <span>👤</span>
-                          <span>
-                            {(notification as any)?.senderName || 
-                             notification.data?.senderName || 
-                             notification.data?.winnerName || 
-                             notification.data?.buyerName || 
-                             'Unknown User'}
-                          </span>
-                          {(notification as any)?.senderEmail && (
+                          <span>{senderName || 'Unknown User'}</span>
+                          {senderEmail && (
                             <span style={{ fontSize: '10px', color: '#999' }}>
-                              ({(notification as any)?.senderEmail})
+                              ({senderEmail})
                             </span>
                           )}
                         </div>
-                      )}
+                        ) : null;
+                      })()}
                       <div style={{
                         fontSize: '12px',
                         color: '#999',

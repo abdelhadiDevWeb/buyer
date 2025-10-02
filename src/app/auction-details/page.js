@@ -6,7 +6,7 @@ import Header from "@/components/header/Header";
 import { SnackbarProvider } from 'notistack';
 import RequestProvider from "@/contexts/RequestContext";
 import { AxiosInterceptor } from '@/app/api/AxiosInterceptor';
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import Chat from "@/chat/Chat";
 
@@ -108,9 +108,7 @@ const AuctionDetailsPage = ({ searchParams }) => {
               <Header />
               <main style={{ minHeight: '100vh', backgroundColor: '#fff', marginTop: 0, paddingTop: 0 }}>
                 <section className="animate-fade-in" style={{ padding: 0, marginTop: 0 }}>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <MultipurposeDetails1 />
-                  </Suspense>
+                  <MultipurposeDetails1 />
                 </section>
               </main>
               <Footer />

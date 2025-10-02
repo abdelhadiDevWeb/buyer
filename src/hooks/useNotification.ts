@@ -2,9 +2,20 @@ import { useState, useCallback, useEffect } from 'react';
 import { authStore } from '@/contexts/authStore';
 import { useCreateSocket } from '@/contexts/socket';
 import { getUnreadNotificationCount } from '@/utils/api';
-import type { Notification } from '@/types';
 
-// Use shared Notification type from src/types
+interface Notification {
+  _id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  data?: Record<string, unknown>;
+  read: boolean;
+  createdAt: string;
+  updatedAt: string;
+  receiver?: string;
+  reciver?: string;
+}
 
 export default function useNotification() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -28,7 +39,7 @@ export default function useNotification() {
         tokenLength: auth?.tokens?.accessToken?.length
       });
       
-      if (!isLogged || !auth?.tokens?.accessToken || !auth?.user?._id) {
+      if (!isLogged || !auth?.tokens?.accessToken) {
         console.log('⚠️ User not authenticated, skipping notifications fetch');
         console.log('💡 Please log in to see notifications');
         setNotifications([]); // Reset notifications
@@ -36,8 +47,10 @@ export default function useNotification() {
         return;
       }
       
+      console.log('✅ User is authenticated, proceeding with notifications fetch');
+      
       setLoading(true);
-      console.log('📥 Fetching notifications for user:', auth.user._id);
+      console.log('📥 Fetching notifications for user:', auth.user?._id);
       
       try {
         const response = await fetch('/api/notifications/general', {
@@ -63,27 +76,40 @@ export default function useNotification() {
         }
         
         const data = await response.json();
-        const allNotifications: Notification[] = data.notifications || [];
+        const allNotifications = data.notifications || [];
         
         console.log('📥 General notifications from API:', allNotifications.length);
+        console.log('📥 Full API response:', data);
         console.log('📥 Sample notification:', allNotifications[0]);
-        console.log('📥 All general notifications details:', allNotifications.map((n: Notification) => ({
+        console.log('📥 All general notifications details:', allNotifications.map((n: any) => ({
           id: n._id,
           title: n.title,
           type: n.type,
           read: n.read,
           userId: n.userId,
-          senderId: n.data?.senderId,
-          senderName: n.data?.senderName,
-          senderEmail: n.data?.senderEmail,
+          senderId: n.senderId,
+          senderName: n.senderName,
+          senderEmail: n.senderEmail,
           createdAt: n.createdAt
         })));
+        
+        // Check specifically for offer notifications
+        const offerNotifications = allNotifications.filter((n: any) => 
+          n.type === 'OFFER_ACCEPTED' || n.type === 'OFFER_DECLINED'
+        );
+        console.log('🎯 Offer notifications found:', offerNotifications.length);
+        if (offerNotifications.length > 0) {
+          console.log('🎯 Offer notifications details:', offerNotifications);
+        } else {
+          console.log('❌ No offer notifications found in general notifications');
+          console.log('🔍 Available notification types:', allNotifications.map((n: any) => n.type));
+        }
         
         // No need to filter - API already returns only unread general notifications
         setNotifications(allNotifications);
         
         // Update unread count based on the filtered notifications
-        const unreadCount = allNotifications.filter(n => n.read === false).length;
+        const unreadCount = allNotifications.filter((n: any) => n.read === false).length;
         setUnreadCount(unreadCount);
         console.log('📊 Calculated unread count from notifications:', unreadCount);
         

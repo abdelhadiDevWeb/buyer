@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazad-click-server.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazadclick-server.onrender.com';
 
 export const ReviewAPI = {
   // Like a user

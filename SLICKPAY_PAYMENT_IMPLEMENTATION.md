@@ -46,19 +46,19 @@ Create a `.env.local` file in the buyer directory with the following configurati
 
 ```env
 # Base URLs
-NEXT_PUBLIC_BASE_URL=https://mazad-click-buyer.vercel.app
+NEXT_PUBLIC_BASE_URL=http://localhost:3001
 NEXT_PUBLIC_BASE_DOMAIN=mazadclick.com
-NEXT_PUBLIC_MAIN_DOMAIN=mazad-click-buyer.vercel.app
+NEXT_PUBLIC_MAIN_DOMAIN=localhost:3001
 
 # API Configuration
-NEXT_PUBLIC_API_URL=https://mazad-click-server.onrender.com/
-NEXT_PUBLIC_SOCKET_URL=https://mazad-click-server.onrender.com/
-NEXT_PUBLIC_STATIC_URL=https://mazad-click-server.onrender.com/static/
+NEXT_PUBLIC_API_URL=http://localhost:3000/
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3000/
+NEXT_PUBLIC_STATIC_URL=http://localhost:3000/static/
 
 # SlickPay Configuration (Real Test Credentials)
 NEXT_PUBLIC_SLICKPAY_PUBLIC_KEY=54|BZ7F6N4KwSD46GEXToOv3ZBpJpf7WVxnBzK5cOE6
 NEXT_PUBLIC_SLICKPAY_BASE_URL=https://devapi.slick-pay.com/api/v2
-NEXT_PUBLIC_SLICKPAY_PUBLIC_URL=https://mazad-click-buyer.vercel.app
+NEXT_PUBLIC_SLICKPAY_PUBLIC_URL=http://localhost:3001
 NEXT_PUBLIC_SLICKPAY_TEST_MODE=true
 
 # Supabase Configuration (if using Supabase for payment tracking)

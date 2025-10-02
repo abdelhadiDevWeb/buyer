@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import React, { useState, useEffect } from 'react'
-import { CategoryAPI } from '../../app/api/category';
+import { useTranslation } from 'react-i18next';
+import { CategoryAPI } from '../../app/api/category.ts';
 
 const Footer = () => {
+  const { t } = useTranslation();
   const [dynamicCategories, setDynamicCategories] = useState([]);
 
   useEffect(() => {
@@ -29,27 +31,27 @@ const Footer = () => {
   
   // Navigation items from header
   const navItems = [
-    { name: 'Accueil', path: "/" },
-    { name: 'Enchères', path: "/auction-sidebar" },
-    { name: 'Catégories', path: "/category" },
-    { name: "Comment Enchérir", path: "/how-to-bid" },
-    { name: 'Membres', path: "/users" },
+    { name: t('footer.navItems.home'), path: "/" },
+    { name: t('footer.navItems.auctions'), path: "/auction-sidebar" },
+    { name: t('footer.navItems.category'), path: "/category" },
+    { name: t('footer.navItems.howToBid'), path: "/how-to-bid" },
+    { name: t('footer.navItems.members'), path: "/users" },
   ];
 
   // Quick links
   const quickLinks = [
-    { title: 'Comment Enchérir', link: '/how-to-bid' },
-    { title: 'Comment Vendre', link: '/how-to-sell' },
-    { title: 'À Propos', link: '/about' },
-    { title: 'FAQ', link: '/faq' },
-    { title: 'Contact', link: '/contact' },
+    { title: t('footer.quickLinks.howToBid'), link: '/how-to-bid' },
+    { title: t('footer.quickLinks.howToSell'), link: '/how-to-sell' },
+    { title: t('footer.quickLinks.about'), link: '/about' },
+    { title: t('footer.quickLinks.faq'), link: '/faq' },
+    { title: t('footer.quickLinks.contact'), link: '/contact' },
   ];
 
   // Legal links
   const legalLinks = [
-    { title: 'Support', link: '/support-center' },
-    { title: "Conditions d'utilisation", link: '/terms-condition' },
-    { title: 'Politique de Confidentialité', link: '/privacy-policy' },
+    { title: t('footer.legal.assistance'), link: '/support-center' },
+    { title: t('footer.legal.terms'), link: '/terms-condition' },
+    { title: t('footer.legal.privacy'), link: '/privacy-policy' },
   ];
 
   // Social media links
@@ -61,29 +63,74 @@ const Footer = () => {
   ];
 
   return (
-    <footer style={{
-      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-      paddingTop: '60px',
-      borderTop: '1px solid #eaeaea',
-    }}>
+    <>
+      <style jsx>{`
+        .footer-main-grid {
+          display: grid;
+          grid-template-columns: 2fr 1fr 1fr 1fr;
+          gap: 40px;
+        }
+        
+        .footer-logo-section {
+          grid-column: span 1;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: flex-start;
+        }
+        
+        @media (max-width: 1024px) {
+          .footer-main-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+          }
+          .footer-logo-section {
+            grid-column: span 2;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .footer-main-grid {
+            grid-template-columns: 1fr;
+            gap: 30px;
+          }
+          .footer-logo-section {
+            grid-column: span 1;
+          }
+        }
+      `}</style>
+      <footer style={{
+        background: 'white',
+        paddingTop: '60px',
+        borderTop: '1px solid #eaeaea',
+      }}>
       {/* Main Footer Section */}
       <div className="main-footer container" style={{ 
+        paddingTop: '0',
         paddingBottom: '40px',
         borderBottom: '1px solid #eaeaea',
       }}>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '40px'
-        }}>
+        <div className="footer-main-grid">
           {/* Logo and Description - Larger Section */}
-          <div style={{ gridColumn: 'span 2' }}>
+          <div className="footer-logo-section" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-start',
+            paddingTop: '0',
+            marginTop: '-40px'
+          }}>
             <img 
-              src="/assets/images/logo-dark.png" 
-              alt="MazadClick Logo" 
+              src="/assets/img/logo.png" 
+              alt="Mazad.Click Logo" 
               style={{ 
-                height: '120px', 
-                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))'
+                height: '160px', 
+                width: 'auto',
+                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.2))',
+                marginBottom: '25px',
+                marginTop: '0',
+                alignSelf: 'flex-start',
+                maxWidth: '100%'
               }} 
             />
             <p style={{ 
@@ -93,7 +140,7 @@ const Footer = () => {
               marginBottom: '25px',
               maxWidth: '400px'
             }}>
-              Plateforme d'enchères moderne pour professionnels et particuliers.
+              {t('footer.description')}
             </p>
             {/* Social Media Icons */}
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -145,7 +192,7 @@ const Footer = () => {
               marginBottom: '20px',
               position: 'relative'
             }}>
-              Navigation
+              {t('footer.navigation')}
               <span style={{
                 position: 'absolute',
                 bottom: '-8px',
@@ -204,7 +251,7 @@ const Footer = () => {
               marginBottom: '20px',
               position: 'relative'
             }}>
-              Liens rapides
+              {t('footer.quickLinksTitle', 'Quick Links')}
               <span style={{
                 position: 'absolute',
                 bottom: '-8px',
@@ -263,7 +310,7 @@ const Footer = () => {
               marginBottom: '20px',
               position: 'relative'
             }}>
-              Catégories
+              {t('footer.categoriesTitle')}
               <span style={{
                 position: 'absolute',
                 bottom: '-8px',
@@ -277,34 +324,31 @@ const Footer = () => {
             <ul style={{
               listStyle: 'none',
               padding: 0,
-              margin: 0,
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '12px'
+              margin: 0
             }}>
-              {dynamicCategories.slice(0, 8).map((category, index) => (
-                <li key={category._id || index}>
+              {dynamicCategories.slice(0, 6).map((category, index) => (
+                <li key={category._id || index} style={{ marginBottom: '12px' }}>
                   <Link href={`/auction-sidebar?category=${category._id}`} style={{
                     color: 'var(--text-secondary, #666)',
                     textDecoration: 'none',
-                    fontSize: '14px',
+                    fontSize: '15px',
                     fontWeight: '500',
                     transition: 'all 0.3s ease',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '8px'
                   }}
                   onMouseOver={e => {
                     e.currentTarget.style.color = 'var(--primary-color, #0063b1)';
-                    e.currentTarget.style.transform = 'translateX(3px)';
+                    e.currentTarget.style.transform = 'translateX(5px)';
                   }}
                   onMouseOut={e => {
                     e.currentTarget.style.color = 'var(--text-secondary, #666)';
                     e.currentTarget.style.transform = 'translateX(0)';
                   }}>
                     <span style={{
-                      width: '3px',
-                      height: '3px',
+                      width: '4px',
+                      height: '4px',
                       borderRadius: '50%',
                       background: 'var(--primary-color, #0063b1)',
                       opacity: 0
@@ -340,8 +384,8 @@ const Footer = () => {
             textDecoration: 'none',
             fontWeight: '600'
           }}>MazadClick</Link>
-          <span style={{ color: 'var(--text-muted, #999)' }}>• Tous droits réservés</span>
-          <span style={{ color: 'var(--text-muted, #999)' }}>• Créé par</span>
+          <span style={{ color: 'var(--text-muted, #999)' }}>• {t('footer.copyright')}</span>
+          <span style={{ color: 'var(--text-muted, #999)' }}>• {t('footer.createdBy')}</span>
           <Link href="https://noteasy-dz.com/" target="_blank" style={{ 
             color: 'var(--primary-color, #0063b1)', 
             textDecoration: 'none',
@@ -381,7 +425,8 @@ const Footer = () => {
           </ul>
         </div>
       </div>
-    </footer>
+      </footer>
+    </>
   )
 }
 

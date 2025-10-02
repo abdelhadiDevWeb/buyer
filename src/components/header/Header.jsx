@@ -15,6 +15,7 @@ import ButtonSwitchApp from "../ButtonSwitchApp/ButtonSwitchApp";
 import ReviewModal from '@/components/ReviewModal';
 import { ReviewAPI } from '@/app/api/review';
 import { NotificationAPI } from '@/app/api/notification';
+import { useTranslation } from 'react-i18next';
 
 const initialState = {
   activeMenu: "",
@@ -50,7 +51,7 @@ function reducer(state, action) {
 }
 
 export const Header = () => {
-  
+  const { t } = useTranslation();
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [state, dispatch] = useReducer(reducer, initialState);
   const pathName = usePathname();
@@ -170,12 +171,12 @@ export const Header = () => {
 
   // Navigation Items
   const navItems = [
-    { name: 'Accueil', path: "/" },
-    { name: 'Enchères', path: "/auction-sidebar" },
-    { name: "Appels d'offres", path: "/tenders" },
-    { name: 'Catégories', path: "/category" },
-    { name: "Comment Enchérir", path: "/how-to-bid" },
-    { name: 'Membres', path: "/users" },
+    { name: t('navigation.home'), path: "/" },
+    { name: t('navigation.auctions'), path: "/auction-sidebar" },
+    { name: t('navigation.tenders'), path: "/tenders" },
+    { name: t('navigation.categories'), path: "/category" },
+    { name: t('navigation.howToBid'), path: "/how-to-bid" },
+    { name: t('navigation.members'), path: "/users" },
   ];
 
 
@@ -188,7 +189,7 @@ export const Header = () => {
     }else{
        setSwitchAccount(true)
        window.localStorage.setItem('switch' , "1")
-       windowRef.current = window.open('https://mazad-click-seller.vercel.app')
+       windowRef.current = window.open('http://localhost:3002')
     }
   }
   useEffect(()=>{
@@ -324,11 +325,11 @@ export const Header = () => {
           <div style={{ flexShrink: 0, padding: 0, margin: 0 }}>
             <Link href="/">
               <img
-                src="/assets/images/logo-dark.png"
-                alt="Mazad Click Logo"
+                src="/assets/img/logo.png"
+                alt="Mazad.Click Logo"
                 className="header-logo"
                 style={{ 
-                  maxHeight: isMobile ? '40px' : isTablet ? '60px' : '80px',
+                  maxHeight: isMobile ? '50px' : isTablet ? '75px' : '100px',
                   width: 'auto',
                   height: 'auto',
                   transition: 'all 0.3s ease'
@@ -402,7 +403,7 @@ export const Header = () => {
               }}>
                 <input
                   type="text"
-                  placeholder={'Rechercher'}
+                  placeholder={t('common.search')}
                   style={{
                     border: 'none',
                     padding: isTablet ? '8px 16px' : '10px 20px',
@@ -522,7 +523,7 @@ export const Header = () => {
                         <path d="M8 9C5.79086 9 4 10.7909 4 13C4 13.5523 4.44772 14 5 14H11C11.5523 14 12 13.5523 12 13C12 10.7909 10.2091 9 8 9Z" fill="white" />
                       </svg>
                     </div>
-                    {!isMobile ? 'Mon compte' : ""}
+                    {!isMobile ? t('common.myAccount') : ""}
                     <svg 
                       width={12} 
                       height={12} 
@@ -579,7 +580,7 @@ export const Header = () => {
                           <path d="M8 9C5.79086 9 4 10.7909 4 13C4 13.5523 4.44772 14 5 14H11C11.5523 14 12 13.5523 12 13C12 10.7909 10.2091 9 8 9Z" fill="white" />
                         </svg>
                       </div>
-                      {!isMobile ? 'Se connecter' : ""}
+                      {!isMobile ? t('common.login') : ""}
                     </button>
                   </Link>
                 )}
@@ -615,7 +616,7 @@ export const Header = () => {
                         marginBottom: '5px',
                         textAlign: 'center'
                       }}>
-                        Passer au vendeur
+                        {t('account.switchToSeller')}
                       </div>
                       <div
                         style={{
@@ -637,7 +638,7 @@ export const Header = () => {
                         textAlign: 'center',
                         marginTop: '5px'
                       }}>
-                        {switchAccount ? 'Mode vendeur activé' : 'Actuellement en mode acheteur'}
+                        {switchAccount ? t('account.sellerModeActive') : t('account.currentlyInBuyerMode')}
                       </div>
                     </div>
                     
@@ -671,7 +672,7 @@ export const Header = () => {
                           <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="#0063b1"/>
                           <path d="M8 10C3.58172 10 0 12.6863 0 16H16C16 12.6863 12.4183 10 8 10Z" fill="#0063b1"/>
                         </svg>
-                        Mon profil
+                        {t('account.myProfile')}
                       </div>
                     </Link>
                     
@@ -703,7 +704,7 @@ export const Header = () => {
                           <path d="M15 14V12.6667C14.9994 12.0758 14.8044 11.5018 14.4462 11.0357C14.0879 10.5696 13.5866 10.2357 13.03 10.0867" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           <path d="M10.53 2.08667C11.0879 2.23464 11.5904 2.56882 11.9493 3.03577C12.3081 3.50272 12.5032 4.07789 12.5032 4.67C12.5032 5.26211 12.3081 5.83728 11.9493 6.30423C11.5904 6.77118 11.0879 7.10536 10.53 7.25333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
-                        Utilisateurs
+                        {t('account.users')}
                       </div>
                     </Link>
                     
@@ -739,7 +740,7 @@ export const Header = () => {
                         <path d="M10.6667 11.3333L14 8L10.6667 4.66667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
-                      Déconnexion
+                      {t('account.logout')}
                     </button>
                   </div>
                 )}
@@ -826,7 +827,7 @@ export const Header = () => {
             }}>
               <input
                 type="text"
-                placeholder={'Rechercher'}
+                placeholder={t('common.search')}
                 className="form-responsive"
                 style={{
                   border: 'none',
@@ -911,11 +912,11 @@ export const Header = () => {
       `}</style>
       <style jsx global>{`
         .header-logo {
-          max-height: 80px;
+          max-height: 100px;
         }
         @media (max-width: 992px) {
           .header-logo {
-            max-height: 60px;
+            max-height: 75px;
           }
           .header-container {
             padding: 0 8px;
@@ -923,7 +924,7 @@ export const Header = () => {
         }
         @media (max-width: 768px) {
           .header-logo {
-            max-height: 48px;
+            max-height: 50px;
           }
           .header-container {
             padding: 0 4px;
@@ -935,7 +936,7 @@ export const Header = () => {
         }
         @media (max-width: 576px) {
           .header-logo {
-            max-height: 36px;
+            max-height: 50px;
           }
           .header-container {
             padding: 0 2px;

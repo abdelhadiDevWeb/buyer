@@ -7,9 +7,11 @@ import { AxiosInterceptor } from '@/app/api/AxiosInterceptor';
 import { SnackbarProvider } from 'notistack';
 import RequestProvider from "@/contexts/RequestContext";
 import SocketProvider from "@/contexts/socket";
+import { useTranslation } from 'react-i18next';
 import "./style.css";
 
 export default function HowToBid() {
+  const { t } = useTranslation();
   const [activeStep, setActiveStep] = useState(1);
 
   // Animation control for elements
@@ -36,45 +38,45 @@ export default function HowToBid() {
   const bidSteps = [
     {
       id: 1,
-      title: 'Create Your Account',
-      description: 'Sign up for a free account to start bidding',
+      title: t('howToBid.steps.createAccount.title'),
+      description: t('howToBid.steps.createAccount.description'),
       icon: "bi bi-person-plus",
-      details: 'Register with your email and create a secure account to access all auction features.'
+      details: t('howToBid.steps.createAccount.details')
     },
     {
       id: 2,
-      title: 'Browse Live Auctions',
-      description: 'Explore available auctions and find items you love',
+      title: t('howToBid.steps.browseAuctions.title'),
+      description: t('howToBid.steps.browseAuctions.description'),
       icon: "bi bi-search",
-      details: 'Use our search and filter tools to discover auctions by category, price range, and location.'
+      details: t('howToBid.steps.browseAuctions.details')
     },
     {
       id: 3,
-      title: 'Understand Item Details',
-      description: 'Review comprehensive information about each item',
+      title: t('howToBid.steps.understandDetails.title'),
+      description: t('howToBid.steps.understandDetails.description'),
       icon: "bi bi-info-circle",
-      details: 'Read descriptions, view photos, check condition reports, and understand terms before bidding.'
+      details: t('howToBid.steps.understandDetails.details')
     },
     {
       id: 4,
-      title: 'Place Your Bid',
-      description: 'Enter your maximum bid amount strategically',
+      title: t('howToBid.steps.placeBid.title'),
+      description: t('howToBid.steps.placeBid.description'),
       icon: "bi bi-cash-coin",
-      details: 'Set your maximum bid and let our system automatically bid for you up to that amount.'
+      details: t('howToBid.steps.placeBid.details')
     },
     {
       id: 5,
-      title: 'Monitor Your Bids',
-      description: 'Track auction progress and adjust your strategy',
+      title: t('howToBid.steps.monitorBids.title'),
+      description: t('howToBid.steps.monitorBids.description'),
       icon: "bi bi-graph-up",
-      details: 'Watch live updates, receive notifications, and manage your active bids in real-time.'
+      details: t('howToBid.steps.monitorBids.details')
     },
     {
       id: 6,
-      title: 'Win & Complete Purchase',
-      description: 'Secure your winning item and arrange collection',
+      title: t('howToBid.steps.winComplete.title'),
+      description: t('howToBid.steps.winComplete.description'),
       icon: "bi bi-trophy",
-      details: 'If you win, complete payment and arrange pickup or delivery of your new item.'
+      details: t('howToBid.steps.winComplete.details')
     }
   ];
 
@@ -94,9 +96,9 @@ export default function HowToBid() {
                 <div className="container">
                   <div className="row align-items-center">
                     <div className="col-lg-6 fade-in-section">
-                      <h1 className="hero-title">How to Bid Like a Pro</h1>
+                      <h1 className="hero-title">{t('howToBid.title')}</h1>
                       <p className="hero-description">
-                        Master the art of online auction bidding with our comprehensive guide
+                        {t('howToBid.subtitle')}
                       </p>
                       <div className="hero-buttons">
                         <button 
@@ -106,10 +108,10 @@ export default function HowToBid() {
                             element?.scrollIntoView({ behavior: 'smooth' });
                           }}
                         >
-                          Learn Now <i className="bi bi-arrow-right"></i>
+                          {t('howToBid.learnNow')} <i className="bi bi-arrow-right"></i>
                         </button>
                         <button className="btn btn-light ms-3">
-                          View Live Auctions <i className="bi bi-box-arrow-right"></i>
+                          {t('howToBid.viewLiveAuctions')} <i className="bi bi-box-arrow-right"></i>
                         </button>
                       </div>
                     </div>
@@ -132,8 +134,8 @@ export default function HowToBid() {
               <section id="steps-section" className="bid-steps-section">
                 <div className="container">
                   <div className="section-title fade-in-section">
-                    <h2>Master Bidding in <span className="text-gradient">6 Simple Steps</span></h2>
-                    <p>Follow our proven process to become a confident and successful bidder</p>
+                    <h2>{t('howToBid.masterTitle')} <span className="text-gradient">{t('howToBid.simpleSteps')}</span></h2>
+                    <p>{t('howToBid.stepDescription')}</p>
                   </div>
 
                   <div className="steps-navigation fade-in-section">
@@ -191,14 +193,14 @@ export default function HowToBid() {
                       disabled={activeStep === 1}
                       onClick={() => setActiveStep(prev => Math.max(prev - 1, 1))}
                     >
-                      <i className="bi bi-arrow-left"></i> Previous
+                      <i className="bi bi-arrow-left"></i> {t('howToBid.previous')}
                     </button>
                     <button 
                       className="btn btn-primary"
                       disabled={activeStep === bidSteps.length}
                       onClick={() => setActiveStep(prev => Math.min(prev + 1, bidSteps.length))}
                     >
-                      Next <i className="bi bi-arrow-right"></i>
+                      {t('howToBid.next')} <i className="bi bi-arrow-right"></i>
                     </button>
                   </div>
                 </div>
@@ -208,8 +210,8 @@ export default function HowToBid() {
               <section className="bid-tips-section">
                 <div className="container">
                   <div className="section-title fade-in-section">
-                    <h2>Pro Tips for Success</h2>
-                    <p>Expert strategies to maximize your bidding potential</p>
+                    <h2>{t('howToBid.proTipsTitle')}</h2>
+                    <p>{t('howToBid.proTipsSubtitle')}</p>
                   </div>
 
                   <div className="row fade-in-section">
@@ -218,8 +220,8 @@ export default function HowToBid() {
                         <div className="tip-icon">
                           <i className="bi bi-clock"></i>
                         </div>
-                        <h3>Strategic Timing</h3>
-                        <p>Bid during less competitive hours to increase your chances of winning at better prices.</p>
+                        <h3>{t('howToBid.strategicTimes')}</h3>
+                        <p>{t('howToBid.strategicTimesDesc')}</p>
                       </div>
                     </div>
                     <div className="col-md-4">
@@ -227,8 +229,8 @@ export default function HowToBid() {
                         <div className="tip-icon">
                           <i className="bi bi-graph-up-arrow"></i>
                         </div>
-                        <h3>Set Maximum Bids</h3>
-                        <p>Use proxy bidding to automatically bid up to your maximum amount without constant monitoring.</p>
+                        <h3>{t('howToBid.maxBids')}</h3>
+                        <p>{t('howToBid.maxBidsDesc')}</p>
                       </div>
                     </div>
                     <div className="col-md-4">
@@ -236,8 +238,8 @@ export default function HowToBid() {
                         <div className="tip-icon">
                           <i className="bi bi-clipboard-data"></i>
                         </div>
-                        <h3>Research Item Value</h3>
-                        <p>Research similar items and market values to set realistic maximum bids and avoid overpaying.</p>
+                        <h3>{t('howToBid.researchValue')}</h3>
+                        <p>{t('howToBid.researchValueDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -248,29 +250,29 @@ export default function HowToBid() {
               <section className="bid-faq-section">
                 <div className="container">
                   <div className="section-title fade-in-section">
-                    <h2>Frequently Asked Questions</h2>
-                    <p>Everything you need to know about bidding on our platform</p>
+                    <h2>{t('howToBid.faqTitle')}</h2>
+                    <p>{t('howToBid.faqSubtitle')}</p>
                   </div>
 
                   <div className="row fade-in-section">
                     <div className="col-lg-6">
                       <div className="faq-item">
-                        <h3>Can I win multiple auctions?</h3>
-                        <p>Yes! You can bid on and win multiple auctions simultaneously. Just ensure you have sufficient funds for all potential wins.</p>
+                        <h3>{t('howToBid.multipleWins')}</h3>
+                        <p>{t('howToBid.multipleWinsDesc')}</p>
                       </div>
                       <div className="faq-item">
-                        <h3>Can I cancel my bid?</h3>
-                        <p>Bids can be cancelled before the auction ends, but not after. Always bid responsibly and within your budget.</p>
+                        <h3>{t('howToBid.cancelBid')}</h3>
+                        <p>{t('howToBid.cancelBidDesc')}</p>
                       </div>
                     </div>
                     <div className="col-lg-6">
                       <div className="faq-item">
-                        <h3>What happens if I'm outbid?</h3>
-                        <p>You'll receive notifications when you're outbid. You can increase your maximum bid anytime before the auction ends.</p>
+                        <h3>{t('howToBid.outbid')}</h3>
+                        <p>{t('howToBid.outbidDesc')}</p>
                       </div>
                       <div className="faq-item">
-                        <h3>What payment methods are accepted?</h3>
-                        <p>We accept credit cards, debit cards, and bank transfers. Payment is required within 24 hours of winning an auction.</p>
+                        <h3>{t('howToBid.paymentMethods')}</h3>
+                        <p>{t('howToBid.paymentMethodsDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -281,10 +283,10 @@ export default function HowToBid() {
               <section className="bid-cta-section fade-in-section">
                 <div className="container">
                   <div className="cta-container">
-                    <h2>Ready to Start Bidding?</h2>
-                    <p>Join thousands of successful bidders and discover amazing deals today</p>
+                    <h2>{t('howToBid.readyToStart')}</h2>
+                    <p>{t('howToBid.readyToStartDesc')}</p>
                     <button className="btn btn-primary">
-                      Explore Live Auctions <i className="bi bi-arrow-right"></i>
+                      {t('howToBid.exploreLiveAuctions')} <i className="bi bi-arrow-right"></i>
                     </button>
                   </div>
                 </div>

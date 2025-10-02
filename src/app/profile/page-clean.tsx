@@ -13,6 +13,7 @@ import { UserAPI } from "@/app/api/users"
 import { useIdentityStatus } from "@/hooks/useIdentityStatus"
 import { useRouter } from "next/navigation"
 import HistoryPage from "./history/HistoryPage"
+import { useTranslation } from "react-i18next"
 import { authStore } from "@/contexts/authStore"
 
 const ProfilePageWrapper = () => {
@@ -45,10 +46,10 @@ interface AvatarData {
   filename?: string;
 }
 
-const API_BASE_URL = 'https://mazad.click/server';
+const API_BASE_URL = 'https://mazadclick-server.onrender.com';
 
 function ProfilePage() {
-  const t = (key: string) => key;
+  const { t } = useTranslation();
   const { auth, isLogged, isReady, initializeAuth, set, fetchFreshUserData } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const { identityStatus, isLoading: isLoadingIdentity } = useIdentityStatus();
@@ -292,28 +293,16 @@ function ProfilePage() {
       console.log('✅ Avatar upload response:', response);
 
       if (response) {
-        const responseUser = (response as any)?.user ?? (response as any)?.data;
-
-        if (responseUser) {
+        if (response.user) {
           const currentUser = auth.user;
-          if (!currentUser) {
-            console.log('⚠️ No current user in auth state, fetching fresh data...');
-            await fetchFreshUserData();
-            setAvatarKey(Date.now());
-            enqueueSnackbar((response as any)?.message || t("profile.avatarUpdated"), { variant: "success" });
-            if (fileInputRef.current) {
-              fileInputRef.current.value = '';
-            }
-            return;
-          }
           const updatedUser = {
             ...currentUser,
-            avatar: responseUser?.avatar ?? currentUser.avatar,
-            photoURL: responseUser?.photoURL || responseUser?.avatar?.fullUrl || currentUser.photoURL
-          } as any;
-
+            avatar: response.user.avatar,
+            photoURL: response.user.photoURL || response.user.avatar?.fullUrl
+          };
+          
           console.log('👤 Updated user with new avatar:', updatedUser);
-
+          
           set({
             tokens: auth.tokens,
             user: updatedUser as any
@@ -321,14 +310,14 @@ function ProfilePage() {
 
           setAvatarKey(Date.now());
 
-          enqueueSnackbar((response as any)?.message || t("profile.avatarUpdated"), { variant: "success" });
+          enqueueSnackbar(response.message || t("profile.avatarUpdated"), { variant: "success" });
         } else {
           console.log('📄 No user data in response, fetching fresh data...');
           await fetchFreshUserData();
           setAvatarKey(Date.now());
-          enqueueSnackbar((response as any)?.message || t("profile.avatarUpdated"), { variant: "success" });
+          enqueueSnackbar(response.message || t("profile.avatarUpdated"), { variant: "success" });
         }
-
+        
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -502,16 +491,16 @@ function ProfilePage() {
                       transition={{ duration: 0.5, delay: 1.3 }}
                     >
                       <div className="rating-stars">
-                            {auth.user?.rate && auth.user.rate > 0 ? (
+                        {auth.user?.rate && auth.user.rate > 0 ? (
                           Array(5).fill(0).map((_, index) => (
                             <motion.i
                               key={index}
-                                  className={`bi bi-star${index < Math.floor(auth.user?.rate ?? 0) ? '-fill' : ''}`}
+                              className={`bi bi-star${index < Math.floor((auth.user?.rate ?? 0)) ? '-fill' : ''}`}
                               initial={{ opacity: 0, scale: 0 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 1.4 + (0.1 * index), type: "spring", stiffness: 200 }}
                               style={{
-                                color: index < Math.floor(auth.user?.rate ?? 0) ? '#FFD700' : '#E0E0E0'
+                                color: index < Math.floor((auth.user?.rate ?? 0)) ? '#FFD700' : '#E0E0E0'
                               }}
                             />
                           ))

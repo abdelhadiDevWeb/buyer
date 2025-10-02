@@ -7,9 +7,10 @@ import { CategoryAPI } from "../../app/api/category";
 // Import static data as fallback
 import categoryData from "../../data/category.json"
 import app from '../../config'; // Import config to access route
+import { useTranslation } from 'react-i18next';
 
 const Home1Category = () => {
-  
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -188,7 +189,7 @@ const Home1Category = () => {
               transition: 'all 0.3s ease',
             }}>
               <img
-                src={subcategory.thumb ? `${app.imageBaseURL}${subcategory.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+                src={subcategory.thumb ? `${app.route}${subcategory.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
                 alt={subcategory.name}
                 style={{
                   width: '100%',
@@ -348,7 +349,7 @@ const Home1Category = () => {
                 justifyContent: 'center',
               }}>
                 <img
-                  src={category.thumb ? `${app.imageBaseURL}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+                  src={category.thumb ? `${app.route}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
                   alt={name}
                   style={{
                     width: '90%',
@@ -420,14 +421,14 @@ const Home1Category = () => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
-                <span>{category.children.length} catégories</span>
+                <span>{category.children.length} categories</span>
               </>
             ) : (
               <>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                 </svg>
-                <span>Parcourir la collection</span>
+                <span>Browse collection</span>
               </>
             )}
           </div>
@@ -507,7 +508,7 @@ const Home1Category = () => {
               >
                 <path d="M6 9l6 6 6-6"/>
               </svg>
-              <span>{isExpanded ? 'Masquer les sous-catégories' : 'Explorer les sous-catégories'}</span>
+              <span>{isExpanded ? 'Hide' : 'Explore'} subcategories</span>
             </button>
           </div>
         )}
@@ -585,10 +586,10 @@ const Home1Category = () => {
       }}>
         <div style={{ fontSize: '48px', marginBottom: '20px', opacity: 0.6 }}>📂</div>
         <h3 style={{ color: '#0063b1', marginBottom: '10px', fontSize: '20px', fontWeight: '600' }}>
-          Aucune catégorie trouvée
+          No Categories Found
         </h3>
         <p style={{ color: '#64748b', fontSize: '14px' }}>
-          {errorMessage || 'Les catégories seront bientôt disponibles.'}
+          {errorMessage || 'Categories will be available soon'}
         </p>
       </div>
     );
@@ -608,29 +609,29 @@ const Home1Category = () => {
         <div style={{
           marginBottom: 'clamp(16px, 3vw, 20px)',
         }}>
-            <h2 style={{
-              fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
-              fontWeight: '800',
-              background: 'linear-gradient(135deg, #0063b1 0%, #00a3e0 50%, #3b82f6 100%)',
-              WebkitBackgroundClip: 'text',
-              backgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              marginBottom: '16px',
-              lineHeight: '1.2',
-              letterSpacing: '-0.02em',
-            }}>
-              Explorez les catégories
-            </h2>
-            <p style={{
-              fontSize: '18px',
-              color: '#64748b',
-              maxWidth: '600px',
-              margin: '0 auto',
-              lineHeight: '1.6',
-              fontWeight: '500',
-            }}>
-              Découvrez des enchères dans les différentes catégories.
-            </p>
+          <h2 style={{
+            fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+            fontWeight: '800',
+            background: 'linear-gradient(135deg, #0063b1 0%, #00a3e0 50%, #3b82f6 100%)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '16px',
+            lineHeight: '1.2',
+            letterSpacing: '-0.02em',
+          }}>
+            Explore Categories
+          </h2>
+          <p style={{
+            fontSize: '18px',
+            color: '#64748b',
+            maxWidth: '600px',
+            margin: '0 auto',
+            lineHeight: '1.6',
+            fontWeight: '500',
+          }}>
+            Discover amazing auctions across different categories and find exactly what you're looking for
+          </p>
         </div>
 
       </div>

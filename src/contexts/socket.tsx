@@ -59,7 +59,7 @@ const SocketProvider: React.FC<Props> = (props = {}) => {
 
         console.log('Creating socket connection for user:', userId);
 
-        currentSocket = io('https://mazad-click-server.onrender.com', {
+        currentSocket = io('https://mazadclick-server.onrender.com', {
           query: { userId },
           transports: ['websocket', 'polling'],
           timeout: 20000,

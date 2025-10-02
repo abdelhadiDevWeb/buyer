@@ -7,14 +7,13 @@ const app = {
   // baseURL: 'https://api.easyeats.dz/v1/',
   // socket: 'wss://api.easyeats.dz/',
 
-  socket: 'https://mazad-click-server.onrender.com/',
-  route: "https://mazad-click-server.onrender.com",
-  baseURL: "https://mazad-click-server.onrender.com/",
-  imageBaseURL: "https://mazad-click-server.onrender.com/static",
+  // socket: 'http://localhost:3000/',
+  // route: "http://localhost:3000",
+  // baseURL: "http://localhost:3000/",
 
-  // socket: 'http://localhost:3001/',
-  // route: "http://localhost:3001/",
-  // baseURL: "http://localhost:3001/",
+  socket: 'https://mazadclick-server.onrender.com',
+  route: "https://mazadclick-server.onrender.com",
+  baseURL: "https://mazadclick-server.onrender.com",
 
   apiKey: '8f2a61c94d7e3b5f9c0a8d2e6b4f1c7a',
 };

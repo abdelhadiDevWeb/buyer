@@ -1,9 +1,11 @@
 import Link from "next/link";
 import React from "react";
+import { useTranslation } from 'react-i18next';
 
 type Home1BannerProps = object;
 
 const Home1Banner: React.FC<Home1BannerProps> = () => {
+  const { t } = useTranslation();
 
   return (
     <>
@@ -360,17 +362,17 @@ const Home1Banner: React.FC<Home1BannerProps> = () => {
             <div className="marquee-outer">
               <div className="marquee-inner">
                 <div className="banner-heading">
-                  Plateforme d'Enchères Moderne
+                  {t('banner.title')}
                   <br />
-                  <span className="banner-animated">Pour les Professionnels</span>
+                  <span className="banner-animated">{t('banner.subtitle')}</span>
                 </div>
                 <div className="banner-subtitle">
-                  Accédez à des actifs premium et enchérissez en toute sécurité.
+                  {t('banner.description')}
                 </div>
                 <div className="banner-actions">
                   <Link href="/auction-sidebar" className="cta-button">
                     <svg width={22} height={22} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="12" fill="#fff"/><path d="M12 7v6l4 2" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    Accéder aux enchères
+                    {t('banner.ctaButton')}
                   </Link>
                 </div>
                 <div className="banner-features">
@@ -379,8 +381,8 @@ const Home1Banner: React.FC<Home1BannerProps> = () => {
                       <svg width={24} height={24} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="2"/><path d="M9 12l2 2 4-4" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
                     <div>
-                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>Plateforme sécurisée</h4>
-                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>Transactions protégées et fiables.</p>
+                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>{t('banner.features.secure.title')}</h4>
+                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>{t('banner.features.secure.description')}</p>
                     </div>
                   </div>
                   <div className="feature-item">
@@ -388,8 +390,8 @@ const Home1Banner: React.FC<Home1BannerProps> = () => {
                       <svg width={24} height={24} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="2"/><path d="M12 6v6l4 2" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
                     <div>
-                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>Support dédié</h4>
-                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>Assistance rapide et efficace.</p>
+                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>{t('banner.features.support.title')}</h4>
+                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>{t('banner.features.support.description')}</p>
                     </div>
                   </div>
                   <div className="feature-item">
@@ -397,24 +399,24 @@ const Home1Banner: React.FC<Home1BannerProps> = () => {
                       <svg width={24} height={24} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="2"/><path d="M17 21v-2c0-1.1-.45-2.15-1.17-2.83C15.08 15.42 14.06 15 13 15H5c-1.06 0-2.08.42-2.83 1.17C1.45 16.85 1 17.9 1 19v2" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="9" cy="7" r="4" stroke="#2563eb" strokeWidth="2"/></svg>
                     </div>
                     <div>
-                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>Communauté active</h4>
-                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>Réseau d'acheteurs et vendeurs fiables.</p>
+                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>{t('banner.features.community.title')}</h4>
+                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>{t('banner.features.community.description')}</p>
                     </div>
                   </div>
                 </div>
                 {/* Duplicate for seamless marquee */}
                 <div className="banner-heading">
-                  Plateforme d'Enchères Moderne
+                  {t('banner.title')}
                   <br />
-                  <span className="banner-animated">Pour les Professionnels</span>
+                  <span className="banner-animated">{t('banner.subtitle')}</span>
                 </div>
                 <div className="banner-subtitle">
-                  Accédez à des actifs premium et enchérissez en toute sécurité.
+                  {t('banner.description')}
                 </div>
                 <div className="banner-actions">
                   <Link href="/auction-sidebar" className="cta-button">
                     <svg width={22} height={22} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="12" fill="#fff"/><path d="M12 7v6l4 2" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    Accéder aux enchères
+                    {t('banner.ctaButton')}
                   </Link>
                 </div>
                 <div className="banner-features">
@@ -423,8 +425,8 @@ const Home1Banner: React.FC<Home1BannerProps> = () => {
                       <svg width={24} height={24} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="2"/><path d="M9 12l2 2 4-4" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
                     <div>
-                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>Plateforme sécurisée</h4>
-                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>Transactions protégées et fiables.</p>
+                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>{t('banner.features.secure.title')}</h4>
+                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>{t('banner.features.secure.description')}</p>
                     </div>
                   </div>
                   <div className="feature-item">
@@ -432,8 +434,8 @@ const Home1Banner: React.FC<Home1BannerProps> = () => {
                       <svg width={24} height={24} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="2"/><path d="M12 6v6l4 2" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
                     <div>
-                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>Support dédié</h4>
-                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>Assistance rapide et efficace.</p>
+                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>{t('banner.features.support.title')}</h4>
+                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>{t('banner.features.support.description')}</p>
                     </div>
                   </div>
                   <div className="feature-item">
@@ -441,8 +443,8 @@ const Home1Banner: React.FC<Home1BannerProps> = () => {
                       <svg width={24} height={24} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="2"/><path d="M17 21v-2c0-1.1-.45-2.15-1.17-2.83C15.08 15.42 14.06 15 13 15H5c-1.06 0-2.08.42-2.83 1.17C1.45 16.85 1 17.9 1 19v2" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="9" cy="7" r="4" stroke="#2563eb" strokeWidth="2"/></svg>
                     </div>
                     <div>
-                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>Communauté active</h4>
-                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>Réseau d'acheteurs et vendeurs fiables.</p>
+                      <h4 style={{color: '#222', fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0'}}>{t('banner.features.community.title')}</h4>
+                      <p style={{color: '#4b5563', fontSize: '13px', margin: 0}}>{t('banner.features.community.description')}</p>
                     </div>
                   </div>
                 </div>
@@ -455,8 +457,8 @@ const Home1Banner: React.FC<Home1BannerProps> = () => {
               <div className="video-play">
                 <svg width={40} height={40} viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
               </div>
-              <div className="video-label">Découvrir la plateforme</div>
-              <div className="video-desc">Expérience moderne, fluide et sécurisée.</div>
+              <div className="video-label">{t('banner.video.label')}</div>
+              <div className="video-desc">{t('banner.video.description')}</div>
             </div>
           </div>
         </div>

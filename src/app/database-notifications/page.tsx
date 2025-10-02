@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BsBell, BsCheck, BsCheckAll } from 'react-icons/bs';
 
 interface Notification {
@@ -14,7 +15,7 @@ interface Notification {
 }
 
 export default function DatabaseNotificationsPage() {
-  const t = (key: string, _opts?: any) => key;
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -32,14 +32,28 @@ export const MessageAPI = {
         console.log('📤 Trying to get messages at primary endpoint');
         const res = await requests.get(`message/getAll/${chatId}`, options);
         console.log('✅ Messages retrieved successfully:', res);
-        return res as any;
+        if ('success' in res) {
+          return res as ApiResponse<Message[]>;
+        }
+        return {
+          success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+          data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+          message: (res as any)?.data?.message,
+        } as ApiResponse<Message[]>;
       } catch (primaryError) {
         console.log('⚠️ Primary get messages endpoint failed, trying alternative:', primaryError);
         
         // Fallback to alternative endpoint
         const res = await requests.get(`chat/messages/${chatId}`, options);
         console.log('✅ Messages retrieved at fallback endpoint:', res);
-        return res as any;
+        if ('success' in res) {
+          return res as ApiResponse<Message[]>;
+        }
+        return {
+          success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+          data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+          message: (res as any)?.data?.message,
+        } as ApiResponse<Message[]>;
       }
     } catch (error: unknown) {
       console.error('❌ Error retrieving messages:', error);
@@ -86,7 +100,14 @@ export const MessageAPI = {
         console.log('📤 Trying primary endpoint: message/create');
         const res = await requests.post('message/create', messageData);
         console.log('✅ Message sent successfully via primary endpoint:', res);
-        return res as any;
+        if ('success' in res) {
+          return res as ApiResponse<Message>;
+        }
+        return {
+          success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+          data: (res as any)?.data?.data ?? (res as any)?.data,
+          message: (res as any)?.data?.message,
+        } as ApiResponse<Message>;
       } catch (primaryError) {
         console.log('⚠️ Primary message endpoint failed, trying alternative 1:', primaryError);
         
@@ -95,7 +116,14 @@ export const MessageAPI = {
           console.log('📤 Trying secondary endpoint: chat/messages');
           const res = await requests.post('chat/messages', messageData);
           console.log('✅ Message sent successfully via secondary endpoint:', res);
-          return res as any;
+          if ('success' in res) {
+            return res as ApiResponse<Message>;
+          }
+          return {
+            success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+            data: (res as any)?.data?.data ?? (res as any)?.data,
+            message: (res as any)?.data?.message,
+          } as ApiResponse<Message>;
         } catch (secondaryError) {
           console.log('⚠️ Secondary message endpoint failed, trying final option:', secondaryError);
           
@@ -103,7 +131,14 @@ export const MessageAPI = {
           console.log('📤 Trying final endpoint: messages');
           const res = await requests.post('messages', messageData);
           console.log('✅ Message sent successfully via final endpoint:', res);
-          return res as any;
+          if ('success' in res) {
+            return res as ApiResponse<Message>;
+          }
+          return {
+            success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+            data: (res as any)?.data?.data ?? (res as any)?.data,
+            message: (res as any)?.data?.message,
+          } as ApiResponse<Message>;
         }
       }
     } catch (error: unknown) {
@@ -127,14 +162,28 @@ export const MessageAPI = {
         console.log('📤 Trying to mark messages as read at primary endpoint');
         const res = await requests.post(`message/mark-read/${chatId}`, {});
         console.log('✅ Messages marked as read successfully:', res);
-        return res as any;
+        if ('success' in res) {
+          return res as ApiResponse<any>;
+        }
+        return {
+          success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+          data: (res as any)?.data?.data ?? (res as any)?.data,
+          message: (res as any)?.data?.message,
+        } as ApiResponse<any>;
       } catch (primaryError) {
         console.log('⚠️ Primary mark-read endpoint failed, trying alternative:', primaryError);
         
         // Fallback to alternative endpoint
         const res = await requests.put(`chat/messages/${chatId}/mark-read`, {});
         console.log('✅ Messages marked as read at fallback endpoint:', res);
-        return res as any;
+        if ('success' in res) {
+          return res as ApiResponse<any>;
+        }
+        return {
+          success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+          data: (res as any)?.data?.data ?? (res as any)?.data,
+          message: (res as any)?.data?.message,
+        } as ApiResponse<any>;
       }
     } catch (error: unknown) {
       console.error('❌ Error marking messages as read:', error);
@@ -153,7 +202,14 @@ export const MessageAPI = {
   getMessages: async (): Promise<ApiResponse<Message[]>> => {
     try {
       const res = await requests.get('messages');
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Message[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Message[]>;
     } catch (error: unknown) {
       throw error;
     }
@@ -165,7 +221,14 @@ export const MessageAPI = {
       console.log('📤 Marking chat as read:', { chatId, userId });
       const res = await requests.post('message/mark-chat-read', { chatId, userId });
       console.log('✅ Chat marked as read successfully:', res);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<any>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<any>;
     } catch (error: unknown) {
       console.error('❌ Error marking chat as read:', error);
       throw error;
@@ -178,7 +241,14 @@ export const MessageAPI = {
       console.log('📤 Getting unread messages for user:', userId);
       const res = await requests.get(`message/unread-messages/${userId}`);
       console.log('✅ Unread messages retrieved successfully:', res);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Message[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Message[]>;
     } catch (error: unknown) {
       console.error('❌ Error getting unread messages:', error);
       throw error;

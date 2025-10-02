@@ -9,6 +9,7 @@ import { styled } from '@mui/material/styles';
 import { LoadingButton } from '@mui/lab';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 
 
 // Style for subscription card
@@ -80,7 +81,7 @@ const PricingCardActions = styled(CardActions)(({ theme }) => ({
 }));
 
 export default function SubscriptionPlans() {
-  const t = (key: string, _opts?: any) => key;
+  const { t } = useTranslation();
   const router = useRouter();
   const theme = useTheme();
   const [selectedPlan, setSelectedPlan] = useState('standard');
@@ -95,11 +96,7 @@ export default function SubscriptionPlans() {
       price: 8000,
       period: t('subscription.plans.6months.period'),
       description: t('subscription.plans.6months.description'),
-      features: [
-        t('subscription.feature.basicTools'),
-        t('subscription.feature.standardSupport'),
-        t('subscription.feature.basicAnalytics')
-      ],
+      features: t('subscription.plans.6months.features', { returnObjects: true }),
       isPopular: false
     },
     {
@@ -108,11 +105,7 @@ export default function SubscriptionPlans() {
       price: 10000,
       period: t('subscription.plans.1year.period'),
       description: t('subscription.plans.1year.description'),
-      features: [
-        t('subscription.feature.advancedTools'),
-        t('subscription.feature.prioritySupport'),
-        t('subscription.feature.advancedAnalytics')
-      ],
+      features: t('subscription.plans.1year.features', { returnObjects: true }),
       isPopular: true
     },
     {
@@ -121,12 +114,7 @@ export default function SubscriptionPlans() {
       price: 15000,
       period: t('subscription.plans.gold.period'),
       description: t('subscription.plans.gold.description'),
-      features: [
-        t('subscription.feature.proTools'),
-        t('subscription.feature.vipSupport'),
-        t('subscription.feature.marketingTools'),
-        t('subscription.feature.apiAccess')
-      ],
+      features: t('subscription.plans.gold.features', { returnObjects: true }),
       isPopular: false
     }
   ];

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Define the base URL of your NestJS API
-const API_BASE_URL = 'https://mazad-click-server.onrender.com/comments'; // Change this to your actual API URL
+const API_BASE_URL = 'https://mazadclick-server.onrender.com/comments'; // Updated API URL
 
 // Define the interfaces for the data models to ensure type safety
 interface User {

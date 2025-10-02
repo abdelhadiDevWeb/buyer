@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useIdentityStatus } from '@/hooks/useIdentityStatus';
 
 interface ProtectedResellerRouteProps {
@@ -10,7 +11,7 @@ interface ProtectedResellerRouteProps {
 }
 
 export default function ProtectedResellerRoute({ children }: ProtectedResellerRouteProps) {
-  const t = (key: string, _opts?: any) => key;
+  const { t } = useTranslation();
   const router = useRouter();
   const { identityStatus, isLoading } = useIdentityStatus();
   const [message, setMessage] = useState('');

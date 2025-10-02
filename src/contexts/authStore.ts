@@ -252,15 +252,15 @@ export const authStore = create<IAuthStore>((setValues) => ({
       // Handle different response formats from your backend
       let userData = null;
       
-      if (response && (response as any).success && (response as any).data) {
+      if (response && response.success && response.data) {
         // New format: { success: true, data: user, message: "..." }
-        console.log('✅ Fresh user data received (new format):', (response as any).data);
-        userData = (response as any).data;
-      } else if ((response as any) && (response as any)._id) {
+        console.log('✅ Fresh user data received (new format):', response.data);
+        userData = response.data;
+      } else if (response && (response as any)._id) {
         // Old format: direct user object
         console.log('✅ Fresh user data received (old format):', response);
-        userData = response;
-      } else if (!response || ((response as any) && Object.keys(response as any).length === 0)) {
+        userData = response as any;
+      } else if (!response || (response && Object.keys(response).length === 0)) {
         // 304 Not Modified response (empty response body)
         console.log('✅ User data is not modified (304), using cached data.');
         console.log('🎉 User data refresh successful (no changes)!');

@@ -20,7 +20,14 @@ export const IdentityAPI = {
   getIdentities: async (): Promise<ApiResponse<Identity[]>> => {
     try {
       const res = await requests.get('identities');
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Identity[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Identity[]>;
     } catch (error: unknown) {
       console.error('Error fetching identities:', error);
       throw error;
@@ -30,7 +37,14 @@ export const IdentityAPI = {
   getMyIdentity: async (): Promise<ApiResponse<Identity>> => {
     try {
       const res = await requests.get('identities/me');
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Identity>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Identity>;
     } catch (error: unknown) {
       console.error('Error fetching my identity:', error);
       throw error;
@@ -40,7 +54,14 @@ export const IdentityAPI = {
   createIdentity: async (identityData: Partial<Identity>): Promise<ApiResponse<Identity>> => {
     try {
       const res = await requests.post('identities', identityData);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Identity>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Identity>;
     } catch (error: unknown) {
       console.error('Error creating identity:', error);
       throw error;
@@ -70,7 +91,14 @@ export const IdentityAPI = {
       
       // Use the postFormData method from requests
       const res = await requests.postFormData('identities/reseller', formData);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Identity>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Identity>;
     } catch (error: unknown) {
       console.error('Error creating reseller identity:', error);
       throw error;
@@ -80,7 +108,14 @@ export const IdentityAPI = {
   updateIdentity: async (id: string, identityData: Partial<Identity>): Promise<ApiResponse<Identity>> => {
     try {
       const res = await requests.put(`identities/${id}`, identityData);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Identity>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Identity>;
     } catch (error: unknown) {
       console.error('Error updating identity:', error);
       throw error;
@@ -90,7 +125,14 @@ export const IdentityAPI = {
   deleteIdentity: async (id: string): Promise<ApiResponse<void>> => {
     try {
       const res = await requests.delete(`identities/${id}`);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<void>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: undefined as unknown as void,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<void>;
     } catch (error: unknown) {
       console.error('Error deleting identity:', error);
       throw error;

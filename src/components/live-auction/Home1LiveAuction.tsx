@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { AuctionsAPI } from "@/app/api/auctions";
 import app from '@/config';
+import { useTranslation } from 'react-i18next';
 import "../auction-details/st.css";
 import "../auction-details/modern-details.css";
 
@@ -26,17 +27,23 @@ interface Auction {
   seller?: {
     _id: string;
     name?: string;
-    profileImage?: { url: string; }; 
+    profileImage?: { url: string; };
     photoURL?: string;
   };
   owner?: {
     firstName?: string;
     lastName?: string;
     name?: string;
-    profileImage?: { url: string; }; 
+    profileImage?: { url: string; };
     photoURL?: string;
   };
   status?: string;
+  // --- Added properties to match usage in JSX ---
+  quantity?: string | number;
+  location?: string;
+  wilaya?: string;
+  description?: string;
+  biddersCount?: number;
 }
 
 // Timer interface
@@ -78,12 +85,7 @@ export function calculateTimeRemaining(endDate: string): Timer {
 }
 
 const Home1LiveAuction = () => {
-  const t = (key: string, _opts?: any) => {
-    const translations = {
-      'liveAuction.viewAll': 'Voir tout'
-    };
-    return translations[key] || key;
-  };
+  const { t } = useTranslation();
   const [liveAuctions, setLiveAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,13 +106,13 @@ const Home1LiveAuction = () => {
           if (!auction.endingAt) return false;
           const endTime = new Date(auction.endingAt);
           const isActive = endTime > new Date();
-          
+
           // Exclude professional auctions from live auctions section
           // Professional auctions should only appear in Professional Auctions section
           if (auction.isPro === true) {
             return false;
           }
-          
+
           // Show only non-professional auctions in live auctions section
           return isActive;
         }).slice(0, 8);
@@ -182,16 +184,16 @@ const Home1LiveAuction = () => {
   // Helper function to get seller display name
   const getSellerDisplayName = useCallback((auction: Auction) => {
     if (auction.hidden === true) {
-      return 'Anonyme';
+      return t('common.anonymous');
     }
-    
-    const ownerName = auction.owner?.firstName && auction.owner?.lastName 
+
+    const ownerName = auction.owner?.firstName && auction.owner?.lastName
       ? `${auction.owner.firstName} ${auction.owner.lastName}`
       : auction.owner?.name;
     const sellerName = auction.seller?.name;
-    
-    return ownerName || sellerName || 'Vendeur';
-  }, []);
+
+    return ownerName || sellerName || t('liveAuction.seller');
+  }, [t]);
 
   // Swiper settings
   const settings = useMemo(() => ({
@@ -253,7 +255,7 @@ const Home1LiveAuction = () => {
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
             }}></div>
-            <p style={{ marginTop: '15px', color: '#666' }}>Chargement des enchères...</p>
+            <p style={{ marginTop: '15px', color: '#666' }}>{t('liveAuction.loading')}</p>
           </div>
         </div>
       </div>
@@ -378,7 +380,7 @@ const Home1LiveAuction = () => {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}>
-              Enchères en direct
+              {t('liveAuction.title')}
             </h2>
             <p style={{
               fontSize: '1.1rem',
@@ -387,7 +389,7 @@ const Home1LiveAuction = () => {
               margin: '0 auto',
               lineHeight: '1.6',
             }}>
-              Découvrez les enchères en cours et participez dès maintenant.
+              {t('liveAuction.description')}
             </p>
           </div>
 
@@ -436,7 +438,7 @@ const Home1LiveAuction = () => {
                         }}>
                           <img
                             src={auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url
-                              ? `${app.imageBaseURL}${auction.thumbs[0].url}`
+                              ? `${app.route}${auction.thumbs[0].url}`
                               : DEFAULT_AUCTION_IMAGE}
                             alt={auction.title || auction.name || 'Auction'}
                             style={{
@@ -451,7 +453,7 @@ const Home1LiveAuction = () => {
                             onMouseLeave={(e) => {
                               e.currentTarget.style.transform = 'scale(1)';
                             }}
-                            onError={(e) => { 
+                            onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.src = DEFAULT_AUCTION_IMAGE;
                             }}
@@ -505,76 +507,216 @@ const Home1LiveAuction = () => {
 
                         {/* Auction Details */}
                         <div style={{ padding: 'clamp(16px, 3vw, 20px)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                            <h3 style={{
-                              fontSize: '18px',
-                              fontWeight: '600',
-                              color: '#222',
-                              lineHeight: '1.3',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              flex: 1,
-                            }}>
-                              {auction.title || auction.name || 'Auction Title'}
-                            </h3>
-                            {auction.isPro && (
-                              <div style={{
-                                background: 'linear-gradient(45deg, #ffd700, #ffed4e)',
-                                color: '#1a1a1a',
-                                padding: '4px 8px',
-                                borderRadius: '12px',
-                                fontSize: '10px',
-                                fontWeight: '700',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '2px',
-                                flexShrink: 0,
-                              }}>
-                                <span>👑</span>
-                                <span>PRO</span>
-                              </div>
-                            )}
-                          </div>
+                          {/* Title */}
+                          <h3 style={{
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            color: '#333',
+                            marginBottom: '12px',
+                            lineHeight: '1.3',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {auction.title || auction.name || 'Auction Title'}
+                          </h3>
 
-                          {/* Price Info */}
+                          {/* Quantity and Location Info */}
                           <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '12px',
                             marginBottom: '16px',
                           }}>
                             <div>
                               <p style={{
-                                fontSize: '14px',
+                                fontSize: '12px',
                                 color: '#666',
                                 margin: '0 0 4px 0',
+                                fontWeight: '600',
                               }}>
-                                Prix actuel
+                                Quantité
                               </p>
                               <p style={{
-                                fontSize: '20px',
-                                fontWeight: '700',
-                                color: '#0063b1',
+                                fontSize: '14px',
+                                color: '#333',
                                 margin: 0,
+                                fontWeight: '500',
                               }}>
-                                {formatPrice(auction.currentPrice || auction.startingPrice || 0)}
+                                {auction.quantity || 'Non spécifiée'}
                               </p>
                             </div>
 
-                            <div style={{
-                              background: 'linear-gradient(45deg, #0063b1, #00a3e0)',
-                              color: 'white',
-                              padding: '6px 12px',
-                              borderRadius: '15px',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                            }}>
-                              En cours
+                            <div>
+                              <p style={{
+                                fontSize: '12px',
+                                color: '#666',
+                                margin: '0 0 4px 0',
+                                fontWeight: '600',
+                              }}>
+                                Localisation
+                              </p>
+                              <p style={{
+                                fontSize: '14px',
+                                color: '#333',
+                                margin: 0,
+                                fontWeight: '500',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}>
+                                {auction.location || auction.wilaya || 'Non spécifiée'}
+                              </p>
                             </div>
                           </div>
+
+                          {/* Separator Line */}
+                          <div style={{
+                            width: '100%',
+                            height: '1px',
+                            background: 'linear-gradient(90deg, transparent, #e9ecef, transparent)',
+                            margin: '0 0 16px 0',
+                          }}></div>
+
+                          {/* Description */}
+                          {auction.description && (
+                            <div style={{
+                              marginBottom: '16px',
+                            }}>
+                              <p style={{
+                                fontSize: '12px',
+                                color: '#666',
+                                margin: '0 0 4px 0',
+                                fontWeight: '600',
+                              }}>
+                                Description
+                              </p>
+                              <p style={{
+                                fontSize: '13px',
+                                color: '#555',
+                                margin: 0,
+                                lineHeight: '1.4',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}>
+                                {auction.description}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Separator Line after Description */}
+                          {auction.description && (
+                            <div style={{
+                              width: '100%',
+                              height: '1px',
+                              background: 'linear-gradient(90deg, transparent, #e9ecef, transparent)',
+                              margin: '0 0 16px 0',
+                            }}></div>
+                          )}
+
+                          {/* Price Info */}
+                          <div style={{
+                            background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                            borderRadius: '12px',
+                            padding: '12px',
+                            marginBottom: '16px',
+                            border: '1px solid #e9ecef',
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                            }}>
+                              <div style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: '#28a745',
+                                animation: 'pulse 2s infinite',
+                              }}></div>
+                              <span style={{
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#28a745',
+                              }}>
+                                Prix actuel
+                              </span>
+                            </div>
+                            <div style={{
+                              textAlign: 'center',
+                              marginTop: '8px',
+                            }}>
+                              <p style={{
+                                fontSize: '22px',
+                                fontWeight: '800',
+                                margin: 0,
+                                color: '#0063b1',
+                                background: 'linear-gradient(90deg, #0063b1, #00a3e0)',
+                                WebkitBackgroundClip: 'text',
+                                backgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                              }}>
+                                {Number(auction.currentPrice || auction.startingPrice || 0).toLocaleString()} DA
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Separator Line after Price */}
+                          <div style={{
+                            width: '100%',
+                            height: '1px',
+                            background: 'linear-gradient(90deg, transparent, #e9ecef, transparent)',
+                            margin: '0 0 16px 0',
+                          }}></div>
+
+                          {/* Bidders Count */}
+                          <div style={{
+                            background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                            borderRadius: '12px',
+                            padding: '12px',
+                            marginBottom: '16px',
+                            border: '1px solid #e9ecef',
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                            }}>
+                              <div style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: '#0063b1',
+                                animation: 'pulse 2s infinite',
+                              }}></div>
+                              <span style={{
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#0063b1',
+                              }}>
+                                {auction.biddersCount || 0} participant{(auction.biddersCount || 0) !== 1 ? 's' : ''}
+                              </span>
+                              <span style={{
+                                fontSize: '12px',
+                                color: '#666',
+                              }}>
+                                ont enchéri
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Separator Line after Bidders Count */}
+                          <div style={{
+                            width: '100%',
+                            height: '1px',
+                            background: 'linear-gradient(90deg, transparent, #e9ecef, transparent)',
+                            margin: '0 0 16px 0',
+                          }}></div>
 
                           {/* Seller Info */}
                           <div style={{
@@ -592,7 +734,7 @@ const Home1LiveAuction = () => {
                                 borderRadius: '50%',
                                 objectFit: 'cover',
                               }}
-                              onError={(e) => { 
+                              onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.src = DEFAULT_PROFILE_IMAGE;
                               }}
@@ -606,7 +748,7 @@ const Home1LiveAuction = () => {
                             </span>
                           </div>
 
-                          {/* Bid Button */}
+                          {/* View Auction Button */}
                           <Link
                             href={`/auction-details/${auction._id}`}
                             style={{
@@ -636,7 +778,7 @@ const Home1LiveAuction = () => {
                               e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 99, 177, 0.3)';
                             }}
                           >
-                            Enchérir
+                            Voir les détails
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M8.59 16.59L10 18L16 12L10 6L8.59 7.41L13.17 12Z"/>
                             </svg>
@@ -753,14 +895,14 @@ const Home1LiveAuction = () => {
                 color: '#333',
                 marginBottom: '12px',
               }}>
-                Aucune enchère en cours
+                {t('liveAuction.noAuctions')}
               </h3>
               <p style={{
                 fontSize: '16px',
                 color: '#666',
                 marginBottom: '30px',
               }}>
-                Revenez plus tard pour voir de nouvelles enchères.
+                {t('liveAuction.noAuctions')}
               </p>
               <Link
                 href="/auction-sidebar"
@@ -830,7 +972,7 @@ const Home1LiveAuction = () => {
                 e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 99, 177, 0.3)';
               }}
             >
-              Voir toutes les enchères
+              {t('liveAuction.viewAll')}
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8.59 16.59L10 18L16 12L10 6L8.59 7.41L13.17 12Z"/>
               </svg>

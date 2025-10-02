@@ -1,5 +1,5 @@
 import { requests } from './utils';
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 import app from '@/config';
 
 // Create a direct axios instance as enhanced fallback
@@ -75,7 +75,13 @@ directAxios.interceptors.request.use(
   (config) => {
     const authHeaders = getAuthHeaders();
     if (Object.keys(authHeaders).length > 0) {
-      config.headers = { ...(config.headers as any), ...authHeaders };
+      const headers = config.headers instanceof AxiosHeaders
+        ? config.headers
+        : new AxiosHeaders(config.headers as any);
+      for (const [key, value] of Object.entries(authHeaders)) {
+        headers.set(key, value);
+      }
+      config.headers = headers;
       console.log('🔐 Auth headers attached to direct request:', config.url);
     } else {
       console.warn('⚠️ No auth headers for direct request:', config.url);
@@ -383,12 +389,13 @@ export const UserAPI = {
     
     try {
       // Filter out undefined values and only allow certain fields
-      const allowedFields = ['firstName', 'lastName', 'phone'];
-      const filteredData = {};
+      const allowedFields: Array<keyof User> = ['firstName', 'lastName', 'phone'];
+      const filteredData: Partial<User> = {};
       
       for (const field of allowedFields) {
-        if ((data as any)[field] !== undefined && (data as any)[field] !== null && (data as any)[field] !== '') {
-          (filteredData as any)[field] = (data as any)[field];
+        const value = data[field as keyof User];
+        if (value !== undefined && value !== null && value !== '') {
+          filteredData[field] = value as any;
         }
       }
       
@@ -491,7 +498,7 @@ export const UserAPI = {
   },
 
   // Upload avatar - FIXED to handle response properly and refresh user data
-  uploadAvatar: async (formData: FormData): Promise<ApiResponse<{ avatarUrl?: string; user?: User }>> => {
+  uploadAvatar: async (formData: FormData): Promise<ApiResponse<User>> => {
     console.log('🖼️ === UPLOAD AVATAR ===');
     
     // Validate FormData
@@ -528,7 +535,7 @@ export const UserAPI = {
           user: userData,
           data: userData,
           message: response.message || 'Avatar uploaded successfully'
-        } as any;
+        };
       } else {
         console.error('❌ Avatar upload failed:', response);
         throw new Error(response.message || 'Avatar upload failed');
@@ -541,7 +548,7 @@ export const UserAPI = {
   },
 
   // Upload reseller identity - matches POST /users/me/reseller-identity
-  uploadResellerIdentity: async (formData: FormData): Promise<ApiResponse<{ identityUrl: string }>> => {
+  uploadResellerIdentity: async (formData: FormData): Promise<ApiResponse<User>> => {
     console.log('🆔 === UPLOAD RESELLER IDENTITY ===');
     
     if (!formData) {
@@ -570,7 +577,7 @@ export const UserAPI = {
           user: userData,
           data: userData,
           message: response.message || 'Identity uploaded successfully'
-        } as any;
+        };
       } else {
         throw new Error(response.message || 'Identity upload failed');
       }
@@ -663,9 +670,9 @@ export const UserAPI = {
     }
     
     if (requests) {
-      return requests.get('users/all') as any;
+      return requests.get('users/all');
     }
-    return safeGet('users/all') as any;
+    return safeGet('users/all');
   },
   
   getClients: async (): Promise<ApiResponse<User[]>> => {
@@ -748,11 +755,25 @@ export const UserAPI = {
         throw new Error('No authentication token available');
       }
       
-      if (requests) {
-        return requests.post('users/admin', {}) as any;
+      let response;
+      if (requests && typeof requests.post === 'function') {
+        response = await requests.post('users/admin', {});
+      } else {
+        response = await safePost('users/admin', {});
       }
       
-      return safePost('users/admin', {}) as any;
+      // Normalize and return ApiResponse<User>
+      if (response?.success !== false && (response?.user || response?.data)) {
+        const userData = response.user || response.data || response;
+        return {
+          success: true,
+          user: userData,
+          data: userData,
+          message: response.message || 'Admin created successfully'
+        };
+      }
+      
+      throw new Error(response?.message || 'Failed to create admin');
     } catch (error: any) {
       console.error('Error creating admin:', error);
       throw error;
@@ -784,4 +805,27 @@ export const UserAPI = {
     
     getRecommendedResellers: (): Promise<any> => 
       requests.get('users/resellers/recommended'),
+  
+  // Helper: Get avatar URL for current user (derived from profile)
+  getUserAvatar: async (userId?: string): Promise<ApiResponse<{ avatarUrl?: string }>> => {
+    try {
+      // Reuse getMe to avoid backend dependency on a dedicated avatar endpoint
+      const profile = await UserAPI.getMe();
+      const user = profile.user || profile.data as any;
+      const avatar = user?.avatar;
+      const avatarUrl = avatar?.fullUrl || avatar?.url || user?.photoURL;
+      return {
+        success: true,
+        data: { avatarUrl },
+        message: avatarUrl ? 'Avatar fetched successfully' : 'No avatar found'
+      };
+    } catch (error: any) {
+      console.error('❌ getUserAvatar failed:', error);
+      return {
+        success: false,
+        data: { avatarUrl: undefined },
+        message: error?.message || 'Failed to get avatar'
+      } as any;
+    }
+  },
 };

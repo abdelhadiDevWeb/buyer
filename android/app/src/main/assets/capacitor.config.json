@@ -1,0 +1,9 @@
+{
+	"appId": "com.mazadclick.buyer",
+	"appName": "Buyer",
+	"webDir": "www",
+	"server": {
+		"url": "https://mazad-click-buyer.vercel.app",
+		"cleartext": false
+	}
+}

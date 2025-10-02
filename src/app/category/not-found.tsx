@@ -1,8 +1,8 @@
 import Link from 'next/link';
-// Avoid useTranslation on server prerender
+import { useTranslation } from 'react-i18next';
 
 export default function NotFound() {
-  const t = (key: string) => key;
+  const { t } = useTranslation();
   return (
     <div style={{ 
       padding: '100px 20px', 

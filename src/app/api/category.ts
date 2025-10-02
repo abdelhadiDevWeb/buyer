@@ -40,7 +40,14 @@ export const CategoryAPI = {
   getCategories: async (): Promise<ApiResponse<Category[]>> => {
     try {
       const res = await requests.get('category');
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Category[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Category[]>;
     } catch (error: unknown) {
       throw error;
     }
@@ -49,7 +56,14 @@ export const CategoryAPI = {
   getRootCategories: async (): Promise<ApiResponse<Category[]>> => {
     try {
       const res = await requests.get('category/roots');
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Category[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Category[]>;
     } catch (error: unknown) {
       throw error;
     }
@@ -58,7 +72,14 @@ export const CategoryAPI = {
   getCategoryTree: async (): Promise<ApiResponse<Category[]>> => {
     try {
       const res = await requests.get('category/tree');
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Category[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Category[]>;
     } catch (error: unknown) {
       throw error;
     }
@@ -68,7 +89,14 @@ export const CategoryAPI = {
     try {
       const url = parentId ? `category/by-parent?parentId=${parentId}` : 'category/by-parent';
       const res = await requests.get(url);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Category[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Category[]>;
     } catch (error: unknown) {
       throw error;
     }
@@ -77,7 +105,14 @@ export const CategoryAPI = {
   getCategory: async (id: string): Promise<ApiResponse<Category>> => {
     try {
       const res = await requests.get(`category/${id}`);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Category>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Category>;
     } catch (error: unknown) {
       throw error;
     }
@@ -86,7 +121,14 @@ export const CategoryAPI = {
   getCategoryWithAncestors: async (id: string): Promise<ApiResponse<CategoryWithAncestors>> => {
     try {
       const res = await requests.get(`category/${id}/with-ancestors`);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<CategoryWithAncestors>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<CategoryWithAncestors>;
     } catch (error: unknown) {
       throw error;
     }
@@ -95,7 +137,14 @@ export const CategoryAPI = {
   getCategoryWithDescendants: async (id: string): Promise<ApiResponse<CategoryWithDescendants>> => {
     try {
       const res = await requests.get(`category/${id}/with-descendants`);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<CategoryWithDescendants>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<CategoryWithDescendants>;
     } catch (error: unknown) {
       throw error;
     }

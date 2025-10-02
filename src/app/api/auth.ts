@@ -98,13 +98,23 @@ export const AuthAPI = {
       
       const res = await requests.post('auth/signup', user);
       console.log('🔐 AuthAPI.signup response:', {
-        success: (res as any).success,
-        hasUser: !!(res as any).data,
-        requiresPhoneVerification: (res as any).requiresPhoneVerification,
-        message: (res as any).message
+        success: 'success' in res ? res.success : false,
+        hasUser: !!('data' in res ? res.data : res),
+        requiresPhoneVerification: 'requiresPhoneVerification' in res ? res.requiresPhoneVerification : false,
+        message: 'message' in res ? res.message : 'Response received'
       });
       
-      return res as any;
+      // Ensure we return the correct type
+      if ('success' in res) {
+        return res as ApiResponse<User>;
+      } else {
+        // Handle AxiosResponse case
+        return {
+          success: res.status >= 200 && res.status < 300,
+          data: res.data,
+          message: 'Request completed'
+        } as ApiResponse<User>;
+      }
     } catch (error: unknown) {
       console.error('❌ AuthAPI.signup failed:', error);
       throw error;
@@ -118,22 +128,22 @@ export const AuthAPI = {
       // Use the correct field name expected by backend
       const res = await requests.post('auth/refresh', { refresh_token: refreshToken });
       console.log('🔄 AuthAPI.refresh response:', {
-        success: (res as any).success,
-        hasTokens: !!((res as any).accessToken || (res as any).access_token)
+        success: 'success' in res ? res.success : false,
+        hasTokens: !!('accessToken' in res ? res.accessToken : ('access_token' in res ? res.access_token : undefined))
       });
       
       // Normalize response format
       const normalizedResponse: AuthResponse = {
-        user: (res as any).user,
-        success: (res as any).success || true,
-        accessToken: (res as any).accessToken || (res as any).access_token,
-        refreshToken: (res as any).refreshToken || (res as any).refresh_token,
-        message: (res as any).message
+        user: 'user' in res ? res.user : undefined,
+        success: 'success' in res ? res.success : true,
+        accessToken: 'accessToken' in res ? res.accessToken : ('access_token' in res ? res.access_token : undefined),
+        refreshToken: 'refreshToken' in res ? res.refreshToken : ('refresh_token' in res ? res.refresh_token : undefined),
+        message: 'message' in res ? res.message : undefined
       };
 
       if (normalizedResponse.accessToken) {
         normalizedResponse.session = {
-          accessToken: normalizedResponse.accessToken || '',
+          accessToken: normalizedResponse.accessToken,
           refreshToken: normalizedResponse.refreshToken || ''
         };
       }
@@ -150,7 +160,20 @@ export const AuthAPI = {
       console.log('🚪 AuthAPI.signout called');
       const res = await requests.delete('auth/signout');
       console.log('🚪 AuthAPI.signout response:', res);
-      return res as any;
+      // Normalize to ApiResponse<null>
+      if ('success' in res) {
+        return {
+          success: res.success,
+          data: null,
+          message: 'message' in res ? (res as any).message : undefined,
+        } as ApiResponse<null>;
+      }
+      // Axios-like response shape fallback
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: null,
+        message: (res as any)?.data?.message ?? 'Request completed',
+      } as ApiResponse<null>;
     } catch (error: any) {
       console.error('❌ AuthAPI.signout failed:', error);
       throw error;
@@ -163,7 +186,21 @@ export const AuthAPI = {
       console.log('🔑 AuthAPI.resetPassword called for phone:', data.phone);
       const res = await requests.post('auth/reset-password/confirm', data);
       console.log('🔑 AuthAPI.resetPassword response:', res);
-      return res as any;
+      // Normalize to ApiResponse<{ message: string }>
+      if ('success' in res) {
+        return {
+          success: res.success,
+          data: { message: (res as any).message ?? 'Request completed' },
+          message: (res as any).message,
+        } as ApiResponse<{ message: string }>;
+      }
+      // Axios-like response shape fallback
+      const message = (res as any)?.data?.message ?? 'Request completed';
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: { message },
+        message,
+      } as ApiResponse<{ message: string }>;
     } catch (error: unknown) {
       console.error('❌ AuthAPI.resetPassword failed:', error);
       throw error;

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
   auctionTitle,
   isLoading = false
 }) => {
-  
+  const { t } = useTranslation();
   const [selectedType, setSelectedType] = useState<'like' | 'dislike' | null>(null);
   const [comment, setComment] = useState('');
 
@@ -128,7 +129,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                   fontWeight: '700',
                   color: '#333'
                 }}>
-                  Félicitations
+                  {t('review.congratulations')}
                 </h2>
                 <p style={{
                   margin: 0,
@@ -136,7 +137,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                   fontSize: '16px',
                   lineHeight: '1.5'
                 }}>
-                  Vous avez remporté l'enchère {auctionTitle && `"${auctionTitle}"`}
+                  {t('review.youWonAuction')} {auctionTitle && `"${auctionTitle}"`}
                 </p>
               </div>
 
@@ -149,7 +150,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                   marginBottom: '15px',
                   textAlign: 'center'
                 }}>
-                  Évaluez votre expérience
+                  {t('review.rateYourExperience')}
                 </h3>
 
                 {/* Like/Dislike Options */}
@@ -180,7 +181,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                     }}
                   >
                     <span style={{ fontSize: '20px' }}>👍</span>
-                    J'aime
+                    {t('review.like')}
                   </motion.button>
 
                   <motion.button
@@ -205,7 +206,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                     }}
                   >
                     <span style={{ fontSize: '20px' }}>👎</span>
-                    Je n'aime pas
+                    {t('review.dislike')}
                   </motion.button>
                 </div>
 
@@ -218,12 +219,12 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                     color: '#333',
                     marginBottom: '8px'
                   }}>
-                    Ajouter un commentaire (optionnel)
+                    {t('review.addComment')} ({t('review.optional')})
                   </label>
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder={"Partagez plus de détails sur votre expérience..."}
+                    placeholder={t('review.commentPlaceholder')}
                     rows={4}
                     style={{
                       width: '100%',
@@ -276,7 +277,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                     e.currentTarget.style.backgroundColor = 'white';
                   }}
                 >
-                  Annuler
+                  {t('common.cancel')}
                 </button>
 
                 <motion.button
@@ -311,7 +312,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                       animation: 'spin 1s linear infinite'
                     }} />
                   )}
-                  {isLoading ? 'Envoi...' : 'Soumettre l\'avis'}
+                  {isLoading ? t('review.submitting') : t('review.submitReview')}
                 </motion.button>
               </div>
             </motion.div>

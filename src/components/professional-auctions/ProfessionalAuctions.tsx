@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { AuctionsAPI } from "@/app/api/auctions";
 import app from '@/config';
+import { useTranslation } from 'react-i18next';
 import useAuth from '@/hooks/useAuth';
 import { CLIENT_TYPE } from '@/types/User';
 import "../auction-details/st.css";
@@ -80,7 +81,7 @@ export function calculateTimeRemaining(endDate: string): Timer {
 }
 
 const ProfessionalAuctions: React.FC = () => {
-  
+  const { t } = useTranslation();
   const { isLogged, auth } = useAuth();
   const [professionalAuctions, setProfessionalAuctions] = useState<ProfessionalAuction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -180,7 +181,7 @@ const ProfessionalAuctions: React.FC = () => {
   // Helper function to get seller display name
   const getSellerDisplayName = useCallback((auction: ProfessionalAuction) => {
     if (auction.hidden === true) {
-      return 'Anonyme';
+      return t('common.anonymous');
     }
     
     const ownerName = auction.owner?.firstName && auction.owner?.lastName 
@@ -188,8 +189,8 @@ const ProfessionalAuctions: React.FC = () => {
       : auction.owner?.name;
     const sellerName = auction.seller?.name;
     
-    return ownerName || sellerName || 'Vendeur';
-  }, []);
+    return ownerName || sellerName || t('professionalAuctions.seller');
+  }, [t]);
 
   // Swiper settings
   const settings = useMemo(() => ({
@@ -525,7 +526,7 @@ const ProfessionalAuctions: React.FC = () => {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}>
-              Enchères Professionnelles
+              {t('professionalAuctions.title', 'Professional Auctions')}
             </h2>
             <p style={{
               fontSize: 'clamp(1rem, 2vw, 1.25rem)',
@@ -534,7 +535,7 @@ const ProfessionalAuctions: React.FC = () => {
               margin: '0 auto',
               lineHeight: '1.6',
             }}>
-              Enchères professionnelles exclusives réservées aux utilisateurs vérifiés.
+              {t('professionalAuctions.description', 'Exclusive professional auctions available only to verified professional users')}
             </p>
           </div>
 
@@ -576,7 +577,7 @@ const ProfessionalAuctions: React.FC = () => {
                       >
                         {/* Professional Badge */}
                         <div className="professional-badge">
-                          Professionnel
+                          PROFESSIONAL
                         </div>
 
                         {/* Auction Image */}
@@ -588,7 +589,7 @@ const ProfessionalAuctions: React.FC = () => {
                           <img
                             src={
                               auction.thumbs && auction.thumbs.length > 0
-                                ? `${app.imageBaseURL}${auction.thumbs[0].url}`
+                                ? `${app.route}${auction.thumbs[0].url}`
                                 : DEFAULT_AUCTION_IMAGE
                             }
                             alt={auction.title}
@@ -643,7 +644,7 @@ const ProfessionalAuctions: React.FC = () => {
                                 color: '#666',
                                 margin: '0 0 4px 0',
                               }}>
-                                Prix actuel
+                                Current Price
                               </p>
                               <p style={{
                                 fontSize: 'clamp(1.125rem, 2.5vw, 1.25rem)',
@@ -660,7 +661,7 @@ const ProfessionalAuctions: React.FC = () => {
                                 color: '#666',
                                 margin: '0 0 4px 0',
                               }}>
-                                Départ
+                                Starting
                               </p>
                               <p style={{
                                 fontSize: '0.875rem',
@@ -682,9 +683,9 @@ const ProfessionalAuctions: React.FC = () => {
                             <img
                               src={
                                 auction.seller?.profileImage?.url
-                                  ? `${app.imageBaseURL}${auction.seller.profileImage.url}`
+                                  ? `${app.route}${auction.seller.profileImage.url}`
                                   : auction.owner?.profileImage?.url
-                                  ? `${app.imageBaseURL}${auction.owner.profileImage.url}`
+                                  ? `${app.route}${auction.owner.profileImage.url}`
                                   : auction.seller?.photoURL
                                   ? `${app.route}${auction.seller.photoURL}`
                                   : auction.owner?.photoURL
@@ -708,7 +709,7 @@ const ProfessionalAuctions: React.FC = () => {
                               color: '#666',
                               fontWeight: '500',
                             }}>
-                               {auction.hidden ? 'Anonyme' : getSellerDisplayName(auction)}
+                               {auction.hidden ? t('common.anonymous') : getSellerDisplayName(auction)}
                             </span>
                           </div>
 
@@ -738,7 +739,7 @@ const ProfessionalAuctions: React.FC = () => {
                                 e.currentTarget.style.boxShadow = 'none';
                               }}
                             >
-                              Voir les détails
+                              View Details
                             </button>
                           </Link>
 
@@ -763,7 +764,7 @@ const ProfessionalAuctions: React.FC = () => {
                                 gap: '4px',
                               }}>
                                 <span>👤</span>
-                                Anonyme
+                                {t('common.anonymous')}
                               </span>
                             </div>
                           )}
@@ -881,14 +882,14 @@ const ProfessionalAuctions: React.FC = () => {
                 color: '#374151',
                 marginBottom: '8px',
               }}>
-                Aucune enchère professionnelle
+                No Professional Auctions Available
               </h3>
               <p style={{
                 fontSize: '1rem',
                 color: '#6b7280',
                 margin: 0,
               }}>
-                Revenez plus tard pour de nouvelles enchères.
+                Check back later for exclusive professional auctions
               </p>
             </div>
           )}
@@ -926,7 +927,7 @@ const ProfessionalAuctions: React.FC = () => {
                   e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 99, 177, 0.3)';
                 }}
               >
-                Voir toutes les enchères professionnelles
+                View All Professional Auctions
               </button>
             </Link>
           </div>

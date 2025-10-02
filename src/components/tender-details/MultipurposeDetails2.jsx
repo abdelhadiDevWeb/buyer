@@ -19,6 +19,7 @@ import app from "@/config"; // Import the app config
 import { calculateTimeRemaining } from "../live-auction/Home1LiveAuction";
 import { ReviewAPI } from "@/app/api/review"; // Import Review API
 import { CommentAPI } from "@/app/api/comment";
+import { useTranslation } from 'react-i18next';
 import { motion } from "framer-motion";
 
 // Helper function to calculate time remaining and format with leading zeros
@@ -51,14 +52,7 @@ function getTimeRemaining(endDate) {
 }
 
 const MultipurposeDetails2 = () => {
-  const t = (key, opts) => {
-    const translations = {
-      'auctionDetails.reviews': 'Avis',
-      'auctionDetails.reviewWarning': 'Vous devez être connecté pour laisser un avis',
-      'common.anonymous': 'Anonyme'
-    };
-    return translations[key] || key;
-  };
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -92,6 +86,8 @@ const MultipurposeDetails2 = () => {
   const [loadingAutoBid, setLoadingAutoBid] = useState(false); // State for loading auto bid
   const [hasExistingAutoBid, setHasExistingAutoBid] = useState(false); // State to track if user has existing auto-bid
   const [deletingAutoBid, setDeletingAutoBid] = useState(false); // State for deleting auto bid
+  const [showCongrats, setShowCongrats] = useState(false); // Winner banner visibility
+  const [showAcceptedModal, setShowAcceptedModal] = useState(false); // Owner accepted offer modal
 
   // Get tender ID from URL params or search params
   const routeId = params?.id;
@@ -245,7 +241,6 @@ const MultipurposeDetails2 = () => {
               title: "Appel d'offres de test",
               description: "Ceci est un appel d'offres de test pour le développement",
               maxBudget: 100000,
-              currentLowestBid: 95000,
               tenderType: "SERVICE",
               status: "OPEN",
               category: { name: "Services informatiques" },
@@ -376,7 +371,7 @@ const MultipurposeDetails2 = () => {
       console.log("Fetching offers for tender:", tenderId);
       
       // Fetch all offers for this tender
-      const offersResponse = await OfferAPI.getOffers();
+      const offersResponse = await OfferAPI.getOffersByTenderId(tenderId);
       console.log("Offers response:", offersResponse);
       
       if (offersResponse.success && offersResponse.data) {
@@ -461,6 +456,20 @@ const MultipurposeDetails2 = () => {
     fetchMyTenderBids();
   }, [isLogged, auth.tokens, tenderId, auth.user?._id]);
 
+  // When owner accepts participant's offer → show congratulation modal and open chat
+  useEffect(() => {
+    try {
+      if (!isLogged || !auth?.user?._id || !Array.isArray(myOffers)) return;
+      const hasAccepted = myOffers.some(bid => (bid.status === 'accepted' || bid.status === 'ACCEPTED'));
+      if (hasAccepted && !showAcceptedModal) {
+        setShowAcceptedModal(true);
+        toast.success("🎉 Votre offre a été acceptée ! Un chat avec l'acheteur va s'ouvrir.");
+        // Auto open chat after short delay
+        setTimeout(() => router.push('/messages'), 1500);
+      }
+    } catch (_) {}
+  }, [isLogged, auth?.user?._id, myOffers, showAcceptedModal]);
+
   useEffect(() => {
     // Fetch all tenders for 'Appels d'Offres Similaires'
     const fetchAllTenders = async () => {
@@ -509,7 +518,6 @@ const MultipurposeDetails2 = () => {
   const safeVideos = safeTenderData.videos || [];
   const safeTitle = safeTenderData.title || safeTenderData.name || "Appel d'offres";
   const safeMaxBudget = safeTenderData.maxBudget || safeTenderData.budget || safeTenderData.maximumBudget || 0;
-  const safeCurrentLowestBid = safeTenderData.currentLowestBid || safeTenderData.lowestBid || safeTenderData.currentPrice || safeMaxBudget;
   const safeOwner = safeTenderData.owner || safeTenderData.seller || null;
   const safeEndingAt = safeTenderData.endingAt || safeTenderData.endDate || safeTenderData.endTime;
   const safeStartingAt = safeTenderData.startingAt || safeTenderData.startDate || safeTenderData.startTime;
@@ -518,6 +526,7 @@ const MultipurposeDetails2 = () => {
   const safeSubCategory = safeTenderData.subCategory || safeTenderData.subcategory || null;
   const safeTenderType = safeTenderData.tenderType || safeTenderData.type || "SERVICE";
   const safeStatus = safeTenderData.status || safeTenderData.state || "OPEN";
+  const safeAwardedTo = safeTenderData.awardedTo || safeTenderData.awardedUser || null;
   const safeLocation = safeTenderData.location || safeTenderData.address || "";
   const safeWilaya = safeTenderData.wilaya || safeTenderData.region || "";
   const safeQuantity = safeTenderData.quantity || safeTenderData.amount || "";
@@ -527,6 +536,19 @@ const MultipurposeDetails2 = () => {
   // Using the real end date if available, otherwise fallback to static date
   const endDate = safeEndingAt || "2024-09-23 11:42:00";
   const { days, hours, minutes, seconds } = useCountdownTimer(endDate);
+
+  // Detect winner (current user is awarded) and show congratulatory banner once
+  useEffect(() => {
+    try {
+      if (!isLogged || !auth?.user?._id || !safeAwardedTo) return;
+      const awardedId = typeof safeAwardedTo === 'string' ? safeAwardedTo : safeAwardedTo?._id;
+      const isWinner = awardedId && awardedId === auth.user._id;
+      if (isWinner && safeStatus === 'AWARDED' && !showCongrats) {
+        setShowCongrats(true);
+        toast.success("🎉 Félicitations ! Vous avez remporté cet appel d'offres. Un chat avec l'acheteur est disponible.");
+      }
+    } catch (_) {}
+  }, [isLogged, auth?.user?._id, safeAwardedTo, safeStatus, showCongrats]);
 
   // Rest of the component remains the same
   const settings = useMemo(() => {
@@ -635,243 +657,222 @@ const MultipurposeDetails2 = () => {
     safeOwner &&
     auth.user._id === (safeOwner._id || safeOwner);
 
-  // Handle bid submission
-  // Fixed handleBidSubmit function for MultipurposeDetails2 .jsx
-const handleBidSubmit = async (e) => {
-  e.preventDefault();
+  // Handle bid submission for tender (lowest price bidding)
+  const handleBidSubmit = async (e) => {
+    e.preventDefault();
 
-  console.log(
-    "[MultipurposeDetails2 ] handleBidSubmit - isLogged:",
-    isLogged,
-    "auth.tokens:",
-    auth.tokens,
-    "auth.user:",
-    auth.user
-  );
-
-  try {
-    // Check if user is logged in
-    if (!isLogged || !auth.tokens) {
-      toast.error("Veuillez vous connecter pour soumettre une offre");
-      router.push("/auth/login");
-      return;
-    }
-
-    // Get bid amount from the quantity input
-    const bidInput = document.querySelector(".quantity__input");
-    if (!bidInput || !bidInput.value) {
-      toast.error("Veuillez entrer un montant d'offre valide");
-      return;
-    }
-
-    const bidAmountRaw = bidInput.value;
-    console.log("[MultipurposeDetails2 ] Raw bid amount:", bidAmountRaw);
-
-    // Clean the bid amount - remove formatting
-    let cleanBidAmount = bidAmountRaw;
-    
-    // Remove ",00 " suffix if present
-    cleanBidAmount = cleanBidAmount.replace(/,00\s*$/, "");
-    
-    // Remove all commas (thousands separators)
-    cleanBidAmount = cleanBidAmount.replace(/,/g, "");
-    
-    // Remove any currency symbols or extra spaces
-    cleanBidAmount = cleanBidAmount.replace(/[^\d.]/g, "");
-
-    console.log("[MultipurposeDetails2 ] Cleaned bid amount:", cleanBidAmount);
-
-    // Parse to number and validate
-    const numericBidAmount = parseFloat(cleanBidAmount);
-    
-    if (isNaN(numericBidAmount) || numericBidAmount <= 0) {
-      toast.error("Veuillez entrer un nombre valide pour le montant de l'offre");
-      return;
-    }
-
-    // For tenders, bids should typically be lower than the maximum budget
-    const maxBudget = tenderData?.maxBudget || 0;
-    const currentLowestBid = tenderData?.currentLowestBid || maxBudget;
-    
-    if (numericBidAmount >= currentLowestBid) {
-      toast.error(`Votre offre doit être inférieure à l'offre actuelle la plus basse de ${formatPrice(currentLowestBid)}`);
-      return;
-    }
-
-    // Round to avoid floating point issues
-    const finalBidAmount = Math.round(numericBidAmount);
-
-    console.log("[MultipurposeDetails2 ] Final bid amount:", finalBidAmount);
-    console.log("[MultipurposeDetails2 ] Current price:", currentPrice);
-
-    // Prepare the payload for tender bid
-    const payload = {
-      bidAmount: finalBidAmount,
-      bidder: auth.user._id,
-      tenderOwner: safeOwner?._id || safeOwner,
-    };
-
-    console.log("[MultipurposeDetails2 ] Sending offer payload:", payload);
-
-    // Validate required fields
-    if (!payload.bidder) {
-      toast.error("Utilisateur non valide. Veuillez vous reconnecter.");
-      return;
-    }
+    console.log(
+      "[MultipurposeDetails2] handleBidSubmit - isLogged:",
+      isLogged,
+      "auth.tokens:",
+      auth.tokens,
+      "auth.user:",
+      auth.user
+    );
 
     try {
-      // Send the offer using TendersAPI (primary method)
-      const offerResponse = await TendersAPI.submitTenderBid(tenderId, payload);
+      // Check if user is logged in
+      if (!isLogged || !auth.tokens) {
+        toast.error("Veuillez vous connecter pour soumettre une offre");
+        router.push("/auth/login");
+        return;
+      }
+
+      // Get bid amount from the quantity input
+      const bidInput = document.querySelector(".quantity__input");
+      if (!bidInput || !bidInput.value) {
+        toast.error("Veuillez entrer un montant d'offre valide");
+        return;
+      }
+
+      const bidAmountRaw = bidInput.value;
+      console.log("[MultipurposeDetails2] Raw bid amount:", bidAmountRaw);
+
+      // Clean the bid amount - remove formatting
+      let cleanBidAmount = bidAmountRaw;
       
-      console.log("[MultipurposeDetails2 ] Offer submission response:", offerResponse);
+      // Remove ",00 " suffix if present
+      cleanBidAmount = cleanBidAmount.replace(/,00\s*$/, "");
       
-      // Also try to send via OfferAPI as backup/additional method
+      // Remove all commas (thousands separators)
+      cleanBidAmount = cleanBidAmount.replace(/,/g, "");
+      
+      // Remove any currency symbols or extra spaces
+      cleanBidAmount = cleanBidAmount.replace(/[^\d.]/g, "");
+
+      console.log("[MultipurposeDetails2] Cleaned bid amount:", cleanBidAmount);
+
+      // Parse to number and validate
+      const numericBidAmount = parseFloat(cleanBidAmount);
+      
+      if (isNaN(numericBidAmount) || numericBidAmount <= 0) {
+        toast.error("Veuillez entrer un nombre valide pour le montant de l'offre");
+        return;
+      }
+
+      // For tenders, only validate that the bid amount is positive
+      // No maximum or minimum limits - tenders accept any price
+
+      // Round to avoid floating point issues
+      const finalBidAmount = Math.round(numericBidAmount);
+
+      console.log("[MultipurposeDetails2] Final bid amount:", finalBidAmount);
+      console.log("[MultipurposeDetails2] Tender data:", tenderData);
+
+      // Prepare the payload for tender bid (only send bidAmount, controller will set bidder and tenderOwner)
+      const payload = {
+        bidAmount: finalBidAmount,
+      };
+
+      console.log("[MultipurposeDetails2] Sending tender bid payload:", payload);
+      console.log("[MultipurposeDetails2] Payload types:", {
+        bidAmount: typeof payload.bidAmount
+      });
+
+      // Validate required fields
+      if (!auth.user._id) {
+        toast.error("Utilisateur non valide. Veuillez vous reconnecter.");
+        return;
+      }
+
       try {
-        const offerAPIPayload = {
-          price: finalBidAmount,
-          user: auth.user._id,
-          owner: safeOwner?._id || safeOwner,
-        };
+        // Send the tender bid using TendersAPI
+        const bidResponse = await TendersAPI.submitTenderBid(tenderId, payload);
+        console.log("[MultipurposeDetails2] Tender bid response:", bidResponse);
         
-        const offerAPIResponse = await OfferAPI.sendOffer(tenderId, offerAPIPayload);
-        console.log("[MultipurposeDetails2 ] OfferAPI response:", offerAPIResponse);
-      } catch (offerAPIErr) {
-        console.warn("OfferAPI submission failed (this is optional):", offerAPIErr);
-        // Don't show error as TendersAPI succeeded
-      }
-      
-      // Always show success message if we got here (no exception thrown)
-      toast.success("Votre offre a été soumise avec succès !");
-      
-      // Clear the input
-      if (bidInput) {
-        bidInput.value = formatPrice(finalBidAmount);
-      }
-      
-      // Refresh the auction data after placing a bid
-      try {
-        const refreshedData = await TendersAPI.getTenderById(tenderId);
-        setTenderData(refreshedData);
-        if (refreshedData?.offers) {
-          setOffers(refreshedData.offers);
+        // Also create an offer record for tracking
+        try {
+          const offerPayload = {
+            price: finalBidAmount,
+            user: auth.user._id,
+            owner: safeOwner?._id || safeOwner,
+          };
+          
+          console.log("[MultipurposeDetails2] Creating offer with payload:", offerPayload);
+          const offerResponse = await OfferAPI.sendOffer(tenderId, offerPayload);
+          console.log("[MultipurposeDetails2] Offer creation response:", offerResponse);
+        } catch (offerErr) {
+          console.warn("Offer creation failed (this is optional):", offerErr);
+          // Don't show error as tender bid succeeded
         }
         
-        // Also refresh offers using OfferAPI and tender bids
-        await fetchOffers();
-        await fetchTenderBids();
-        await fetchMyTenderBids();
-      } catch (refreshErr) {
-        console.warn("Failed to refresh auction data after successful bid:", refreshErr);
-        // Don't show error for this as the bid was successful
-      }
-    } catch (submitError) {
-      // If there was an error during submission, check if it has a status code
-      // Status codes in the 2xx range indicate success despite the error
-      const statusCode = submitError?.response?.status;
-      const hasSuccessStatus = statusCode && statusCode >= 200 && statusCode < 300;
-      
-      console.log("[MultipurposeDetails2 ] Offer submission error:", submitError, "Status code:", statusCode);
-      
-      // If we have a success status code, treat it as success
-      if (hasSuccessStatus) {
+        // Show success message
         toast.success("Votre offre a été soumise avec succès !");
         
         // Clear the input
         if (bidInput) {
-          bidInput.value = formatPrice(finalBidAmount);
+          bidInput.value = "";
         }
         
-        // Try to refresh the auction data
+        // Refresh the tender data after placing a bid
         try {
-          const refreshedData = await TendersAPI.getTenderById(tenderId);
-          setTenderData(refreshedData);
-          if (refreshedData?.offers) {
-            setOffers(refreshedData.offers);
+          const refreshedResponse = await TendersAPI.getTenderById(tenderId);
+          console.log("Refreshed tender response:", refreshedResponse);
+          
+          // Extract data from response using the same logic as initial fetch
+          let refreshedData = null;
+          if (refreshedResponse) {
+            if (refreshedResponse.data) {
+              refreshedData = refreshedResponse.data;
+            } else if (refreshedResponse.success && refreshedResponse.data) {
+              refreshedData = refreshedResponse.data;
+            } else if (typeof refreshedResponse === 'object' && !refreshedResponse.success) {
+              refreshedData = refreshedResponse;
+            }
           }
+          
+          console.log("Extracted refreshed data:", refreshedData);
+          if (refreshedData) {
+            setTenderData(refreshedData);
+          }
+          
+          // Refresh offers and bids
+          await fetchOffers();
+          await fetchTenderBids();
+          await fetchMyTenderBids();
         } catch (refreshErr) {
-          console.warn("Failed to refresh auction data after successful bid:", refreshErr);
+          console.warn("Failed to refresh tender data after successful bid:", refreshErr);
         }
-      } else {
-        // Re-throw the error to be caught by the outer catch block
-        throw submitError;
+      } catch (submitError) {
+        console.log("[MultipurposeDetails2] Tender bid submission error:", submitError);
+        
+        // Check if the error response contains a success flag
+        if (submitError?.response?.data?.success === true) {
+          console.log("[MultipurposeDetails2] Detected successful operation despite error:", submitError);
+          toast.success("Votre offre a été soumise avec succès !");
+          
+          // Refresh data
+          try {
+            const refreshedResponse = await TendersAPI.getTenderById(tenderId);
+            console.log("Error case refreshed tender response:", refreshedResponse);
+            
+            // Extract data from response using the same logic as initial fetch
+            let refreshedData = null;
+            if (refreshedResponse) {
+              if (refreshedResponse.data) {
+                refreshedData = refreshedResponse.data;
+              } else if (refreshedResponse.success && refreshedResponse.data) {
+                refreshedData = refreshedResponse.data;
+              } else if (typeof refreshedResponse === 'object' && !refreshedResponse.success) {
+                refreshedData = refreshedResponse;
+              }
+            }
+            
+            console.log("Error case extracted refreshed data:", refreshedData);
+            if (refreshedData) {
+              setTenderData(refreshedData);
+            }
+            
+            await fetchOffers();
+            await fetchTenderBids();
+            await fetchMyTenderBids();
+          } catch (refreshErr) {
+            console.warn("Failed to refresh tender data:", refreshErr);
+          }
+        } else {
+          // Re-throw the error to be caught by the outer catch block
+          throw submitError;
+        }
       }
-    }
 
-  } catch (err) {
-    console.error("Error placing bid:", err);
-    
-    // Check if the error response contains a success flag that's true
-    // This handles cases where the offer was saved but error was thrown anyway
-    if (err?.response?.data?.success === true) {
-      console.log("[MultipurposeDetails2 ] Detected successful operation despite error:", err);
-      toast.success("Votre offre a été soumise avec succès !");
+    } catch (err) {
+      console.error("Error placing tender bid:", err);
       
-      // Refresh the auction data
-      try {
-        const refreshedData = await TendersAPI.getTenderById(tenderId);
-        setTenderData(refreshedData);
-        if (refreshedData?.offers) {
-          setOffers(refreshedData.offers);
-        }
-      } catch (refreshErr) {
-        console.warn("Failed to refresh auction data:", refreshErr);
-      }
-      return;
-    }
-    
-    // Extract user-friendly error message
-    let errorMessage = "Échec de la soumission d'offre. Veuillez réessayer.";
-    
-    if (err?.response?.data?.message) {
-      const serverMessage = err.response.data.message;
+      // Extract user-friendly error message
+      let errorMessage = "Échec de la soumission d'offre. Veuillez réessayer.";
       
-      // Handle specific error messages from server
-      switch (serverMessage) {
-        case 'OFFER.INVALID_PRICE':
-          errorMessage = "Montant d'offre invalide. Vérifiez que votre offre respecte les critères.";
-          break;
-        case 'OFFER.AUCTION_ENDED':
-          errorMessage = "Cet appel d'offres est terminé.";
-          break;
-        case 'OFFER.INSUFFICIENT_AMOUNT':
-          errorMessage = "Le montant de votre offre est insuffisant.";
-          break;
-        case 'OFFER.OWNER_CANNOT_BID':
-          errorMessage = "Vous ne pouvez pas soumettre d'offre sur votre propre appel d'offres.";
-          break;
-        default:
-          errorMessage = serverMessage;
-      }
-    } else if (err?.message) {
-      errorMessage = err.message;
-    }
-    
-    // Check if we have data despite the error
-    if (err?.response?.data) {
-      console.log("[MultipurposeDetails2 ] Error response contains data:", err.response.data);
+      console.log("Error details:", err);
+      console.log("Error response:", err?.response?.data);
       
-      // If the data contains a valid offer object, consider it a success
-      if (err.response.data.price || err.response.data._id) {
-        console.log("[MultipurposeDetails2 ] Found offer data in error response, treating as success");
-        toast.success("Votre offre a été soumise avec succès !");
+      if (err?.response?.data?.message) {
+        const serverMessage = err.response.data.message;
+        console.log("Server error message:", serverMessage);
         
-        // Try to refresh auction data
-        try {
-          const refreshedData = await TendersAPI.getTenderById(tenderId);
-          setTenderData(refreshedData);
-          if (refreshedData?.offers) {
-            setOffers(refreshedData.offers);
-          }
-        } catch (refreshErr) {
-          console.warn("Failed to refresh auction data:", refreshErr);
+        // Handle specific error messages from server
+        if (serverMessage.includes('Bid amount must be lower than current lowest bid')) {
+          errorMessage = `Votre offre doit être inférieure à l'offre actuelle la plus basse. ${serverMessage}`;
+        } else if (serverMessage.includes('Bid amount is below minimum acceptable price')) {
+          errorMessage = `Le montant de votre offre est inférieur au prix minimum acceptable. ${serverMessage}`;
+        } else if (serverMessage.includes('Tender is no longer accepting bids')) {
+          errorMessage = "Cet appel d'offres n'accepte plus d'offres.";
+        } else if (serverMessage.includes('Tender has ended')) {
+          errorMessage = "Cet appel d'offres est terminé.";
+        } else if (serverMessage.includes('Bid amount must be a positive number')) {
+          errorMessage = "Le montant de l'offre doit être un nombre positif.";
+        } else if (serverMessage.includes('Bidder ID is required')) {
+          errorMessage = "Erreur d'authentification. Veuillez vous reconnecter.";
+        } else if (serverMessage.includes('Tender owner ID is required')) {
+          errorMessage = "Erreur de données. Veuillez réessayer.";
+        } else {
+          errorMessage = serverMessage;
         }
-        return;
+      } else if (err?.message) {
+        errorMessage = err.message;
       }
+      
+      toast.error(errorMessage);
     }
-    
-    toast.error(errorMessage);
-  }
-};
+  };
 
   // Handle bid submission for similar tenders
   const handleSimilarTenderBid = async (similarTender) => {
@@ -897,11 +898,8 @@ const handleBidSubmit = async (e) => {
         return;
       }
 
-      // For tenders, calculate suggested bid amount (lower than current lowest bid)
-      const maxBudget = similarTender.maxBudget || 0;
-      const currentLowestBid = similarTender.currentLowestBid || maxBudget;
-      // Suggest a bid that's 5% lower than current lowest bid
-      const suggestedBid = Math.floor(currentLowestBid * 0.95);
+      // For tenders, suggest a starting bid amount (user can change it)
+      const suggestedBid = 1000; // Default starting bid - user can modify
 
       // Show confirmation dialog
       const confirmed = window.confirm(
@@ -1067,8 +1065,25 @@ const handleBidSubmit = async (e) => {
       setReviewText("");
       setReviewRating(0);
       // Optionally refresh auction data to show new review
-      const refreshedData = await TendersAPI.getTenderById(tenderId);
-      setTenderData(refreshedData);
+      const refreshedResponse = await TendersAPI.getTenderById(tenderId);
+      console.log("Review refresh tender response:", refreshedResponse);
+      
+      // Extract data from response using the same logic as initial fetch
+      let refreshedData = null;
+      if (refreshedResponse) {
+        if (refreshedResponse.data) {
+          refreshedData = refreshedResponse.data;
+        } else if (refreshedResponse.success && refreshedResponse.data) {
+          refreshedData = refreshedResponse.data;
+        } else if (typeof refreshedResponse === 'object' && !refreshedResponse.success) {
+          refreshedData = refreshedResponse;
+        }
+      }
+      
+      console.log("Review extracted refreshed data:", refreshedData);
+      if (refreshedData) {
+        setTenderData(refreshedData);
+      }
     } catch (err) {
       console.error("Error submitting review:", err);
       if (err.response?.data?.message) {
@@ -1130,10 +1145,27 @@ const handleBidSubmit = async (e) => {
         
         // Also refresh the auction data to get any updates in the background
         try {
-          const refreshedData = await TendersAPI.getTenderById(tenderId);
-          setTenderData(refreshedData);
-          if (refreshedData?.offers) {
-            setOffers(refreshedData.offers);
+          const refreshedResponse = await TendersAPI.getTenderById(tenderId);
+          console.log("Auto-bid refresh tender response:", refreshedResponse);
+          
+          // Extract data from response using the same logic as initial fetch
+          let refreshedData = null;
+          if (refreshedResponse) {
+            if (refreshedResponse.data) {
+              refreshedData = refreshedResponse.data;
+            } else if (refreshedResponse.success && refreshedResponse.data) {
+              refreshedData = refreshedResponse.data;
+            } else if (typeof refreshedResponse === 'object' && !refreshedResponse.success) {
+              refreshedData = refreshedResponse;
+            }
+          }
+          
+          console.log("Auto-bid extracted refreshed data:", refreshedData);
+          if (refreshedData) {
+            setTenderData(refreshedData);
+            if (refreshedData?.offers) {
+              setOffers(refreshedData.offers);
+            }
           }
         } catch (refreshErr) {
           console.warn("Could not refresh auction data:", refreshErr);
@@ -1337,6 +1369,100 @@ const handleBidSubmit = async (e) => {
         </div>
       ) : (
         <>
+          {showCongrats && (
+            <div style={{
+              position: 'sticky', top: 0, zIndex: 50,
+              background: 'linear-gradient(90deg, #0f9d58, #34a853)', color: '#fff',
+              padding: '14px 16px', borderRadius: 12, marginBottom: 16,
+              boxShadow: '0 8px 24px rgba(52,168,83,0.35)'
+            }}>
+              <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',justifyContent:'space-between'}}>
+                <div style={{display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center',
+                    fontSize: 18
+                  }}>🎉</div>
+                  <div>
+                    <div style={{fontWeight:700, fontSize:16}}>Félicitations ! Vous avez remporté cet appel d'offres</div>
+                    <div style={{opacity:0.95, fontSize:13}}>Un chat avec l'acheteur est prêt pour finaliser les détails.</div>
+                  </div>
+                </div>
+                <div style={{display:'flex', gap:8}}>
+                  <button
+                    onClick={() => router.push('/messages')}
+                    style={{
+                      background:'#fff', color:'#0f9d58', border:'none',
+                      padding:'10px 14px', borderRadius:10, fontWeight:700, cursor:'pointer'
+                    }}
+                    title="Ouvrir le chat avec l'acheteur"
+                  >
+                    Ouvrir le chat
+                  </button>
+                  <button
+                    onClick={() => setShowCongrats(false)}
+                    style={{
+                      background:'rgba(255,255,255,0.15)', color:'#fff', border:'1px solid rgba(255,255,255,0.35)',
+                      padding:'10px 12px', borderRadius:10, cursor:'pointer'
+                    }}
+                    title="Masquer"
+                  >
+                    Masquer
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showAcceptedModal && (
+            <div style={{
+              position:'fixed', inset:0, background:'rgba(0,0,0,0.45)',
+              display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000
+            }}>
+              <div style={{
+                width:'min(520px, 92vw)', background:'#fff', borderRadius:16,
+                boxShadow:'0 24px 64px rgba(0,0,0,0.25)', overflow:'hidden'
+              }}>
+                <div style={{
+                  background:'linear-gradient(135deg,#4caf50,#2e7d32)', color:'#fff', padding:'18px 22px'
+                }}>
+                  <div style={{display:'flex', alignItems:'center', gap:12}}>
+                    <div style={{
+                      width:40, height:40, borderRadius:'50%', background:'rgba(255,255,255,0.2)',
+                      display:'flex', alignItems:'center', justifyContent:'center', fontSize:22
+                    }}>🎉</div>
+                    <div>
+                      <div style={{fontSize:18, fontWeight:800}}>Félicitations !</div>
+                      <div style={{opacity:0.95, fontSize:14}}>Votre offre a été acceptée par l'acheteur</div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{padding:'20px 22px'}}>
+                  <p style={{marginTop:0, color:'#333', lineHeight:1.6}}>
+                    Vous avez remporté cet appel d'offres. Un chat est prêt pour démarrer la discussion et finaliser les détails.
+                  </p>
+                  <div style={{display:'flex', gap:10, justifyContent:'flex-end', marginTop:16}}>
+                    <button
+                      onClick={() => setShowAcceptedModal(false)}
+                      style={{
+                        background:'#f1f3f5', color:'#333', border:'1px solid #e0e0e0', padding:'10px 14px',
+                        borderRadius:10, cursor:'pointer', fontWeight:600
+                      }}
+                    >Plus tard</button>
+                    <button
+                      onClick={() => router.push('/messages')}
+                      style={{
+                        background:'linear-gradient(90deg,#2e7d32,#4caf50)', color:'#fff', border:'none',
+                        padding:'10px 16px', borderRadius:10, cursor:'pointer', fontWeight:800,
+                        boxShadow:'0 6px 16px rgba(76,175,80,0.35)'
+                      }}
+                    >Ouvrir le chat</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div
             className="auction-details-section auction-details-modern mb-110"
             style={{ marginTop: 0, paddingTop: 0 }}
@@ -1348,7 +1474,7 @@ const handleBidSubmit = async (e) => {
                   <div className="main-image-container" style={{ position: 'relative' }}>
                     {showVideo && safeVideos.length > 0 ? (
                       <video
-                        src={`${app.imageBaseURL}${safeVideos[selectedVideoIndex]?.url}`}
+                        src={`${app.route}${safeVideos[selectedVideoIndex]?.url}`}
                         controls
                         className="main-video"
                         crossOrigin="use-credentials"
@@ -1369,7 +1495,7 @@ const handleBidSubmit = async (e) => {
                     <img
                       src={
                         safeAttachments.length > 0
-                          ? `${app.imageBaseURL}${safeAttachments[selectedImageIndex]?.url}`
+                          ? `${app.route}${safeAttachments[selectedImageIndex]?.url}`
                           : DEFAULT_AUCTION_IMAGE
                       }
                       alt={safeTitle}
@@ -1446,7 +1572,7 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                             >
                               <img
-                                src={`${app.imageBaseURL}${attachment.url}`}
+                                src={`${app.route}${attachment.url}`}
                               alt={`${safeTitle} - Image ${index + 1}`}
                                 onError={(e) => {
                                   e.target.onerror = null;
@@ -1486,7 +1612,7 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                           >
                             <video
-                              src={`${app.imageBaseURL}${video.url}`}
+                              src={`${app.route}${video.url}`}
                               style={{
                                 width: '100%',
                                 height: '80px',
@@ -1707,15 +1833,9 @@ const handleBidSubmit = async (e) => {
                         <table className="table">
                           <tbody>
                             <tr>
-                              <td className="fw-bold">Budget maximum</td>
+                              <td className="fw-bold">Quantité</td>
                               <td>
-                                {safeMaxBudget > 0 ? formatPrice(safeMaxBudget) : "Non spécifié"}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className="fw-bold">Offre la plus basse</td>
-                              <td>
-                                {safeCurrentLowestBid > 0 ? formatPrice(safeCurrentLowestBid) : "Aucune offre"}
+                                {safeTenderData.quantity || "Non spécifiée"}
                               </td>
                             </tr>
                             <tr>
@@ -1772,10 +1892,50 @@ const handleBidSubmit = async (e) => {
                             appel d'offres.
                           </div>
                         )}
+                        
+                        {/* Tender Bidding Instructions */}
+                        {!isOwner && (
+                          <div
+                            style={{
+                              backgroundColor: "#e3f2fd",
+                              border: "1px solid #bbdefb",
+                              borderRadius: "8px",
+                              padding: "12px",
+                              marginBottom: "16px",
+                              color: "#1565c0",
+                              fontSize: "13px",
+                              fontWeight: "500",
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: "8px",
+                            }}
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style={{ marginTop: "2px", flexShrink: 0 }}
+                            >
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                            </svg>
+                            <div>
+                              <strong>Instructions pour l'appel d'offres :</strong>
+                              <ul style={{ margin: "4px 0 0 0", paddingLeft: "16px" }}>
+                                <li>Entrez le prix que vous proposez pour ce projet</li>
+                                <li>Vous pouvez proposer n'importe quel prix</li>
+                                <li>Le gagnant sera sélectionné par l'acheteur selon ses critères</li>
+                                <li>Aucune limite de prix - soumettez votre offre</li>
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+                        
                         <div className="quantity-counter-and-btn-area">
                           <HandleQuantity
-                            initialValue={formatPrice(safeCurrentLowestBid)}
-                            startingPrice={safeMaxBudget}
+                            initialValue=""
+                            startingPrice={0}
+                            placeholder="Entrez n'importe quel prix"
                           />
                           <button
                             className="bid-btn-modern"
@@ -1789,7 +1949,7 @@ const handleBidSubmit = async (e) => {
                             title={
                               isOwner
                                 ? "Vous ne pouvez pas soumettre d'offre sur votre propre appel d'offres."
-                                : undefined
+                                : "Soumettre votre offre"
                             }
                           >
                             <div className="btn-content">
@@ -1921,7 +2081,7 @@ const handleBidSubmit = async (e) => {
                             </label>
                             <input
                               type="number"
-                              value={professionalAmount || safeCurrentLowestBid}
+                              value={professionalAmount || safeMaxBudget}
                               onChange={(e) => setProfessionalAmount(e.target.value)}
                               placeholder={
                                 loadingAutoBid 
@@ -1957,9 +2117,9 @@ const handleBidSubmit = async (e) => {
                             <p style={{
                               margin: '8px 0 0 0',
                               color: '#666',
-                              fontSize: '12px'
+                              fontSize: '12px',
                             }}>
-                              Budget maximum: {formatPrice(safeMaxBudget)}
+                              Quantité: {safeTenderData.quantity || "Non spécifiée"}
                             </p>
                           </div>
 
@@ -2950,7 +3110,7 @@ const handleBidSubmit = async (e) => {
                                   <img
                                     src={
                                       offer.user?.avatar?.url
-                                        ? `${app.imageBaseURL}${offer.user.avatar.url}`
+                                        ? `${app.route}${offer.user.avatar.url}`
                                         : DEFAULT_USER_AVATAR
                                     }
                                     alt={offer.user?.firstName || "User"}
@@ -3191,7 +3351,7 @@ const handleBidSubmit = async (e) => {
                                           src={
                                             tender.attachments &&
                                             tender.attachments.length > 0
-                                              ? `${app.imageBaseURL}${tender.attachments[0].url}`
+                                              ? `${app.route}${tender.attachments[0].url}`
                                               : DEFAULT_AUCTION_IMAGE
                                           }
                                           alt={tender.title || "Appel d'offres"}
@@ -3458,30 +3618,19 @@ const handleBidSubmit = async (e) => {
                                             >
                                               {hasTenderEnded
                                                 ? "Appel d'offres terminé"
-                                                : "Meilleure offre"}
+                                                : "Quantité"}
                                             </p>
                                             <p
                                               style={{
-                                                fontSize: "20px",
-                                                fontWeight: "700",
+                                                fontSize: "14px",
+                                                fontWeight: "500",
                                                 margin: 0,
-                                                background: hasTenderEnded
+                                                color: hasTenderEnded
                                                   ? "#888"
-                                                  : "linear-gradient(90deg, #0063b1, #00a3e0)",
-                                                WebkitBackgroundClip: "text",
-                                                backgroundClip: "text",
-                                                WebkitTextFillColor:
-                                                  hasTenderEnded
-                                                    ? "#888"
-                                                    : "transparent",
+                                                  : "#333",
                                               }}
                                             >
-                                              {Number(
-                                                tender.currentLowestBid ||
-                                                  tender.maxBudget ||
-                                                  0
-                                              ).toLocaleString()}{" "}
-                                              DA
+                                              {tender.quantity || "Non spécifiée"}
                                             </p>
                                           </div>
                                           <div
@@ -3543,7 +3692,7 @@ const handleBidSubmit = async (e) => {
                                             <img
                                               src={
                                                 tender.owner?.avatar?.url
-                                                  ? `${app.imageBaseURL}${tender.owner.avatar.url}`
+                                                  ? `${app.route}${tender.owner.avatar.url}`
                                                   : DEFAULT_PROFILE_IMAGE
                                               }
                                               alt="Owner"
@@ -3575,12 +3724,8 @@ const handleBidSubmit = async (e) => {
                                               }}
                                             >
                                               {(() => {
-                                                // Check if tender is hidden (anonymous) - check multiple possible fields
-                                                if (tender.hidden === true || 
-                                                    tender.owner?.hidden === true || 
-                                                    tender.seller?.hidden === true ||
-                                                    tender.owner?.isAnonymous === true ||
-                                                    tender.seller?.isAnonymous === true) {
+                                                // Check if tender is hidden (anonymous)
+                                                if (tender.hidden === true) {
                                                   return t('common.anonymous');
                                                 }
                                                 
@@ -3598,18 +3743,6 @@ const handleBidSubmit = async (e) => {
                                                 // Try seller name
                                                 if (tender.seller?.name) {
                                                   return tender.seller.name;
-                                                }
-                                                // Try just firstName
-                                                if (tender.owner?.firstName) {
-                                                  return tender.owner.firstName;
-                                                }
-                                                // Try seller firstName + lastName
-                                                if (tender.seller?.firstName && tender.seller?.lastName) {
-                                                  return `${tender.seller.firstName} ${tender.seller.lastName}`;
-                                                }
-                                                // Try seller firstName
-                                                if (tender.seller?.firstName) {
-                                                  return tender.seller.firstName;
                                                 }
                                                 // Default fallback
                                                 return 'Acheteur';

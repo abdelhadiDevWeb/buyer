@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.mazadclick.buyer.app-mergeDebugResources-25:/values-v31/values-v31.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\7490\\.gradle\\caches\\8.9\\transforms\\2fa0f7aba173f92b0f38d4b0e11e83c1\\transformed\\core-splashscreen-1.0.1\\res\\values-v31\\values-v31.xml",
+                    "from": {
+                        "startLines": "2,9",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,473",
+                        "endLines": "8,13",
+                        "endColumns": "12,12",
+                        "endOffsets": "468,697"
+                    }
+                }
+            ]
+        }
+    ]
+}

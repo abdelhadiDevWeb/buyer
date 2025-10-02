@@ -16,6 +16,7 @@ import { AxiosInterceptor } from '@/app/api/AxiosInterceptor';
 import './style.css'
 import SocketProvider from "@/contexts/socket";
 import { useCreateSocket } from '@/contexts/socket';
+
 export default function Home() {
   const { initializeAuth } = useAuth();
   const [animatedSections, setAnimatedSections] = useState({
@@ -956,7 +957,7 @@ export default function Home() {
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 1L15.09 8.26L23 9L17 14.74L18.18 22.5L12 19.77L5.82 22.5L7 14.74L1 9L8.91 8.26L12 1Z"/>
                         </svg>
-                        Approuvé par des partenaires
+                        Trusted by 5,000+ Business Partners
                       </div>
 
                       {/* Enhanced Main Headline */}
@@ -973,7 +974,7 @@ export default function Home() {
                           cursor: 'default',
                         }}
                       >
-                        Plateforme d'
+                        Professional{' '}
                         <span className="gradient-text" style={{
                           background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 25%, #1d4ed8 50%, #1e3a8a 75%, #312e81 100%)',
                           backgroundSize: '300% 300%',
@@ -984,7 +985,7 @@ export default function Home() {
                           display: 'inline-block',
                           animation: 'gradientShift 4s ease infinite',
                         }}>
-                          Enchères Professionnelle
+                          Auction Platform
                         </span>
                         <br />
                         <span style={{
@@ -993,7 +994,7 @@ export default function Home() {
                           backgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                         }}>
-                          Pour l'Excellence Commerciale
+                          For Business Excellence
                         </span>
                       </h1>
 
@@ -1013,7 +1014,7 @@ export default function Home() {
                           padding: '0 20px',
                         }}
                       >
-                        Accédez à des actifs premium et des opportunités exclusives
+                        Access premium business assets, participate in professional auctions, and secure strategic acquisitions from verified enterprise sellers in our secure B2B marketplace.
                       </p>
 
                       {/* CTA Buttons */}
@@ -1065,7 +1066,7 @@ export default function Home() {
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM17 13H13V17H11V13H7V11H11V7H13V11H17V13Z"/>
                           </svg>
-                          Accéder à la plateforme
+                          Access Platform
                         </button>
 
                         <button
@@ -1104,7 +1105,7 @@ export default function Home() {
                             <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.09 0 2.13.2 3.1.56"/>
                             <path d="M21 3l-6 6-4-4"/>
                           </svg>
-                          Comment enchérir
+                          Learn Process
                         </button>
                       </div>
 
@@ -1124,18 +1125,18 @@ export default function Home() {
                         {[
                           {
                             icon: 'M12 1L15.09 8.26L23 9L17 14.74L18.18 22.5L12 19.77L5.82 22.5L7 14.74L1 9L8.91 8.26L12 1Z',
-                            title: 'Actifs premium',
-                            description: 'Lots vérifiés et de haute qualité'
+                            title: 'Premium Assets',
+                            description: 'Access exclusive business assets and investments'
                           },
                           {
                             icon: 'M9 12l2 2 4-4M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.09 0 2.13.2 3.1.56',
-                            title: 'Plateforme sécurisée',
-                            description: 'Transactions protégées et fiables'
+                            title: 'Secure Platform',
+                            description: 'Enterprise-grade security and verification'
                           },
                           {
                             icon: 'M13 2.05v3.03c3.39.49 6 3.39 6 6.92 0 .9-.18 1.75-.5 2.54l2.6 1.53c.56-1.24.9-2.62.9-4.07 0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V2.05c-5.05.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-2.6-1.53C16.17 17.98 14.21 19 12 19z',
-                            title: 'Support 24/7',
-                            description: 'Assistance dédiée en continu'
+                            title: '24/7 Support',
+                            description: 'Professional assistance whenever you need it'
                           }
                         ].map((item, index) => (
                           <div

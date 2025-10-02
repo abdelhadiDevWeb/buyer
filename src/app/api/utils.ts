@@ -216,17 +216,17 @@ export const requests = {
       });
   },
 
-  postFormData: <T = any>(url: string, formData: FormData, config = {}): Promise<ApiResponse<T>> => {
+  postFormData: <T = any>(url: string, formData: FormData, config: AxiosRequestConfig = {} as AxiosRequestConfig): Promise<ApiResponse<T>> => {
     console.log('🌐 POST FormData request to:', url);
     if (!formData) {
       throw new Error('FormData is required for postFormData');
     }
     
     return instance.post(url, formData, {
-      ...config,
+      ...(config || {}),
       headers: {
         'Content-Type': 'multipart/form-data',
-        ...((config as any).headers || {})
+        ...((config && (config as any).headers) ? (config as any).headers : {})
       }
     })
     .then(responseBody)

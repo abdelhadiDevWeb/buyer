@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useCreateSocket } from '@/contexts/socket';
 import { authStore } from '@/contexts/authStore';
-import type { Notification as GeneralBellNotification } from '@/types';
 
 interface ChatNotification {
   _id: string;
@@ -36,7 +35,7 @@ function formatDate(dateString: string): string {
 
 export function useChatNotificationsWithGeneral() {
   const [chatNotifications, setChatNotifications] = useState<ChatNotification[]>([]);
-  const [chatCreatedNotifications, setChatCreatedNotifications] = useState<GeneralBellNotification[]>([]);
+  const [chatCreatedNotifications, setChatCreatedNotifications] = useState<GeneralNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -113,17 +112,17 @@ export function useChatNotificationsWithGeneral() {
       
       if (response.ok) {
         const data = await response.json();
-        const chatRelatedNotifications: GeneralBellNotification[] = data.notifications || [];
+        const chatRelatedNotifications = data.notifications || [];
         
         console.log('ChatHook: Found chat-related notifications:', chatRelatedNotifications.length);
-        console.log('ChatHook: Chat notifications details:', chatRelatedNotifications.map((n: GeneralBellNotification) => ({
+        console.log('ChatHook: Chat notifications details:', chatRelatedNotifications.map((n: any) => ({
           id: n._id,
           title: n.title,
           type: n.type,
           read: n.read,
-          senderId: n.data?.senderId,
-          senderName: n.data?.senderName,
-          senderEmail: n.data?.senderEmail,
+          senderId: n.senderId,
+          senderName: n.senderName,
+          senderEmail: n.senderEmail,
           createdAt: n.createdAt
         })));
         

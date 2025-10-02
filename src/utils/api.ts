@@ -1,8 +1,7 @@
 import axios from "axios";
 import { authStore } from "@/contexts/authStore";
 
-type LoginInput = { login: string; password: string };
-export const loginFunction = async (data: LoginInput): Promise<string> => {
+export const loginFunction = async (data: { login: string; password: string }) => {
   console.log(data);
   if (data.login == "" || data.password == "") {
     return "you need to add all information";
@@ -10,12 +9,12 @@ export const loginFunction = async (data: LoginInput): Promise<string> => {
 
   try {
     const res = await axios.post(
-      `https://mazad-click-server.onrender.com/auth/signin`,
+      `https://mazadclick-server.onrender.com/auth/signin`,
       { login: data.login, password: data.password },
       {
         withCredentials: true,
         headers: {
-          "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER,
+          "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
         },
       }
     );
@@ -48,21 +47,20 @@ export const loginFunction = async (data: LoginInput): Promise<string> => {
     ) {
       return "to login you must be a valid email address or a phone number";
     }
-    return "error";
   }
 };
 
-type RegisterInput = {
+export const registerFunction = async (data: {
   email: string;
   password: string;
   phone: string;
   firstname: string;
   lastname: string;
   gender?: string;
+  gerden?: string;
   type?: string;
   sellerType?: string;
-};
-export const registerFunction = async (data: RegisterInput): Promise<string> => {
+}) => {
   console.log(data);
 
   if (
@@ -71,13 +69,13 @@ export const registerFunction = async (data: RegisterInput): Promise<string> => 
     data.phone == "" ||
     data.firstname == "" ||
     data.lastname == "" ||
-    data.gender == ""
+    (data as any).gerden == ""
   ) {
     return "please enter all information to register";
   }
   try {
     const res = await axios.post(
-      `https://mazad-click-server.onrender.com/auth/signup`,
+      `https://mazadclick-server.onrender.com/auth/signup`,
       {
         email: data.email,
         firstName: data.firstname,
@@ -91,7 +89,7 @@ export const registerFunction = async (data: RegisterInput): Promise<string> => 
       {
         withCredentials: true,
         headers: {
-          "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER,
+          "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
         },
       }
     );
@@ -106,15 +104,14 @@ export const registerFunction = async (data: RegisterInput): Promise<string> => 
     if (err?.response?.data?.message == "Phone number already exist") {
       return "Phone number already exist";
     }
-    return "error";
   }
 };
 
 export const getAuction = async () => {
   try {
-    const res = await axios.get(`https://mazad-click-server.onrender.com/bid`, {
+    const res = await axios.get(`https://mazadclick-server.onrender.com/bid`, {
       headers: {
-        "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER,
+        "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
       }
     });
     return res.data;
@@ -130,10 +127,10 @@ export const getDeatilsAuction = async (id: string) => {
     const { auth } = authStore.getState();
     const token = auth?.tokens?.accessToken;
 
-    const res = await axios.get(`https://mazad-click-server.onrender.com/bid/${id}`, {
+    const res = await axios.get(`https://mazadclick-server.onrender.com/bid/${id}`, {
       headers: {
         Authorization: token ? `Bearer ${token}` : '',
-        "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER,
+        "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
       }
     });
     return res.data;
@@ -143,19 +140,18 @@ export const getDeatilsAuction = async (id: string) => {
   }
 }
 
-type SendOfferInput = { id: string; offer: number };
-export const sendOffer = async (data: SendOfferInput) => {
+export const sendOffer = async (data: { id: string; offer: number }) => {
   try {
     // Get auth token from authStore instead of localStorage
     const { auth } = authStore.getState();
     const token = auth?.tokens?.accessToken;
 
-    const res = await axios.post(`https://mazad-click-server.onrender.com/offers/${data.id}`, {
+    const res = await axios.post(`https://mazadclick-server.onrender.com/offers/${data.id}`, {
       offer: data.offer
     }, {
       headers: {
         Authorization: token ? `Bearer ${token}` : '',
-        "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER,
+        "x-access-key": process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
       }
     });
     return res.data;

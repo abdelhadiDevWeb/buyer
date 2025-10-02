@@ -10,6 +10,7 @@ import { ChatAPI } from '@/app/api/chat'
 import { MessageAPI } from '@/app/api/messages'
 import { useCreateSocket } from '@/contexts/socket'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import Image from 'next/image'
 
 // Define TypeScript interfaces
@@ -42,7 +43,7 @@ interface Message {
 type SocketMessage = Message;
 
 export default function Chat() {
-  const t = (key: string, _opts?: any) => key;
+  const { t } = useTranslation();
   const router = useRouter()
   const searchParams = useSearchParams()
   const [err, setErr] = useState<boolean>(false)
@@ -58,9 +59,14 @@ export default function Chat() {
   const [typing, setTyping] = useState<boolean>(false)
   const [isOnline, setIsOnline] = useState<boolean>(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
+  const [allReceivedMessages, setAllReceivedMessages] = useState<Set<string>>(new Set())
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLInputElement>(null)
+  const currentChatRef = useRef<string>('')
+  const processedMessagesRef = useRef<Set<string>>(new Set())
+  const socketListenersAddedRef = useRef<boolean>(false)
+  const messageTimeoutRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
   const socketContext = useCreateSocket()
   const socket = socketContext?.socket
 
@@ -253,34 +259,133 @@ export default function Chat() {
     }
   }, [search, chats])
 
-  // Socket event listeners
+  // Update current chat ref when idChat changes and clear processed messages
   useEffect(() => {
-    if (!socket || !socket.on) return
+    currentChatRef.current = idChat
+    // Clear processed messages when switching chats to allow new messages
+    processedMessagesRef.current.clear()
+    // Also clear global received messages for the new chat
+    setAllReceivedMessages(new Set())
+    // Clear all pending timeouts when switching chats
+    messageTimeoutRef.current.forEach(timeout => clearTimeout(timeout))
+    messageTimeoutRef.current.clear()
+  }, [idChat])
+
+  // Socket event listeners - Completely rewritten to prevent duplicates
+  useEffect(() => {
+    if (!socket || !socket.on || socketListenersAddedRef.current) {
+      console.log('🔌 Socket listeners already added or socket not available')
+      return
+    }
+
+    console.log('🔌 Setting up socket listeners for the first time')
 
     const handleNewMessage = (data: SocketMessage) => {
-      if (data.idChat === idChat) {
-        setMessages(prev => [...prev, data])
+      console.log('📨 Socket message received:', data)
+      
+      // Check if message was already received globally
+      if (allReceivedMessages.has(data._id)) {
+        console.log('⚠️ Message already received globally, skipping duplicate')
+        return
       }
-      setReget(prev => !prev)
+      
+      // Clear any existing timeout for this message
+      if (messageTimeoutRef.current.has(data._id)) {
+        clearTimeout(messageTimeoutRef.current.get(data._id)!)
+      }
+      
+      // Debounce message processing to prevent rapid duplicates
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Processing debounced message:', data._id)
+        
+        // Only add message if it's for the current chat
+        if (data.idChat === currentChatRef.current) {
+          setMessages(prev => {
+            // Double-check if message already exists in state
+            const messageExists = prev.some(msg => msg._id === data._id)
+            if (messageExists) {
+              console.log('⚠️ Message already exists in state, skipping duplicate')
+              return prev
+            }
+            console.log('✅ Adding new message to current chat')
+            return [...prev, data]
+          })
+        }
+        
+        // Mark message as received globally
+        setAllReceivedMessages(prev => new Set([...prev, data._id]))
+        
+        // Update chat list to show new message
+        setReget(prev => !prev)
+        
+        // Clean up timeout
+        messageTimeoutRef.current.delete(data._id)
+      }, 100) // 100ms debounce
+      
+      messageTimeoutRef.current.set(data._id, timeoutId)
     }
 
     const handleAdminMessage = (data: SocketMessage) => {
-      if (data.idChat === idChat) {
-        setMessages(prev => [...prev, data])
+      console.log('📨 Admin message received:', data)
+      
+      // Check if message was already received globally
+      if (allReceivedMessages.has(data._id)) {
+        console.log('⚠️ Admin message already received globally, skipping duplicate')
+        return
       }
-      setReget(prev => !prev)
+      
+      // Clear any existing timeout for this message
+      if (messageTimeoutRef.current.has(data._id)) {
+        clearTimeout(messageTimeoutRef.current.get(data._id)!)
+      }
+      
+      // Debounce message processing to prevent rapid duplicates
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Processing debounced admin message:', data._id)
+        
+        // Only add message if it's for the current chat
+        if (data.idChat === currentChatRef.current) {
+          setMessages(prev => {
+            // Double-check if message already exists in state
+            const messageExists = prev.some(msg => msg._id === data._id)
+            if (messageExists) {
+              console.log('⚠️ Admin message already exists in state, skipping duplicate')
+              return prev
+            }
+            console.log('✅ Adding new admin message to current chat')
+            return [...prev, data]
+          })
+        }
+        
+        // Mark message as received globally
+        setAllReceivedMessages(prev => new Set([...prev, data._id]))
+        
+        // Update chat list to show new message
+        setReget(prev => !prev)
+        
+        // Clean up timeout
+        messageTimeoutRef.current.delete(data._id)
+      }, 100) // 100ms debounce
+      
+      messageTimeoutRef.current.set(data._id, timeoutId)
     }
 
+    // Add listeners only once and mark as added
     socket.on('sendMessage', handleNewMessage)
     socket.on('adminMessage', handleAdminMessage)
+    socketListenersAddedRef.current = true
+
+    console.log('✅ Socket listeners added successfully')
 
     return () => {
+      console.log('🧹 Cleaning up socket listeners')
       if (socket && socket.off) {
         socket.off('sendMessage', handleNewMessage)
         socket.off('adminMessage', handleAdminMessage)
+        socketListenersAddedRef.current = false
       }
     }
-  }, [socket, idChat])
+  }, [socket]) // Only run when socket changes
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -293,6 +398,23 @@ export default function Chat() {
       getChats()
     }
   }, [err, getChats, reget])
+
+  // Component cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Chat component unmounting, cleaning up socket listeners')
+      if (socket && socket.off) {
+        socket.off('sendMessage')
+        socket.off('adminMessage')
+      }
+      socketListenersAddedRef.current = false
+      processedMessagesRef.current.clear()
+      
+      // Clear all pending timeouts
+      messageTimeoutRef.current.forEach(timeout => clearTimeout(timeout))
+      messageTimeoutRef.current.clear()
+    }
+  }, [socket])
 
   // Handle key press
   const handleKeyPress = (e: React.KeyboardEvent) => {

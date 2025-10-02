@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Container, 
   Typography, 
@@ -22,7 +22,7 @@ import {
   getPaymentStatusColor 
 } from '@/app/api/payment';
 
-function PaymentSuccessContent() {
+export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed'>('pending');
@@ -255,19 +255,5 @@ function PaymentSuccessContent() {
         </CardContent>
       </Card>
     </Container>
-  );
-}
-
-export default function PaymentSuccessPage() {
-  return (
-    <Suspense fallback={
-      <Container maxWidth="md" sx={{ py: 8 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <CircularProgress />
-        </Box>
-      </Container>
-    }>
-      <PaymentSuccessContent />
-    </Suspense>
   );
 } 

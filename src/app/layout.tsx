@@ -10,7 +10,6 @@ import "../../public/assets/css/slick.css";
 import "../../public/assets/css/bootstrap.min.css";
 import "../../public/assets/css/style.css";
 import "./rtl.css";
-import "../styles/rtl.css";
 
 import ScrollTopBtn from "../components/common/ScrollTopBtn.jsx";
 import useWow from "@/customHooks/useWow";
@@ -22,10 +21,13 @@ import { AxiosInterceptor } from "@/app/api/AxiosInterceptor";
 import { SnackbarProvider } from "@/contexts/snackbarContext";
 import SocketProvider from "@/contexts/socket";
 import FloatingAdminChat from "@/components/FloatingAdminChat";
+import FloatingLanguageSwitcher from "@/components/FloatingLanguageSwitcher";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import I18nProvider from "@/components/I18nProvider";
 import GlobalLoader from "@/components/common/GlobalLoader";
 import InteractiveBackground from "@/components/common/InteractiveBackground";
 import BidChecker from "@/components/BidChecker";
-// Multilanguage removed
+import WinnerAnnouncement from "@/components/WinnerAnnouncement";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   // --- Hooks must be called inside the component function body ---
@@ -42,7 +44,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   // --- The return statement provides the component's UI ---
   return (
     <html
-      lang="fr"
+      lang="en"
       className={`${playfair_display.variable} ${dmsans.variable}`}
       // Prop to prevent hydration errors from browser extensions
       suppressHydrationWarning={true}
@@ -50,15 +52,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <link
           rel="icon"
-          href="/assets/img/fav-icon.svg"
-          type="image/x-icon"
-          sizes="16x16"
+          href="/assets/img/logo.png"
+          type="image/jpeg"
+          sizes="16x16 32x32"
         />
-        <meta name="description" content="Plateforme d'enchères professionnelle MazadClick" />
-        <meta name="keywords" content="enchères, ventes aux enchères, MazadClick, acheteur" />
-        <title>MazadClick - Acheteur</title>
+        <meta name="description" content="Your description here" />
+        <meta name="keywords" content="next.js, SEO, meta tags" />
+        <title>MazadClick-Buyer</title>
       </head>
       <body>
+        <I18nProvider>
+          <LanguageProvider>
             <AxiosInterceptor>
               <SocketProvider>
                 <SnackbarProvider>
@@ -72,12 +76,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   />
                   <GlobalLoader />
                   <BidChecker />
+                  <WinnerAnnouncement />
                   {children}
                   <ScrollTopBtn />
                   <FloatingAdminChat />
+                  <FloatingLanguageSwitcher />
                 </SnackbarProvider>
               </SocketProvider>
             </AxiosInterceptor>
+          </LanguageProvider>
+        </I18nProvider>
       </body>
     </html>
   );

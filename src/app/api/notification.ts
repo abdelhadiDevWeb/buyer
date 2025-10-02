@@ -22,11 +22,11 @@ export const NotificationAPI = {
         }
       });
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching notifications:', error);
-      if ((error as any).response) {
-        console.error('Response status:', (error as any).response.status);
-        console.error('Response data:', (error as any).response.data);
+      if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
       }
       throw error;
     }
@@ -55,11 +55,11 @@ export const NotificationAPI = {
         }
       );
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error marking notification as read:', error);
-      if ((error as any).response) {
-        console.error('Response status:', (error as any).response.status);
-        console.error('Response data:', (error as any).response.data);
+      if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
       }
       throw error;
     }
@@ -88,11 +88,11 @@ export const NotificationAPI = {
         }
       );
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error marking all notifications as read:', error);
-      if ((error as any).response) {
-        console.error('Response status:', (error as any).response.status);
-        console.error('Response data:', (error as any).response.data);
+      if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
       }
       throw error;
     }
@@ -117,11 +117,11 @@ export const NotificationAPI = {
         }
       });
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching unread count:', error);
-      if ((error as any).response) {
-        console.error('Response status:', (error as any).response.status);
-        console.error('Response data:', (error as any).response.data);
+      if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
       }
       // Return 0 on error as a fallback
       return 0;
@@ -151,11 +151,11 @@ export const NotificationAPI = {
         }
       );
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error marking chat notifications as read:', error);
-      if ((error as any).response) {
-        console.error('Response status:', (error as any).response.status);
-        console.error('Response data:', (error as any).response.data);
+      if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
       }
       throw error;
     }

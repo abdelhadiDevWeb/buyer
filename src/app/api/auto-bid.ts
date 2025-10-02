@@ -25,7 +25,14 @@ export const AutoBidAPI = {
   getAutoBids: async (): Promise<ApiResponse<AutoBid[]>> => {
     try {
       const res = await requests.get('auto-bids');
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<AutoBid[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<AutoBid[]>;
     } catch (error: unknown) {
       throw error;
     }
@@ -38,7 +45,14 @@ export const AutoBidAPI = {
       // Use the correct endpoint based on the server controller
       const res = await requests.get(`auto-bid/auction/${auctionId}/user`);
       console.log('Auto-bid get response:', res);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<AutoBid>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<AutoBid>;
     } catch (error: unknown) {
       console.error('Error getting auto-bid:', error);
       throw error;
@@ -52,7 +66,14 @@ export const AutoBidAPI = {
       // Use the correct endpoint based on the server controller
       const res = await requests.post(`auto-bid/${auctionId}`, autoBidData);
       console.log('Auto-bid API response:', res);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<AutoBid>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<AutoBid>;
     } catch (error: unknown) {
       console.error('Error creating/updating auto-bid:', error);
       
@@ -73,7 +94,14 @@ export const AutoBidAPI = {
       console.log('Deleting auto-bid for auction:', auctionId, 'and user:', userId);
       // Use the correct endpoint based on the server controller
       const res = await requests.delete(`auto-bid/${auctionId}/user/${userId}`);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<any>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<any>;
     } catch (error: unknown) {
       console.error('Error deleting auto-bid:', error);
       throw error;

@@ -6,7 +6,8 @@ export const useIdentityStatus = () => {
   const { isLogged } = useAuth();
   const [identityStatus, setIdentityStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [identityData, setIdentityData] = useState<any | null>(null);
+  type Identity = { status?: string } & Record<string, unknown>;
+  const [identityData, setIdentityData] = useState<Identity | null>(null);
 
   const checkIdentityStatus = useCallback(async () => {
     if (!isLogged) {
@@ -21,8 +22,8 @@ export const useIdentityStatus = () => {
       const identity = await IdentityAPI.getMyIdentity();
       
       if (identity && identity.success && identity.data) {
-        setIdentityData(identity.data);
-        setIdentityStatus(identity.data.status);
+        setIdentityData(identity.data as any);
+        setIdentityStatus((identity.data as any).status);
         console.log('✅ Identity status fetched:', identity.data.status);
       } else {
         console.log('⚠️ No identity found or invalid response');
@@ -35,7 +36,7 @@ export const useIdentityStatus = () => {
       setIdentityData(null);
       
       // If it's a 404, it means no identity exists
-      if ((error as any)?.response?.status === 404) {
+      if (error?.response?.status === 404) {
         console.log('📭 No identity found for user (404)');
       }
     } finally {

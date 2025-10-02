@@ -43,15 +43,25 @@ export const ChatAPI = {
         console.log(`📤 Calling POST ${endpoint} with params:`, params);
         const res = await requests.post(endpoint, params);
         console.log(`✅ Success with POST ${endpoint}:`, res);
-        return res as any;
+        if ('success' in res) {
+          return res as ApiResponse<Chat[]>;
+        }
+        return {
+          success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+          data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+          message: (res as any)?.data?.message,
+        } as ApiResponse<Chat[]>;
       } catch (endpointError) {
         console.error(`❌ Endpoint ${endpoint} failed:`, endpointError);
         
         // Return empty array on error instead of trying other endpoints
+        const errorMessage = (endpointError && typeof endpointError === 'object' && 'message' in endpointError)
+          ? String((endpointError as any).message)
+          : 'Unknown error';
         return {
           data: [],
           success: false,
-          message: `Failed to fetch chats: ${(endpointError as any).message || 'Unknown error'}`
+          message: `Failed to fetch chats: ${errorMessage}`
         };
       }
       
@@ -84,7 +94,14 @@ export const ChatAPI = {
           console.log(`📤 Trying to create chat at endpoint: ${endpoint}`);
           const res = await requests.post(endpoint, chatData);
           console.log(`✅ Chat created successfully at ${endpoint}:`, res);
-          return res as any;
+          if ('success' in res) {
+            return res as ApiResponse<Chat>;
+          }
+          return {
+            success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+            data: (res as any)?.data?.data ?? (res as any)?.data,
+            message: (res as any)?.data?.message,
+          } as ApiResponse<Chat>;
         } catch (endpointError) {
           console.log(`❌ Endpoint ${endpoint} failed:`, endpointError);
           continue;

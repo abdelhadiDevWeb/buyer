@@ -1,34 +1,31 @@
-import { ID, ISODateString } from './primitives';
+export enum TENDER_TYPE {
+  PRODUCT = 'PRODUCT',
+  SERVICE = 'SERVICE',
+}
+
+export enum TENDER_STATUS {
+  OPEN = 'OPEN',
+  AWARDED = 'AWARDED',
+  CLOSED = 'CLOSED',
+  ARCHIVED = 'ARCHIVED',
+}
 
 export enum TENDER_AUCTION_TYPE {
   CLASSIC = 'CLASSIC',
   EXPRESS = 'EXPRESS',
 }
 
-export enum TENDER_STATUS {
-  OPEN = 'OPEN',
-  CLOSED = 'CLOSED',
-  DRAFT = 'DRAFT',
-}
-
-export type TENDER_TYPE = 'PRODUCT' | 'SERVICE';
-
-export interface TenderCategory {
-  _id: ID;
-  name: string;
-}
-
 export interface Tender {
-  _id: ID;
+  _id: string;
   owner: any;
   title: string;
   description: string;
   requirements: string[];
-  category?: TenderCategory;
+  category: any;
   subCategory?: any;
   attachments: any[];
-  startingAt: ISODateString;
-  endingAt: ISODateString;
+  startingAt: string;
+  endingAt: string;
   tenderType: TENDER_TYPE;
   auctionType: TENDER_AUCTION_TYPE;
   maxBudget: number;
@@ -41,7 +38,25 @@ export interface Tender {
   awardedTo?: any;
   status: TENDER_STATUS;
   comments: string[];
-  createdAt: ISODateString;
-  updatedAt: ISODateString;
+  createdAt: string;
+  updatedAt: string;
 }
-// Removed duplicate enums and interfaces below to avoid re-definition conflicts
+
+export enum TenderBidStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  DECLINED = 'declined',
+}
+
+export interface TenderBid {
+  _id: string;
+  bidder: any;
+  tenderOwner: any;
+  tender: any;
+  bidAmount: number;
+  proposal?: string;
+  deliveryTime?: number;
+  status: TenderBidStatus;
+  createdAt: string;
+  updatedAt: string;
+}

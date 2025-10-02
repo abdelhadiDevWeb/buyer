@@ -6,7 +6,9 @@ import Link from "next/link";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { TendersAPI } from "@/app/api/tenders";
 import app from '@/config';
+import { useTranslation } from 'react-i18next';
 import { Tender, TENDER_STATUS } from '@/types/tender';
+import useAuth from '@/hooks/useAuth';
 import "../auction-details/st.css";
 import "../auction-details/modern-details.css";
 
@@ -53,12 +55,8 @@ export function calculateTimeRemaining(endDate: string): Timer {
 }
 
 const Home1LiveTenders = () => {
-  const t = (key: string, _opts?: any) => {
-    const translations = {
-      'liveTenders.buyer': 'Acheteur'
-    };
-    return translations[key] || key;
-  };
+  const { t } = useTranslation();
+  const { isLogged, auth } = useAuth();
   const [liveTenders, setLiveTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,15 +70,11 @@ const Home1LiveTenders = () => {
         setLoading(true);
         const data = await TendersAPI.getActiveTenders();
 
-        // Filter out ended tenders and limit to 8 for display
+        // Keep all tenders (including ended) and limit to 8 for display
         const tendersData = (data as any).data || data;
-        const activeTenders = tendersData.filter((tender: Tender) => {
-          if (!tender.endingAt) return false;
-          const endTime = new Date(tender.endingAt);
-          return endTime > new Date() && tender.status === TENDER_STATUS.OPEN;
-        }).slice(0, 8);
+        const limitedTenders = (tendersData || []).slice(0, 8);
 
-        setLiveTenders(activeTenders);
+        setLiveTenders(limitedTenders);
         setError(null);
       } catch (err) {
         console.error("Error fetching tenders:", err);
@@ -144,12 +138,12 @@ const Home1LiveTenders = () => {
     return `${Number(price).toLocaleString()} DA`;
   }, []);
 
-  // Calculate savings
-  const calculateSavings = useCallback((maxBudget: number, currentLowest: number) => {
-    const savings = maxBudget - currentLowest;
-    const percentage = ((savings / maxBudget) * 100).toFixed(0);
-    return { savings, percentage };
-  }, []);
+
+  // Helper function to check if current user is the owner of a tender
+  const isTenderOwner = useCallback((tender: Tender) => {
+    if (!isLogged || !auth.user?._id) return false;
+    return tender.owner?._id === auth.user._id || tender.owner === auth.user._id;
+  }, [isLogged, auth.user?._id]);
 
   // Swiper settings
   const settings = useMemo(() => ({
@@ -331,12 +325,12 @@ const Home1LiveTenders = () => {
               fontWeight: '800',
               color: '#222',
               marginBottom: '16px',
-              background: 'linear-gradient(90deg, #28a745, #20c997)',
+              background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}>
-              Appels d'offres en cours
+              Appels d'Offres en Cours
             </h2>
             <p style={{
               fontSize: '1.1rem',
@@ -345,7 +339,7 @@ const Home1LiveTenders = () => {
               margin: '0 auto',
               lineHeight: '1.6',
             }}>
-              Explorez les appels d'offres actifs et soumettez vos propositions.
+              Soumettez vos offres et remportez des contrats intéressants
             </p>
           </div>
 
@@ -362,15 +356,15 @@ const Home1LiveTenders = () => {
               >
                 {liveTenders.map((tender, idx) => {
                   const timer = timers[tender._id] || { days: "00", hours: "00", minutes: "00", seconds: "00", hasEnded: false };
+                  const isEnded = !!timer.hasEnded;
                   const isAnimated = animatedCards.includes(idx);
                   const isUrgent = parseInt(timer.hours) < 1 && parseInt(timer.minutes) < 30;
-                  const { savings, percentage } = calculateSavings(tender.maxBudget, tender.currentLowestBid);
 
                   // Determine the display name for the tender owner
                   const ownerName = tender.owner?.firstName && tender.owner?.lastName
                     ? `${tender.owner.firstName} ${tender.owner.lastName}`.trim()
                     : tender.owner?.name;
-                  const displayName = ownerName || t('liveTenders.buyer');
+                  const displayName = ownerName || 'Acheteur';
 
                   return (
                     <SwiperSlide key={tender._id} style={{ height: 'auto', display: 'flex', justifyContent: 'center' }}>
@@ -386,6 +380,9 @@ const Home1LiveTenders = () => {
                           maxWidth: '320px',
                           position: 'relative',
                           minHeight: '380px',
+                          opacity: isEnded ? 0.6 : 1,
+                          filter: isEnded ? 'grayscale(60%)' : 'none',
+                          cursor: isEnded ? 'not-allowed' : 'default'
                         }}
                       >
                         {/* Tender Image */}
@@ -393,14 +390,14 @@ const Home1LiveTenders = () => {
                           position: 'relative',
                           height: 'clamp(160px, 25vw, 200px)',
                           overflow: 'hidden',
-                          background: 'linear-gradient(135deg, #28a745, #20c997)',
+                          background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}>
                           {tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url ? (
                             <img
-                              src={`${app.imageBaseURL}${tender.attachments[0].url}`}
+                              src={`${app.route}${tender.attachments[0].url}`}
                               alt={tender.title || 'Tender'}
                               style={{
                                 width: '100%',
@@ -408,7 +405,7 @@ const Home1LiveTenders = () => {
                                 objectFit: 'cover',
                                 transition: 'transform 0.4s ease',
                               }}
-                              onError={(e) => { 
+                              onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
                               }}
@@ -428,7 +425,9 @@ const Home1LiveTenders = () => {
                             position: 'absolute',
                             top: '10px',
                             right: '10px',
-                            background: isUrgent ? 'linear-gradient(45deg, #ff4444, #ff6666)' : 'linear-gradient(45deg, #28a745, #20c997)',
+                            background: isEnded
+                              ? 'rgba(0,0,0,0.55)'
+                              : (isUrgent ? 'linear-gradient(45deg, #ff4444, #ff6666)' : 'linear-gradient(45deg, #8b5cf6, #a855f7)'),
                             color: 'white',
                             padding: '8px 12px',
                             borderRadius: '20px',
@@ -436,13 +435,17 @@ const Home1LiveTenders = () => {
                             fontWeight: '600',
                             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
                           }}>
-                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                              <span className={`timer-digit ${isUrgent ? 'urgent' : ''}`}>{timer.hours}</span>
-                              <span>:</span>
-                              <span className={`timer-digit ${isUrgent ? 'urgent' : ''}`}>{timer.minutes}</span>
-                              <span>:</span>
-                              <span className={`timer-digit ${isUrgent ? 'urgent' : ''}`}>{timer.seconds}</span>
-                            </div>
+                            {isEnded ? (
+                              <span style={{ fontWeight: 800 }}>Terminé</span>
+                            ) : (
+                              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                <span className={`timer-digit ${isUrgent ? 'urgent' : ''}`}>{timer.hours}</span>
+                                <span>:</span>
+                                <span className={`timer-digit ${isUrgent ? 'urgent' : ''}`}>{timer.minutes}</span>
+                                <span>:</span>
+                                <span className={`timer-digit ${isUrgent ? 'urgent' : ''}`}>{timer.seconds}</span>
+                              </div>
+                            )}
                           </div>
 
                           {/* Type Badge */}
@@ -459,6 +462,25 @@ const Home1LiveTenders = () => {
                           }}>
                             {tender.tenderType === 'PRODUCT' ? 'Produit' : 'Service'}
                           </div>
+
+                          {/* Owner Badge */}
+                          {isTenderOwner(tender) && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '10px',
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              background: 'rgba(255, 193, 7, 0.9)',
+                              color: '#212529',
+                              padding: '6px 12px',
+                              borderRadius: '15px',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              Votre appel d'offres
+                            </div>
+                          )}
                         </div>
 
                         {/* Tender Details */}
@@ -478,7 +500,7 @@ const Home1LiveTenders = () => {
                             {tender.title || 'Tender Title'}
                           </h3>
 
-                          {/* Budget Info */}
+                          {/* Location and Quantity Info */}
                           <div style={{
                             display: 'grid',
                             gridTemplateColumns: '1fr 1fr',
@@ -490,53 +512,109 @@ const Home1LiveTenders = () => {
                                 fontSize: '12px',
                                 color: '#666',
                                 margin: '0 0 4px 0',
+                                fontWeight: '600',
                               }}>
-                                Budget maximal
+                                Localisation
                               </p>
                               <p style={{
-                                fontSize: '16px',
-                                fontWeight: '700',
-                                color: '#28a745',
+                                fontSize: '14px',
+                                color: '#333',
                                 margin: 0,
+                                fontWeight: '500',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
                               }}>
-                                {formatPrice(tender.maxBudget)}
+                                {tender.location || tender.wilaya || 'Non spécifiée'}
                               </p>
                             </div>
 
-                            <div>
-                              <p style={{
+                              <div>
+                                <p style={{
+                                  fontSize: '12px',
+                                  color: '#666',
+                                  margin: '0 0 4px 0',
+                                fontWeight: '600',
+                                }}>
+                                Quantité
+                                </p>
+                                <p style={{
+                                fontSize: '14px',
+                                color: '#333',
+                                  margin: 0,
+                                fontWeight: '500',
+                                }}>
+                                {tender.quantity || 'Non spécifiée'}
+                                </p>
+                              </div>
+                          </div>
+
+                          {/* Description */}
+                          {tender.description && (
+                            <div style={{
+                              marginBottom: '16px',
+                            }}>
+                                <p style={{
+                                  fontSize: '12px',
+                                  color: '#666',
+                                  margin: '0 0 4px 0',
+                                fontWeight: '600',
+                                }}>
+                                Description
+                                </p>
+                                <p style={{
+                                fontSize: '13px',
+                                color: '#555',
+                                  margin: 0,
+                                lineHeight: '1.4',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}>
+                                {tender.description}
+                                </p>
+                              </div>
+                            )}
+
+                          {/* Participants Count */}
+                          <div style={{
+                            background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                            borderRadius: '12px',
+                            padding: '12px',
+                            marginBottom: '16px',
+                            border: '1px solid #e9ecef',
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                            }}>
+                              <div style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: '#8b5cf6',
+                                animation: 'pulse 2s infinite',
+                              }}></div>
+                              <span style={{
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#8b5cf6',
+                              }}>
+                                {((tender as any).participantsCount || 0)} participant{(((tender as any).participantsCount || 0) !== 1) ? 's' : ''}
+                              </span>
+                              <span style={{
                                 fontSize: '12px',
                                 color: '#666',
-                                margin: '0 0 4px 0',
                               }}>
-                                Meilleure offre
-                              </p>
-                              <p style={{
-                                fontSize: '16px',
-                                fontWeight: '700',
-                                color: '#20c997',
-                                margin: 0,
-                              }}>
-                                {formatPrice(tender.currentLowestBid)}
-                              </p>
+                                ont soumis des offres
+                              </span>
                             </div>
                           </div>
 
-                          {/* Savings Indicator */}
-                          {savings > 0 && (
-                            <div style={{
-                              background: 'linear-gradient(45deg, #28a745, #20c997)',
-                              color: 'white',
-                              padding: '8px 12px',
-                              borderRadius: '15px',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              textAlign: 'center',
-                              marginBottom: '16px',
-                            }}>
-                              Économies: {formatPrice(savings)} ({percentage}%)
-                            </div>
-                          )}
 
                           {/* Owner Info */}
                           <div style={{
@@ -554,7 +632,7 @@ const Home1LiveTenders = () => {
                                 borderRadius: '50%',
                                 objectFit: 'cover',
                               }}
-                              onError={(e) => { 
+                              onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.src = DEFAULT_PROFILE_IMAGE;
                               }}
@@ -570,7 +648,7 @@ const Home1LiveTenders = () => {
 
                          {/* Submit Proposal Button */}
                           <Link
-                            href={`/tender-details/${tender._id}`} 
+                            href={`/tender-details/${tender._id}`}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -578,27 +656,32 @@ const Home1LiveTenders = () => {
                               gap: '8px',
                               width: '100%',
                               padding: '12px 20px',
-                              background: 'linear-gradient(90deg, #28a745, #20c997)',
+                              background: isEnded ? '#c7c7c7' : 'linear-gradient(90deg, #8b5cf6, #a855f7)',
                               color: 'white',
                               textDecoration: 'none',
                               borderRadius: '25px',
                               fontWeight: '600',
                               fontSize: '14px',
                               transition: 'all 0.3s ease',
-                              boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
+                              boxShadow: isEnded ? 'none' : '0 4px 12px rgba(139, 92, 246, 0.3)',
+                              pointerEvents: isEnded ? 'none' : 'auto'
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'linear-gradient(90deg, #20c997, #28a745)';
-                              e.currentTarget.style.transform = 'translateY(-2px)';
-                              e.currentTarget.style.boxShadow = '0 8px 20px rgba(40, 167, 69, 0.4)';
+                              if (!isEnded) {
+                                e.currentTarget.style.background = 'linear-gradient(90deg, #a855f7, #8b5cf6)';
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 8px 20px rgba(139, 92, 246, 0.4)';
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'linear-gradient(90deg, #28a745, #20c997)';
-                              e.currentTarget.style.transform = 'translateY(0)';
-                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)';
+                              if (!isEnded) {
+                                e.currentTarget.style.background = 'linear-gradient(90deg, #8b5cf6, #a855f7)';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
+                              }
                             }}
                           >
-                            Soumettre une proposition
+                            {isEnded ? 'Terminé' : 'Soumettre une offre'}
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M8.59 16.59L10 18L16 12L10 6L8.59 7.41L13.17 12Z"/>
                             </svg>
@@ -639,7 +722,7 @@ const Home1LiveTenders = () => {
                     marginLeft: '-25px',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(90deg, #28a745, #20c997)';
+                    e.currentTarget.style.background = 'linear-gradient(90deg, #8b5cf6, #a855f7)';
                     e.currentTarget.style.color = 'white';
                     e.currentTarget.style.transform = 'scale(1.1)';
                   }}
@@ -672,7 +755,7 @@ const Home1LiveTenders = () => {
                     marginRight: '-25px',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(90deg, #28a745, #20c997)';
+                    e.currentTarget.style.background = 'linear-gradient(90deg, #8b5cf6, #a855f7)';
                     e.currentTarget.style.color = 'white';
                     e.currentTarget.style.transform = 'scale(1.1)';
                   }}
@@ -715,7 +798,7 @@ const Home1LiveTenders = () => {
                 color: '#333',
                 marginBottom: '12px',
               }}>
-                Aucun appel d'offres
+                Aucun appel d'offres actif
               </h3>
               <p style={{
                 fontSize: '16px',
@@ -735,33 +818,33 @@ const Home1LiveTenders = () => {
             transform: 'translateY(30px)',
             animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
           }}>
-              <Link
+            <Link
               href="/tender-sidebar"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '10px',
                 padding: '16px 32px',
-                background: 'linear-gradient(90deg, #28a745, #20c997)',
+                background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
                 color: 'white',
                 textDecoration: 'none',
                 borderRadius: '50px',
                 fontWeight: '600',
                 fontSize: '16px',
-                boxShadow: '0 8px 25px rgba(40, 167, 69, 0.3)',
+                boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(90deg, #20c997, #28a745)';
+                e.currentTarget.style.background = 'linear-gradient(90deg, #a855f7, #8b5cf6)';
                 e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(40, 167, 69, 0.4)';
+                e.currentTarget.style.boxShadow = '0 12px 30px rgba(139, 92, 246, 0.4)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(90deg, #28a745, #20c997)';
+                e.currentTarget.style.background = 'linear-gradient(90deg, #8b5cf6, #a855f7)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(40, 167, 69, 0.3)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.3)';
               }}
-              >
+            >
               Voir tous les appels d'offres
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8.59 16.59L10 18L16 12L10 6L8.59 7.41L13.17 12Z"/>

@@ -152,15 +152,15 @@ export default function HistoryPage() {
         // --- End Debugging console logs ---
 
         // The API returns a wrapped response, so access the data property and map to the expected format
-        const apiOffers = response?.data || [];
-        const fetchedOffers: OfferHistoryItem[] = apiOffers.map(offer => ({
-          _id: offer.id,
-          price: offer.amount,
+        const apiOffers = (response?.data || []) as Array<any>;
+        const fetchedOffers: OfferHistoryItem[] = apiOffers.map((offer: any) => ({
+          _id: offer._id || offer.id,
+          price: offer.amount ?? offer.price ?? 0,
           status: offer.status === 'pending' ? 'en attente' : offer.status === 'accepted' ? 'accepted' : 'declined',
-          createdAt: offer.createdAt,
+          createdAt: offer.createdAt || offer.created_at || new Date().toISOString(),
           bid: {
-            title: `Auction ${offer.auctionId}`, // You might want to fetch actual auction title
-            _id: offer.auctionId
+            title: `Bid ${offer.bidId || offer.bid_id || ''}`,
+            _id: offer.bidId || offer.bid_id || ''
           },
           user: {
             firstName: 'User', // You might want to fetch actual user data

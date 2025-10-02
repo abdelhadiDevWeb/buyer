@@ -27,18 +27,32 @@ export const OfferAPI = {
   getOffers: async (): Promise<ApiResponse<Offer[]>> => {
     try {
       const res = await requests.get('offers');
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Offer[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Offer[]>;
     } catch (error: unknown) {
       throw error;
     }
   },
 
-  sendOffer: async (auctionId: string, offerData: CreateOfferData): Promise<ApiResponse<Offer>> => {
+  sendOffer: async (tenderId: string, offerData: CreateOfferData): Promise<ApiResponse<Offer>> => {
     try {
-      console.log('Sending offer for auction:', auctionId, 'with data:', offerData);
-      const res = await requests.post(`offers/${auctionId}`, offerData);
+      console.log('Sending offer for tender:', tenderId, 'with data:', offerData);
+      const res = await requests.post(`offers/${tenderId}`, offerData);
       console.log('Offer API response:', res);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Offer>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Offer>;
     } catch (error: unknown) {
       console.error('Error sending offer:', error);
       
@@ -57,9 +71,35 @@ export const OfferAPI = {
     try {
       console.log('Getting offers for user:', userId);
       const res = await requests.get(`offers/user/${userId}`);
-      return res as any;
+      if ('success' in res) {
+        return res as ApiResponse<Offer[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Offer[]>;
     } catch (error: unknown) {
       console.error('Error getting offers by user ID:', error);
+      throw error;
+    }
+  },
+
+  // Get offers for a specific tender
+  getOffersByTenderId: async (tenderId: string): Promise<ApiResponse<Offer[]>> => {
+    try {
+      console.log('Getting offers for tender:', tenderId);
+      const res = await requests.get(`offers/tender/${tenderId}`);
+      if ('success' in res) {
+        return res as ApiResponse<Offer[]>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Offer[]>;
+    } catch (error: unknown) {
+      console.error('Error getting offers by tender ID:', error);
       throw error;
     }
   },

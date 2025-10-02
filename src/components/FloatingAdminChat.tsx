@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './FloatingAdminChat.css';
+import { useTranslation } from 'react-i18next';
 import { useCreateSocket } from '../contexts/socket';
 import { ChatAPI } from '../app/api/chat';
 import { MessageAPI } from '../app/api/messages';
@@ -30,23 +31,7 @@ interface AdminChat {
 }
 
 const FloatingAdminChat: React.FC = () => {
-    const t = (key: string) => {
-        const map: Record<string, string> = {
-            'chat.admin': 'Admin',
-            'chat.support': 'Support',
-            'chat.openAdminChat': 'Ouvrir le chat admin',
-            'chat.adminSupport': 'Support Administrateur',
-            'chat.online': 'En ligne',
-            'chat.closeChat': 'Fermer le chat',
-            'chat.loadingMessages': 'Chargement des messages...',
-            'chat.startConversation': 'Commencez la conversation',
-            'chat.hereToHelp': 'Nous sommes là pour vous aider',
-            'chat.sending': 'Envoi...',
-            'chat.error': 'Erreur',
-            'chat.adminTyping': "L'admin est en train d'écrire...",
-        };
-        return map[key] ?? key;
-    };
+    const { t } = useTranslation();
     const { auth } = useAuth();
     const socketContext = useCreateSocket();
 
@@ -231,8 +216,8 @@ const FloatingAdminChat: React.FC = () => {
                 // Fallback: create a default admin structure
                 admins = [{
                     _id: 'admin',
-                    firstName: t('chat.admin'),
-                    lastName: t('chat.support'),
+                    firstName: 'Admin',
+                    lastName: 'Support',
                     AccountType: 'admin',
                     phone: ''
                 }];
@@ -243,8 +228,8 @@ const FloatingAdminChat: React.FC = () => {
                 // Use fallback admin instead of returning null
                 admins = [{
                     _id: 'admin',
-                    firstName: t('chat.admin'),
-                    lastName: t('chat.support'),
+                    firstName: 'Admin',
+                    lastName: 'Support',
                     AccountType: 'admin',
                     phone: ''
                 }];
@@ -265,8 +250,8 @@ const FloatingAdminChat: React.FC = () => {
                     },
                     {
                         _id: adminUser._id,
-                        firstName: adminUser.firstName || t('chat.admin'),
-                        lastName: adminUser.lastName || t('chat.support'),
+                        firstName: adminUser.firstName || 'Admin',
+                        lastName: adminUser.lastName || 'Support',
                         AccountType: 'admin',
                         phone: adminUser.phone || ''
                     }
@@ -876,11 +861,11 @@ const FloatingAdminChat: React.FC = () => {
                                                         <span className="message-time">
                                                             {isTemp ? (
                                                                 <span className="sending-indicator">
-                                                                    <i className="bi bi-clock"></i> {t('chat.sending')}
+                                                                    <i className="bi bi-clock"></i> Sending...
                                                                 </span>
                                                             ) : isError ? (
                                                                 <span className="error-indicator">
-                                                                    <i className="bi bi-exclamation-triangle"></i> {t('chat.error')}
+                                                                    <i className="bi bi-exclamation-triangle"></i> Error
                                                                 </span>
                                                             ) : (
                                                                 formatTime(msg.createdAt)

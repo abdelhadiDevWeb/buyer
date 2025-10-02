@@ -10,7 +10,6 @@ import RequestProvider from '@/contexts/RequestContext';
 import { motion } from "framer-motion";
 import './styles.css';
 import { UserAPI } from '@/app/api/users';
-import app from '@/config';
 import { IdentityAPI } from '@/app/api/identity';
 import { SubscriptionAPI, SubscriptionPlan } from '@/app/api/subscription';
 import ProtectedResellerRoute from '@/components/ProtectedResellerRoute';
@@ -40,7 +39,6 @@ interface ConversionResponse {
 }
 
 export default function BecomeResellerPage() {
-  const t = (key: string) => key;
   const { auth, isLogged, isReady, set, initializeAuth } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const [resellerStep, setResellerStep] = useState(1);
@@ -98,12 +96,12 @@ export default function BecomeResellerPage() {
       
       console.log('Raw API response:', response);
       console.log('Response success:', response.success);
-      console.log('Response plans:', response.plans);
-      console.log('Plans array length:', response.plans?.length);
+      console.log('Response plans:', response.data?.plans);
+      console.log('Plans array length:', response.data?.plans?.length);
       
-      if (response.success && response.plans && Array.isArray(response.plans)) {
+      if (response.success && response.data?.plans && Array.isArray(response.data.plans)) {
         // Backend already filters for active plans, so no need to filter again
-        const plans = response.plans;
+        const plans = response.data.plans;
         setSubscriptionPlans(plans);
         console.log('Subscription plans fetched successfully:', plans);
         console.log('Number of plans loaded:', plans.length);
@@ -117,9 +115,10 @@ export default function BecomeResellerPage() {
         console.warn('Response structure:', {
           hasSuccess: 'success' in response,
           successValue: response.success,
-          hasPlans: 'plans' in response,
-          plansValue: response.plans,
-          responseKeys: Object.keys(response)
+          hasPlans: 'data' in response && 'plans' in (response.data || {} as any),
+          plansValue: response.data?.plans,
+          responseKeys: Object.keys(response),
+          dataKeys: response.data ? Object.keys(response.data as any) : []
         });
         enqueueSnackbar('No subscription plans available at the moment', { variant: 'warning' });
       }
@@ -147,20 +146,19 @@ export default function BecomeResellerPage() {
     
     try {
       console.log('Fetching user avatar from attachments...');
-      const avatarData = await UserAPI.getMe(); // Use getMe instead
+      const avatarData = await UserAPI.getUserAvatar(auth.user._id);
       console.log('Avatar data received:', avatarData);
       
-      if (avatarData?.user && (avatarData.user as any).avatar?.url) {
-        console.log('Avatar from user object:', (avatarData.user as any).avatar.url);
-        const fullAvatarUrl = `${app.imageBaseURL}${(avatarData.user as any).avatar.url}`;
-        console.log('Full avatar URL:', fullAvatarUrl);
+      if (avatarData?.data && (avatarData.data.avatarUrl)) {
+        console.log('Avatar data from backend:', avatarData.data);
+        console.log('Avatar URL from backend:', avatarData.data.avatarUrl);
         
         set({
           tokens: auth.tokens,
           user: {
             ...auth.user,
-            avatar: { url: fullAvatarUrl },
-            photoURL: fullAvatarUrl
+            avatar: { url: avatarData.data.avatarUrl },
+            photoURL: avatarData.data.avatarUrl
           } as AuthUserExtended
         });
         
@@ -204,7 +202,7 @@ export default function BecomeResellerPage() {
     console.log('auth.user:', auth.user);
     
     if (auth.user?.avatar) {
-      const avatarUrl = typeof auth.user.avatar === 'string' ? auth.user.avatar : auth.user.avatar.url;
+      const avatarUrl = auth.user.avatar.url;
       console.log('Final avatar URL:', avatarUrl);
     } else if (auth.user?.photoURL) {
       console.log('Final photoURL:', auth.user.photoURL);
@@ -223,12 +221,12 @@ export default function BecomeResellerPage() {
       }
       
       if (url.startsWith('/static/')) {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazad-click-server.onrender.com';
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazadclick-server.onrender.com';
         return `${apiBaseUrl}${url}`;
       }
       
       if (!url.startsWith('/')) {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazad-click-server.onrender.com';
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazadclick-server.onrender.com';
         return `${apiBaseUrl}/static/${url}`;
       }
       
@@ -240,9 +238,7 @@ export default function BecomeResellerPage() {
 
   // Get the final avatar source
   const avatarSrc = auth.user && auth.user.avatar ? 
-                    (typeof auth.user.avatar === 'string' 
-                      ? getAvatarUrl({ url: auth.user.avatar }) 
-                      : getAvatarUrl(auth.user.avatar)) : 
+                    getAvatarUrl(auth.user.avatar) : 
                     auth.user && auth.user.photoURL && auth.user.photoURL.trim() !== "" ? 
                     getAvatarUrl({ url: auth.user.photoURL }) : 
                     "/assets/images/avatar.jpg";
@@ -285,11 +281,11 @@ export default function BecomeResellerPage() {
         
         console.log('Subscription creation response:', response);
 
-        if (response.success && response.subscription) {
-          setCreatedSubscriptionId(response.subscription._id || response.subscription.id);
-          setCreatedPaymentId(response.payment?.id || response.payment?._id);
-          console.log('Subscription created successfully:', response.subscription);
-          console.log('Payment created with ID:', response.payment?.id || response.payment?._id);
+        if (response.success && response.data?.subscription) {
+          setCreatedSubscriptionId(response.data.subscription._id || response.data.subscription.id);
+          setCreatedPaymentId(response.data.payment?.id || response.data.payment?._id);
+          console.log('Subscription created successfully:', response.data.subscription);
+          console.log('Payment created with ID:', response.data.payment?.id || response.data.payment?._id);
           
           enqueueSnackbar('Subscription created successfully! Please complete the payment.', { 
             variant: 'success',
@@ -505,7 +501,7 @@ export default function BecomeResellerPage() {
       
       console.log('Testing server connectivity...');
       try {
-        const testResponse = await fetch('https://mazad-click-server.onrender.com/health');
+        const testResponse = await fetch('https://mazadclick-server.onrender.com/health');
         console.log('Server health check status:', testResponse.status);
       } catch (testError) {
         console.warn('Server health check failed:', testError);
@@ -997,7 +993,7 @@ export default function BecomeResellerPage() {
                             name="cardholderName"
                             value={paymentFormData.cardholderName}
                             onChange={handlePaymentFormChange}
-                            placeholder={t("becomeReseller.placeholderName")} 
+                            placeholder="John Doe" 
                           />
                         </div>
                       </div>

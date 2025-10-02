@@ -47,8 +47,6 @@ const nextConfig = {
   // Experimental features
   experimental: {
     optimizeCss: true,
-    // Add legacy browser support
-    legacyBrowsers: false,
   },
   
   // Development configuration

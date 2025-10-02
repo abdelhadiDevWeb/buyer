@@ -87,70 +87,225 @@ export interface MyPaymentsResponse {
   }>;
 }
 
+interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  success: boolean;
+}
+
 export const SubscriptionAPI = {
   // Get all subscription plans
-  getPlans: (): Promise<SubscriptionPlan[]> =>
-    requests.get('subscription/plans') as any,
+  getPlans: async (): Promise<ApiResponse<SubscriptionPlan[]>> => {
+    const res = await requests.get('subscription/plans');
+    if ('success' in res) {
+      return res as ApiResponse<SubscriptionPlan[]>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+      message: (res as any)?.data?.message,
+    } as ApiResponse<SubscriptionPlan[]>;
+  },
   
   // Get plans by role
-  getPlansByRole: (role: string): Promise<{ success: boolean; plans: SubscriptionPlan[] }> => 
-    requests.get(`subscription/plans/${role}?t=${Date.now()}`) as any,
+  getPlansByRole: async (role: string): Promise<ApiResponse<{ success: boolean; plans: SubscriptionPlan[] }>> => {
+    const res = await requests.get(`subscription/plans/${role}?t=${Date.now()}`);
+    if ('success' in res) {
+      return res as ApiResponse<{ success: boolean; plans: SubscriptionPlan[] }>;
+    }
+    const data = (res as any)?.data ?? {};
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: {
+        success: Boolean(data?.success ?? true),
+        plans: data?.plans ?? data?.data ?? [],
+      },
+      message: data?.message,
+    } as ApiResponse<{ success: boolean; plans: SubscriptionPlan[] }>;
+  },
   
   // Create a new subscription plan (Admin only)
-  createPlan: (plan: CreatePlanDto): Promise<SubscriptionPlan> => 
-    requests.post('subscription/admin/plans', plan) as any,
+  createPlan: async (plan: CreatePlanDto): Promise<ApiResponse<SubscriptionPlan>> => {
+    const res = await requests.post('subscription/admin/plans', plan);
+    if ('success' in res) {
+      return res as ApiResponse<SubscriptionPlan>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<SubscriptionPlan>;
+  },
   
   // Update an existing subscription plan (Admin only)
-  updatePlan: (planId: string, plan: Partial<CreatePlanDto>): Promise<SubscriptionPlan> => 
-    requests.patch(`subscription/admin/plans/${planId}`, plan) as any,
+  updatePlan: async (planId: string, plan: Partial<CreatePlanDto>): Promise<ApiResponse<SubscriptionPlan>> => {
+    const res = await requests.patch(`subscription/admin/plans/${planId}`, plan);
+    if ('success' in res) {
+      return res as ApiResponse<SubscriptionPlan>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<SubscriptionPlan>;
+  },
   
   // Delete a subscription plan (Admin only)
-  deletePlan: (planId: string): Promise<void> => 
-    requests.delete(`subscription/admin/plans/${planId}`) as any,
+  deletePlan: async (planId: string): Promise<ApiResponse<void>> => {
+    const res = await requests.delete(`subscription/admin/plans/${planId}`);
+    if ('success' in res) {
+      return res as ApiResponse<void>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: undefined as unknown as void,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<void>;
+  },
   
   // Initialize default plans (Admin only)
-  initializePlans: (): Promise<any> => 
-    requests.post('subscription/admin/init-plans', {}) as any,
+  initializePlans: async (): Promise<ApiResponse<any>> => {
+    const res = await requests.post('subscription/admin/init-plans', {});
+    if ('success' in res) {
+      return res as ApiResponse<any>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<any>;
+  },
   
   // Get subscription statistics (Admin only)
-  getStats: (): Promise<any> => 
-    requests.get('subscription/admin/stats') as any,
+  getStats: async (): Promise<ApiResponse<any>> => {
+    const res = await requests.get('subscription/admin/stats');
+    if ('success' in res) {
+      return res as ApiResponse<any>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<any>;
+  },
   
   // Get all subscriptions (Admin only)
-  getAllSubscriptions: (): Promise<any> => 
-    requests.get('subscription') as any,
+  getAllSubscriptions: async (): Promise<ApiResponse<any>> => {
+    const res = await requests.get('subscription');
+    if ('success' in res) {
+      return res as ApiResponse<any>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<any>;
+  },
   
   // Get my subscription
-  getMySubscription: (): Promise<MySubscriptionResponse> =>
-    requests.get('subscription/my-subscription') as any,
+  getMySubscription: async (): Promise<ApiResponse<MySubscriptionResponse>> => {
+    const res = await requests.get('subscription/my-subscription');
+    if ('success' in res) {
+      return res as ApiResponse<MySubscriptionResponse>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<MySubscriptionResponse>;
+  },
   
   // Create subscription with payment
-  createSubscriptionWithPayment: (data: CreateSubscriptionWithPaymentDto): Promise<SubscriptionResponse> => 
-    requests.post('subscription/create-with-payment', data) as any,
+  createSubscriptionWithPayment: async (data: CreateSubscriptionWithPaymentDto): Promise<ApiResponse<SubscriptionResponse>> => {
+    const res = await requests.post('subscription/create-with-payment', data);
+    if ('success' in res) {
+      return res as ApiResponse<SubscriptionResponse>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<SubscriptionResponse>;
+  },
   
   // Confirm payment for subscription
-  confirmPayment: (paymentId: string): Promise<PaymentConfirmationResponse> =>
-    requests.post(`subscription/payment/${paymentId}/confirm`, {}) as any,
+  confirmPayment: async (paymentId: string): Promise<ApiResponse<PaymentConfirmationResponse>> => {
+    const res = await requests.post(`subscription/payment/${paymentId}/confirm`, {});
+    if ('success' in res) {
+      return res as ApiResponse<PaymentConfirmationResponse>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<PaymentConfirmationResponse>;
+  },
   
   // Get payment status
-  getPaymentStatus: (paymentId: string): Promise<PaymentStatusResponse> =>
-    requests.get(`subscription/payment/${paymentId}/status`) as any,
+  getPaymentStatus: async (paymentId: string): Promise<ApiResponse<PaymentStatusResponse>> => {
+    const res = await requests.get(`subscription/payment/${paymentId}/status`);
+    if ('success' in res) {
+      return res as ApiResponse<PaymentStatusResponse>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<PaymentStatusResponse>;
+  },
   
   // Get my payments
-  getMyPayments: (): Promise<MyPaymentsResponse> =>
-    requests.get('subscription/my-payments') as any,
+  getMyPayments: async (): Promise<ApiResponse<MyPaymentsResponse>> => {
+    const res = await requests.get('subscription/my-payments');
+    if ('success' in res) {
+      return res as ApiResponse<MyPaymentsResponse>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<MyPaymentsResponse>;
+  },
   
   // Get all payments (Admin only)
-  getAllPayments: (page?: number, limit?: number): Promise<any> => 
-    requests.get(`subscription/admin/payments?page=${page || 1}&limit=${limit || 10}`) as any,
+  getAllPayments: async (page?: number, limit?: number): Promise<ApiResponse<any>> => {
+    const res = await requests.get(`subscription/admin/payments?page=${page || 1}&limit=${limit || 10}`);
+    if ('success' in res) {
+      return res as ApiResponse<any>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<any>;
+  },
   
   // Cleanup expired subscriptions and payments (Admin only)
-  cleanupExpired: (): Promise<any> => 
-    requests.post('subscription/admin/cleanup-expired', {}) as any,
+  cleanupExpired: async (): Promise<ApiResponse<any>> => {
+    const res = await requests.post('subscription/admin/cleanup-expired', {});
+    if ('success' in res) {
+      return res as ApiResponse<any>;
+    }
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: (res as any)?.data?.data ?? (res as any)?.data,
+      message: (res as any)?.data?.message,
+    } as ApiResponse<any>;
+  },
   
   // Handle SlickPay webhook (Public)
-  handleSlickPayWebhook: (payload: any): Promise<{ success: boolean; error?: string }> =>
-    requests.post('subscription/webhook/slickpay', payload) as any,
+  handleSlickPayWebhook: async (payload: any): Promise<ApiResponse<{ success: boolean; error?: string }>> => {
+    const res = await requests.post('subscription/webhook/slickpay', payload);
+    if ('success' in res) {
+      return res as ApiResponse<{ success: boolean; error?: string }>;
+    }
+    const data = (res as any)?.data ?? {};
+    return {
+      success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+      data: { success: Boolean(data?.success ?? true), error: data?.error },
+      message: data?.message,
+    } as ApiResponse<{ success: boolean; error?: string }>;
+  },
   
   // Payment flow endpoints
   

@@ -27,7 +27,7 @@ interface User {
   location?: string;
   description?: string;
   verificationStatus?: string;
-  isRecommended?: boolean; // Added for recommended feature
+  isRecommended?: boolean; 
   history: {
     date: string;
     action: string;
@@ -70,8 +70,8 @@ export default function UserDetailsPage() {
       console.log('Recommended professionals:', recommendedProfessionals);
       console.log('Recommended resellers:', recommendedResellers);
       
-      // Normalize API response: extract actual user object from data/user/direct
-      const userData = (userResponse as any)?.data ?? (userResponse as any)?.user ?? userResponse;
+      // Handle both direct response and nested data response
+      const userData = userResponse?.data || userResponse;
       
       if (userData) {
         // Check if this user is in the recommended lists
@@ -282,14 +282,14 @@ export default function UserDetailsPage() {
 
     return (
       <div className="position-absolute recommended-badge-large" style={{ 
-        top: '20px', 
-        right: '20px', 
+        top: '15px', 
+        right: '15px', 
         zIndex: 10 
       }}>
         <div className="recommended-badge-container" style={{
           position: 'relative',
-          width: '100px',
-          height: '50px'
+          width: '105px',
+          height: '40px'
         }}>
           {/* Glowing background effect */}
           <div className="recommended-glow" style={{
@@ -299,9 +299,9 @@ export default function UserDetailsPage() {
             right: '0',
             bottom: '0',
             background: 'linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4)',
-            borderRadius: '25px',
+            borderRadius: '20px',
             animation: 'recommendedGlow 2s ease-in-out infinite',
-            filter: 'blur(3px)',
+            filter: 'blur(2px)',
             transform: 'scale(1.1)'
           }}></div>
           
@@ -309,25 +309,31 @@ export default function UserDetailsPage() {
           <div className="recommended-main-badge" style={{
             position: 'relative',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '25px',
-            padding: '8px 16px',
+            borderRadius: '20px',
+            padding: '6px 12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '3px solid white',
-            boxShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
-            animation: 'recommendedPulse 1.5s ease-in-out infinite'
+            border: '2px solid white',
+            boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+            animation: 'recommendedPulse 1.5s ease-in-out infinite',
+            minWidth: '105px',
+            maxWidth: '105px',
+            height: '40px'
           }}>
-            <i className="bi bi-star-fill me-2" style={{ 
-              fontSize: '16px', 
+            <i className="bi bi-star-fill me-1" style={{ 
+              fontSize: '10px', 
               color: '#FFD700',
-              animation: 'recommendedStar 2s ease-in-out infinite'
+              animation: 'recommendedStar 2s ease-in-out infinite',
+              flexShrink: 0
             }}></i>
             <span style={{ 
-              fontSize: '14px', 
+              fontSize: '9px', 
               fontWeight: '700', 
               color: 'white',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+              whiteSpace: 'nowrap',
+              lineHeight: '1.2'
             }}>
               Recommended
             </span>
@@ -336,10 +342,10 @@ export default function UserDetailsPage() {
           {/* Sparkle effects */}
           <div className="sparkle sparkle-1" style={{
             position: 'absolute',
-            top: '-8px',
-            right: '-8px',
-            width: '12px',
-            height: '12px',
+            top: '-6px',
+            right: '-6px',
+            width: '10px',
+            height: '10px',
             background: '#FFD700',
             borderRadius: '50%',
             animation: 'sparkle 1.5s ease-in-out infinite'
@@ -347,10 +353,10 @@ export default function UserDetailsPage() {
           
           <div className="sparkle sparkle-2" style={{
             position: 'absolute',
-            bottom: '-5px',
-            left: '-5px',
-            width: '10px',
-            height: '10px',
+            bottom: '-4px',
+            left: '-4px',
+            width: '8px',
+            height: '8px',
             background: '#FF6B6B',
             borderRadius: '50%',
             animation: 'sparkle 1.5s ease-in-out infinite 0.5s'
@@ -359,9 +365,9 @@ export default function UserDetailsPage() {
           <div className="sparkle sparkle-3" style={{
             position: 'absolute',
             top: '50%',
-            right: '-12px',
-            width: '8px',
-            height: '8px',
+            right: '-10px',
+            width: '6px',
+            height: '6px',
             background: '#4ECDC4',
             borderRadius: '50%',
             animation: 'sparkle 1.5s ease-in-out infinite 1s'
@@ -370,10 +376,10 @@ export default function UserDetailsPage() {
           {/* Additional sparkles for larger badge */}
           <div className="sparkle sparkle-4" style={{
             position: 'absolute',
-            top: '-5px',
-            left: '20%',
-            width: '6px',
-            height: '6px',
+            top: '-4px',
+            left: '15%',
+            width: '5px',
+            height: '5px',
             background: '#96CEB4',
             borderRadius: '50%',
             animation: 'sparkle 1.5s ease-in-out infinite 0.3s'
@@ -381,10 +387,10 @@ export default function UserDetailsPage() {
           
           <div className="sparkle sparkle-5" style={{
             position: 'absolute',
-            bottom: '-8px',
-            right: '30%',
-            width: '8px',
-            height: '8px',
+            bottom: '-6px',
+            right: '25%',
+            width: '6px',
+            height: '6px',
             background: '#45B7D1',
             borderRadius: '50%',
             animation: 'sparkle 1.5s ease-in-out infinite 0.8s'
@@ -399,17 +405,22 @@ export default function UserDetailsPage() {
 
     return (
       <span className="badge d-flex align-items-center animated-badge ms-2" style={{ 
-        padding: '8px 12px', 
-        fontSize: '12px', 
+        padding: '6px 12px', 
+        fontSize: '9px', 
         fontWeight: '600',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         border: 'none',
         color: 'white',
         borderRadius: '20px',
-        boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
+        boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+        whiteSpace: 'nowrap',
+        maxWidth: '110px',
+        minWidth: '105px',
+        height: '28px',
+        lineHeight: '1.2'
       }}>
-        <i className="bi bi-star-fill me-1" style={{ fontSize: '10px', color: '#FFD700' }}></i>
-        RECOMMENDED
+        <i className="bi bi-star-fill me-1" style={{ fontSize: '8px', color: '#FFD700', flexShrink: 0 }}></i>
+        <span>RECOMMENDED</span>
       </span>
     );
   };
@@ -453,7 +464,12 @@ export default function UserDetailsPage() {
     <>
       <AxiosInterceptor>
         <Header />
-        <main className="user-details-page" style={{ minHeight: '100vh', backgroundColor: '#f8f9fa', padding: '40px 0' }}>
+        <main className="user-details-page" style={{ 
+          minHeight: '100vh', 
+          padding: '40px 0',
+          position: 'relative',
+          zIndex: 1,
+        }}>
           <div className="container">
             {/* Add CSS for animated stars, badges, cards, and recommended effects */}
             <style>{`
@@ -654,7 +670,9 @@ export default function UserDetailsPage() {
               className="card mb-4 user-header-card"
               style={{
                 borderRadius: '20px',
-                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
                 transition: 'all 0.4s ease',
                 position: 'relative',
                 overflow: 'visible'
@@ -774,7 +792,9 @@ export default function UserDetailsPage() {
                   style={{
                     borderRadius: '15px',
                     border: 'none',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
                     transition: 'all 0.3s ease'
                   }}
                 >
@@ -791,7 +811,9 @@ export default function UserDetailsPage() {
                   style={{
                     borderRadius: '15px',
                     border: 'none',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
                     transition: 'all 0.3s ease'
                   }}
                 >
@@ -808,7 +830,9 @@ export default function UserDetailsPage() {
                   style={{
                     borderRadius: '15px',
                     border: 'none',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
                     transition: 'all 0.3s ease'
                   }}
                 >
@@ -827,7 +851,9 @@ export default function UserDetailsPage() {
                   style={{
                     borderRadius: '15px',
                     border: 'none',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
                     transition: 'all 0.3s ease'
                   }}
                 >
@@ -843,7 +869,13 @@ export default function UserDetailsPage() {
             </div>
 
             {/* Tabs Section */}
-            <div className="card" style={{ borderRadius: '20px', boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)' }}>
+            <div className="card" style={{ 
+              borderRadius: '20px', 
+              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}>
               <div className="card-header bg-white" style={{ padding: '0', borderBottom: '1px solid #eee', borderRadius: '20px 20px 0 0' }}>
                 <ul className="nav nav-tabs" style={{ borderBottom: 'none', padding: '20px 20px 0 20px' }}>
                   <li className="nav-item">

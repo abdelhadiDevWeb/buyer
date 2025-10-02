@@ -14,7 +14,7 @@ export async function POST(request) {
     }
 
     // Call your backend API to resend OTP
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mazad-click-server.onrender.com';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mazadclick-server.onrender.com';
     const response = await fetch(`${backendUrl}/otp/resend/confirm-phone`, {
       method: 'POST',
       headers: {

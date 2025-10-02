@@ -8,13 +8,13 @@ export default function BidChecker() {
   const { auth, isLogged } = authStore();
 
   useEffect(() => {
-    if (!isLogged || !auth?.user || !auth.user._id) return;
+    if (!isLogged || !auth?.user) return;
 
     // checkBids function
     async function checkBids() {
-      if (!auth || !auth.user || !auth.user._id) return;
+      if (!auth || !auth.user) return;
       try {
-        const res = await BidsCheck.checkBids({ id: auth.user._id as string });
+        const res = await BidsCheck.checkBids({ id: String(auth.user._id || '') });
         console.log('Res Bid Check', res);
       } catch (error) {
         console.error('Error checking bids:', error);

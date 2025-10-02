@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { BsBell, BsHammer, BsTrophy, BsExclamationCircle, BsChat } from 'react-icons/bs';
 import useNotification from '@/hooks/useNotification';
 import useTotalNotifications from '@/hooks/useTotalNotifications';
+import { useTranslation } from 'react-i18next';
 
 // Fallback icon component
 const FallbackIcon = () => <BsBell size={16} color="#666" />;
@@ -28,23 +29,7 @@ const NotificationBell = memo(function NotificationBell({ variant = 'header', on
   }, []);
   
   // Always call hooks in consistent order - never conditionally
-  const t = (key: string, opts?: any) => {
-    switch (key) {
-      case 'notifications.justNow': return 'À l\'instant';
-      case 'notifications.minutesAgo': return `${opts?.minutes} min`;
-      case 'notifications.hoursAgo': return `${opts?.hours} h`;
-      case 'notifications.daysAgo': return `${opts?.days} j`;
-      case 'notifications.title': return 'Notifications';
-      case 'notifications.processing': return 'Traitement...';
-      case 'notifications.markAllAsRead': return 'Tout marquer comme lu';
-      case 'notifications.loading': return 'Chargement...';
-      case 'notifications.defaultTitle': return 'Notification';
-      case 'notifications.defaultMessage': return 'Vous avez une nouvelle notification.';
-      case 'notifications.noNotifications': return 'Aucune notification';
-      case 'notifications.viewAll': return 'Voir tout';
-      default: return key;
-    }
-  };
+  const { t } = useTranslation();
   const { notifications, loading, markAsRead, markAllAsRead, refresh } = useNotification();
   
   // Use combined notification counts

@@ -400,14 +400,14 @@ export default function UsersPage() {
 
     return (
       <div className="position-absolute recommended-badge" style={{ 
-        top: '10px', 
-        left: '10px', 
+        top: '8px', 
+        left: '8px', 
         zIndex: 10 
       }}>
         <div className="recommended-badge-container" style={{
           position: 'relative',
-          width: '60px',
-          height: '30px'
+          width: '85px',
+          height: '28px'
         }}>
           {/* Glowing background effect */}
           <div className="recommended-glow" style={{
@@ -417,7 +417,7 @@ export default function UsersPage() {
             right: '0',
             bottom: '0',
             background: 'linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4)',
-            borderRadius: '15px',
+            borderRadius: '14px',
             animation: 'recommendedGlow 2s ease-in-out infinite',
             filter: 'blur(2px)',
             transform: 'scale(1.1)'
@@ -427,25 +427,31 @@ export default function UsersPage() {
           <div className="recommended-main-badge" style={{
             position: 'relative',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '15px',
+            borderRadius: '14px',
             padding: '4px 8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             border: '2px solid white',
-            boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-            animation: 'recommendedPulse 1.5s ease-in-out infinite'
+            boxShadow: '0 3px 12px rgba(102, 126, 234, 0.4)',
+            animation: 'recommendedPulse 1.5s ease-in-out infinite',
+            minWidth: '85px',
+            maxWidth: '85px',
+            height: '28px'
           }}>
             <i className="bi bi-star-fill me-1" style={{ 
-              fontSize: '10px', 
+              fontSize: '7px', 
               color: '#FFD700',
-              animation: 'recommendedStar 2s ease-in-out infinite'
+              animation: 'recommendedStar 2s ease-in-out infinite',
+              flexShrink: 0
             }}></i>
             <span style={{ 
-              fontSize: '9px', 
+              fontSize: '7px', 
               fontWeight: '700', 
               color: 'white',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+              whiteSpace: 'nowrap',
+              lineHeight: '1.2'
             }}>
               Recommended
             </span>
@@ -454,10 +460,10 @@ export default function UsersPage() {
           {/* Sparkle effects */}
           <div className="sparkle sparkle-1" style={{
             position: 'absolute',
-            top: '-5px',
-            right: '-5px',
-            width: '8px',
-            height: '8px',
+            top: '-4px',
+            right: '-4px',
+            width: '6px',
+            height: '6px',
             background: '#FFD700',
             borderRadius: '50%',
             animation: 'sparkle 1.5s ease-in-out infinite'
@@ -467,8 +473,8 @@ export default function UsersPage() {
             position: 'absolute',
             bottom: '-3px',
             left: '-3px',
-            width: '6px',
-            height: '6px',
+            width: '5px',
+            height: '5px',
             background: '#FF6B6B',
             borderRadius: '50%',
             animation: 'sparkle 1.5s ease-in-out infinite 0.5s'
@@ -477,7 +483,7 @@ export default function UsersPage() {
           <div className="sparkle sparkle-3" style={{
             position: 'absolute',
             top: '50%',
-            right: '-8px',
+            right: '-6px',
             width: '4px',
             height: '4px',
             background: '#4ECDC4',
@@ -522,8 +528,9 @@ export default function UsersPage() {
         padding: '40px',
         maxWidth: '500px',
         margin: '0 auto',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-        border: '1px solid #FEE2E2'
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)'
       }}>
         <i className="bi bi-exclamation-triangle text-danger mb-3" style={{ fontSize: '3rem' }}></i>
         <h4 className="text-danger mb-2">Error Loading Users</h4>
@@ -576,7 +583,9 @@ export default function UsersPage() {
               backgroundColor: 'rgba(255, 255, 255, 0.95)',
               borderRadius: '20px',
               padding: '30px 25px',
-              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               height: '350px',
               animation: 'pulse 1.5s ease-in-out infinite alternate'
             }}>
@@ -618,8 +627,9 @@ export default function UsersPage() {
         <Header />
         <main className="users-page-wrapper" style={{
           minHeight: '100vh',
-          backgroundColor: '#f8f9fa',
-          padding: '60px 0'
+          padding: '60px 0',
+          position: 'relative',
+          zIndex: 1,
         }}>
           <div className="container">
             {/* Add CSS for animated stars, badges, cards, and recommended effects */}
@@ -890,16 +900,6 @@ export default function UsersPage() {
               </div>
             </div>
 
-            {/* Temporary Testing Section - Add this for debugging */}
-            {!loading && !error.hasError && (
-              <div className="mb-4 p-3 bg-info-subtle border border-info rounded">
-                <h6>Debug Info:</h6>
-                <p>Total users: {users.length}</p>
-                <p>Recommended users: {users.filter(u => u.isRecommended).length}</p>
-                <p>User IDs with recommended status: {users.filter(u => u.isRecommended).map(u => u._id).join(', ') || 'None'}</p>
-              </div>
-            )}
-
             {/* Users Grid */}
             <div className="users-grid">
               {error.hasError ? renderErrorState() : loading ? renderLoadingState() : filteredUsers.length === 0 ? (
@@ -910,7 +910,9 @@ export default function UsersPage() {
                     padding: '40px',
                     maxWidth: '500px',
                     margin: '0 auto',
-                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
                   }}>
                     <i className="bi bi-search text-muted mb-3" style={{ fontSize: '3rem' }}></i>
                     <h4 className="text-muted mb-2">
@@ -948,9 +950,9 @@ export default function UsersPage() {
                             padding: '30px 25px',
                             cursor: 'pointer',
                             transition: 'all 0.4s ease',
-                            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+                            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15)',
                             border: '1px solid rgba(255, 255, 255, 0.2)',
-                            backdropFilter: 'blur(10px)',
+                            backdropFilter: 'blur(20px)',
                             height: '100%',
                             position: 'relative',
                             overflow: 'hidden',
@@ -1108,11 +1110,12 @@ export default function UsersPage() {
                 <div className="row">
                   <div className="col-md-3 mb-3">
                     <div className="stat-card text-center" style={{
-                      backgroundColor: 'white',
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
                       borderRadius: '20px',
                       padding: '30px 20px',
-                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                      border: '1px solid #e5e7eb'
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)'
                     }}>
                       <i className="bi bi-people mb-3" style={{ fontSize: '2.5rem', color: '#6366f1' }}></i>
                       <h3 className="mb-1" style={{ fontWeight: '700', color: '#1f2937' }}>
@@ -1123,11 +1126,12 @@ export default function UsersPage() {
                   </div>
                   <div className="col-md-3 mb-3">
                     <div className="stat-card text-center" style={{
-                      backgroundColor: 'white',
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
                       borderRadius: '20px',
                       padding: '30px 20px',
-                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                      border: '1px solid #e5e7eb'
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)'
                     }}>
                       <i className="bi bi-award mb-3" style={{ fontSize: '2.5rem', color: '#0063B1' }}></i>
                       <h3 className="mb-1" style={{ fontWeight: '700', color: '#1f2937' }}>
@@ -1138,11 +1142,12 @@ export default function UsersPage() {
                   </div>
                   <div className="col-md-3 mb-3">
                     <div className="stat-card text-center" style={{
-                      backgroundColor: 'white',
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
                       borderRadius: '20px',
                       padding: '30px 20px',
-                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                      border: '1px solid #e5e7eb'
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)'
                     }}>
                       <i className="bi bi-briefcase mb-3" style={{ fontSize: '2.5rem', color: '#F59E0B' }}></i>
                       <h3 className="mb-1" style={{ fontWeight: '700', color: '#1f2937' }}>
@@ -1153,11 +1158,12 @@ export default function UsersPage() {
                   </div>
                   <div className="col-md-3 mb-3">
                     <div className="stat-card text-center" style={{
-                      backgroundColor: 'white',
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
                       borderRadius: '20px',
                       padding: '30px 20px',
-                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                      border: '1px solid #e5e7eb'
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)'
                     }}>
                       <i className="bi bi-person mb-3" style={{ fontSize: '2.5rem', color: '#3B82F6' }}></i>
                       <h3 className="mb-1" style={{ fontWeight: '700', color: '#1f2937' }}>

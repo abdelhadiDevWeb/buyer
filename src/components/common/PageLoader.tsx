@@ -30,13 +30,13 @@ const PageLoader: React.FC<PageLoaderProps> = ({
     justifyContent: 'center',
     zIndex: 9999,
     animation: 'fadeIn 0.3s ease-in-out'
-  } : {
+  } as React.CSSProperties : {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: '60px 20px',
     minHeight: '300px'
-  };
+  } as React.CSSProperties;
 
   const contentStyle: React.CSSProperties = fullScreen ? {
     textAlign: 'center',
@@ -46,9 +46,9 @@ const PageLoader: React.FC<PageLoaderProps> = ({
     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
     border: '1px solid rgba(0, 99, 177, 0.1)',
     animation: 'slideUp 0.4s ease-out'
-  } : {
+  } as React.CSSProperties : {
     textAlign: 'center'
-  };
+  } as React.CSSProperties;
 
   return (
     <div style={containerStyle}>

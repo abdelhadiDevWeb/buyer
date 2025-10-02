@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazad-click-server.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mazadclick-server.onrender.com';
 
 // Helper function to check if backend is accessible
 async function checkBackendHealth() {
@@ -28,10 +28,11 @@ async function checkBackendHealth() {
     return true;
   } catch (error) {
     console.error('❌ Backend health check failed:', error);
+    const errObj = (error && typeof error === 'object') ? (error as any) : {};
     console.error('❌ Error details:', {
-      message: (error as any).message,
-      code: (error as any).code,
-      errno: (error as any).errno
+      message: 'message' in errObj ? String(errObj.message) : undefined,
+      code: 'code' in errObj ? errObj.code : undefined,
+      errno: 'errno' in errObj ? errObj.errno : undefined,
     });
     return false;
   }
@@ -86,8 +87,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error('❌ Error fetching admin chats:', error);
+    const errObj = (error && typeof error === 'object') ? (error as any) : {};
+    const details = 'message' in errObj ? String(errObj.message) : 'Unknown error';
     return NextResponse.json(
-      { error: 'Internal server error', details: (error as any).message }, 
+      { error: 'Internal server error', details }, 
       { status: 500 }
     );
   }
@@ -146,8 +149,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error('❌ Error fetching chats:', error);
+    const errObj = (error && typeof error === 'object') ? (error as any) : {};
+    const details = 'message' in errObj ? String(errObj.message) : 'Unknown error';
     return NextResponse.json(
-      { error: 'Internal server error', details: (error as any).message }, 
+      { error: 'Internal server error', details }, 
       { status: 500 }
     );
   }

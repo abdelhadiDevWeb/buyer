@@ -30,7 +30,7 @@ const parseFormattedPrice = (formattedPrice) => {
   return isNaN(parsed) ? 0 : Math.floor(parsed);
 };
 
-function HandleQuantity({ initialValue = 1, startingPrice = 0 }) {
+function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" }) {
   // Parse the initial value - it might be a formatted string or a number
   const parseInitialValue = (value) => {
     if (typeof value === 'string') {
@@ -41,8 +41,8 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0 }) {
 
   const initialNumericValue = parseInitialValue(initialValue);
 
-  // Calculate 5% of starting price for increment/decrement
-  const fivePercentIncrement = Math.max(1, Math.round(startingPrice * 0.05));
+  // Fixed increment/decrement value of 100
+  const incrementValue = 100;
 
   // Initialize state with the parsed numeric value
   const [state1, dispatch1] = useReducer(quantityReducer, {
@@ -58,13 +58,13 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0 }) {
   }, [state1.quantity]);
 
   const increment1 = () => {
-    // Add 5% of starting price to current value
-    dispatch1({ type: "INCREMENT", payload: fivePercentIncrement });
+    // Add 100 to current value
+    dispatch1({ type: "INCREMENT", payload: incrementValue });
   };
 
   const decrement1 = () => {
-    // Subtract 5% of starting price from current value, but don't go below 1
-    dispatch1({ type: "DECREMENT", payload: fivePercentIncrement });
+    // Subtract 100 from current value, but don't go below 1
+    dispatch1({ type: "DECREMENT", payload: incrementValue });
   };
 
   const handleInputChange1 = (e) => {
@@ -91,7 +91,7 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0 }) {
         style={{ cursor: "pointer" }}
         onClick={decrement1}
         aria-label="Decrease quantity"
-        title={`Diminuer de ${formatPrice(fivePercentIncrement)} (5% du prix de départ)`}
+        title={`Diminuer de ${formatPrice(incrementValue)}`}
       >
         <svg 
           width="14" 
@@ -110,14 +110,14 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0 }) {
         onChange={handleInputChange1}
         onBlur={handleInputBlur}
         className="quantity__input"
-        placeholder={formatPrice(initialNumericValue)}
+        placeholder={placeholder || formatPrice(initialNumericValue)}
       />
       <a
         className="quantity__plus"
         style={{ cursor: "pointer" }}
         onClick={increment1}
         aria-label="Increase quantity"
-        title={`Augmenter de ${formatPrice(fivePercentIncrement)} (5% du prix de départ)`}
+        title={`Augmenter de ${formatPrice(incrementValue)}`}
       >
         <svg 
           width="14" 
