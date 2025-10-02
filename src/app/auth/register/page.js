@@ -237,7 +237,7 @@ export default function Register() {
         
         // Redirect to seller app OTP verification page
         setTimeout(() => {
-          const baseUrl = `${window.location.protocol}//${window.location.hostname}:3001`;
+          const baseUrl = `${window.location.protocol}//${window.location.hostname}`;
           const otpUrl = `${baseUrl}/otp-verification?phone=${encodeURIComponent(userData.phone)}&fromBuyer=true`;
           console.log('Redirecting to:', otpUrl);
           window.location.href = otpUrl;
