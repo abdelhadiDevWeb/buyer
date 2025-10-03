@@ -132,7 +132,7 @@ export default function CategoryClient() {
           console.log('❌ No response received from API');
         }
         
-        if (isSuccess && categoryData && categoryData.length > 0) {
+        if (isSuccess && categoryData && (categoryData?.length || 0) > 0) {
           console.log('🎉 Setting categories:', categoryData);
           setCategories(categoryData as Category[]);
           setError(false);
