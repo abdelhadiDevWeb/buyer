@@ -98,29 +98,50 @@ export default function CategoryClient() {
     const fetchCategories = async () => {
       try {
         setLoading(true);
+        console.log('🔄 Fetching categories from API...');
         const response = await CategoryAPI.getCategoryTree();
+        console.log('📡 API Response:', response);
+        
         let categoryData: Category[] | null = null;
         let isSuccess = false;
+        
         if (response) {
           if ((response as any).success && Array.isArray((response as any).data)) {
             categoryData = (response as any).data;
             isSuccess = true;
+            console.log('✅ Success: Found categories in response.data:', categoryData.length);
           } else if (Array.isArray(response as any)) {
             categoryData = response as any;
             isSuccess = true;
+            console.log('✅ Success: Direct array response:', categoryData.length);
           } else if ((response as any).data && Array.isArray((response as any).data)) {
             categoryData = (response as any).data;
             isSuccess = true;
+            console.log('✅ Success: Found categories in response.data (alternative):', categoryData.length);
+          } else {
+            console.log('❌ No valid category data found in response structure');
+            console.log('Response structure:', {
+              hasSuccess: 'success' in (response as any),
+              hasData: 'data' in (response as any),
+              isArray: Array.isArray(response),
+              responseType: typeof response,
+              responseKeys: response && typeof response === 'object' ? Object.keys(response) : []
+            });
           }
+        } else {
+          console.log('❌ No response received from API');
         }
+        
         if (isSuccess && categoryData && categoryData.length > 0) {
+          console.log('🎉 Setting categories:', categoryData);
           setCategories(categoryData as Category[]);
           setError(false);
         } else {
-          throw new Error('Invalid response structure');
+          console.log('❌ No categories to display, throwing error');
+          throw new Error('Invalid response structure or no categories found');
         }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("❌ Error fetching categories:", error);
         setCategories([]);
         setError(true);
       } finally {
@@ -577,17 +598,250 @@ export default function CategoryClient() {
     );
   };
 
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '400px',
+        padding: '40px',
+      }}>
+        <div style={{ 
+          width: '40px', 
+          height: '40px', 
+          border: '3px solid rgba(0, 99, 177, 0.2)', 
+          borderTop: '3px solid #0063b1', 
+          borderRadius: '50%', 
+          animation: 'spin 1s linear infinite' 
+        }} />
+      </div>
+    );
+  }
+
+  if (error || categories.length === 0) {
+    return (
+      <div style={{ 
+        textAlign: 'center', 
+        padding: '60px 20px',
+        background: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '16px',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(0, 99, 177, 0.1)',
+        margin: '20px',
+      }}>
+        <div style={{ fontSize: '48px', marginBottom: '20px', opacity: 0.6 }}>📂</div>
+        <h3 style={{ color: '#0063b1', marginBottom: '10px', fontSize: '20px', fontWeight: '600' }}>
+          No Categories Found
+        </h3>
+        <p style={{ color: '#64748b', fontSize: '14px' }}>
+          Categories will be available soon. Please try again later.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ 
         padding: '80px 0', 
         minHeight: '100vh',
         position: 'relative',
         zIndex: 1,
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
       }}>
-      {/* The rest of the JSX from the original page remains unchanged */}
-      {/* For brevity, reuse the original render below */}
-      {/* Header, search, lists, etc. */}
-      {/* Copy-pasted content retained from source file */}
+      
+      {/* Header Section */}
+      <div className="container-responsive" style={{ marginBottom: '40px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <h1 style={{
+            fontSize: 'clamp(2rem, 4vw, 3rem)',
+            fontWeight: '800',
+            background: 'linear-gradient(135deg, #0063b1 0%, #00a3e0 50%, #3b82f6 100%)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '16px',
+            lineHeight: '1.2',
+          }}>
+            {viewMode === 'categories' ? 'Browse Categories' : selectedCategoryName}
+          </h1>
+          <p style={{
+            fontSize: '18px',
+            color: '#64748b',
+            maxWidth: '600px',
+            margin: '0 auto',
+            lineHeight: '1.6',
+          }}>
+            {viewMode === 'categories' 
+              ? 'Explore our wide range of auction categories and find exactly what you\'re looking for'
+              : `Discover amazing auctions in the ${selectedCategoryName} category`
+            }
+          </p>
+        </div>
+
+        {/* Search Bar */}
+        <div style={{
+          maxWidth: '600px',
+          margin: '0 auto 40px',
+          position: 'relative',
+        }}>
+          <input
+            type="text"
+            placeholder={viewMode === 'categories' ? 'Search categories...' : 'Search auctions...'}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '16px 20px',
+              paddingRight: '50px',
+              fontSize: '16px',
+              border: '2px solid #e2e8f0',
+              borderRadius: '16px',
+              background: 'white',
+              outline: 'none',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = '#0063b1';
+              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 99, 177, 0.15)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = '#e2e8f0';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
+            }}
+          />
+          <div style={{
+            position: 'absolute',
+            right: '16px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#64748b',
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+          </div>
+        </div>
+
+        {/* Back Button for Auctions View */}
+        {viewMode === 'auctions' && (
+          <div style={{ marginBottom: '30px', textAlign: 'center' }}>
+            <button
+              onClick={goBackToCategories}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #f8fafc, #e2e8f0)',
+                border: '2px solid #e2e8f0',
+                borderRadius: '12px',
+                color: '#0063b1',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #e2e8f0, #cbd5e1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #f8fafc, #e2e8f0)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              Back to Categories
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Content Section */}
+      <div className="container-responsive">
+        {viewMode === 'categories' ? (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '24px',
+            maxWidth: '1200px',
+            margin: '0 auto',
+          }}>
+            {renderCategoryHierarchy(filteredCategories)}
+          </div>
+        ) : (
+          <div>
+            {auctionsLoading ? (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                minHeight: '200px',
+              }}>
+                <div style={{ 
+                  width: '32px', 
+                  height: '32px', 
+                  border: '3px solid rgba(0, 99, 177, 0.2)', 
+                  borderTop: '3px solid #0063b1', 
+                  borderRadius: '50%', 
+                  animation: 'spin 1s linear infinite' 
+                }} />
+              </div>
+            ) : filteredAuctions.length > 0 ? (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '24px',
+                maxWidth: '1400px',
+                margin: '0 auto',
+              }}>
+                {filteredAuctions.map(renderAuctionCard)}
+              </div>
+            ) : (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '60px 20px',
+                background: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: '16px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0, 99, 177, 0.1)',
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '20px', opacity: 0.6 }}>🔍</div>
+                <h3 style={{ color: '#0063b1', marginBottom: '10px', fontSize: '20px', fontWeight: '600' }}>
+                  No Auctions Found
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '14px' }}>
+                  {searchTerm ? 'No auctions match your search criteria.' : 'No auctions available in this category yet.'}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Global Styles */}
+      <style jsx global>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.05);
+            opacity: 0.8;
+          }
+        }
+      `}</style>
     </div>
   );
 }

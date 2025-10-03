@@ -69,8 +69,18 @@ const Home1Category = () => {
         console.error('Error fetching categories:', error);
         
         // Try loading static fallback data
-        if (categoryData && Array.isArray(categoryData) && categoryData.length > 0) {
-          setCategories(categoryData);
+        if (categoryData && categoryData['auction-category'] && Array.isArray(categoryData['auction-category']) && categoryData['auction-category'].length > 0) {
+          // Transform the fallback data to match expected structure
+          const transformedCategories = categoryData['auction-category'].map(cat => ({
+            _id: cat.id.toString(),
+            id: cat.id,
+            name: cat.name,
+            thumb: {
+              url: cat.image
+            },
+            children: []
+          }));
+          setCategories(transformedCategories);
           setError(false);
           setErrorMessage('');
         } else {

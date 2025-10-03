@@ -14,6 +14,7 @@ interface ChatNotificationsProps {
 export default function ChatNotifications({ variant = 'header', onOpenChange }: ChatNotificationsProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(1024);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Use Zustand store pattern for auth
@@ -49,6 +50,21 @@ export default function ChatNotifications({ variant = 'header', onOpenChange }: 
       onOpenChange(true);
     }
   };
+
+  // Track window width for responsive positioning
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    // Set initial width
+    setWindowWidth(window.innerWidth);
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -193,19 +209,40 @@ export default function ChatNotifications({ variant = 'header', onOpenChange }: 
       </button>
 
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 10px)',
-          right: 0,
-          background: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-          width: '360px',
-          zIndex: 1000,
-          overflow: 'hidden',
-          animation: 'fadeIn 0.2s ease-out',
-          border: '1px solid rgba(0,0,0,0.05)'
-        }}>
+        <>
+          {/* Mobile backdrop overlay */}
+          {windowWidth <= 768 && (
+            <div 
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.5)',
+                zIndex: 999,
+                animation: 'fadeIn 0.2s ease-out'
+              }}
+              onClick={() => setIsOpen(false)}
+            />
+          )}
+          
+          <div style={{
+            position: windowWidth <= 768 ? 'fixed' : 'absolute',
+            top: windowWidth <= 768 ? '50%' : 'calc(100% + 10px)',
+            left: windowWidth <= 768 ? '50%' : 'auto',
+            right: windowWidth <= 768 ? 'auto' : 0,
+            transform: windowWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
+            background: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+            width: windowWidth <= 768 ? 'calc(100vw - 32px)' : '360px',
+            maxWidth: windowWidth <= 768 ? '400px' : '360px',
+            zIndex: 1000,
+            overflow: 'hidden',
+            animation: 'fadeIn 0.2s ease-out',
+            border: '1px solid rgba(0,0,0,0.05)'
+          }}>
           
           {/* Header */}
           <div style={{
@@ -588,6 +625,7 @@ export default function ChatNotifications({ variant = 'header', onOpenChange }: 
             </Link>
           </div>
         </div>
+        </>
       )}
       
       <style jsx>{`
