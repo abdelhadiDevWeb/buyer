@@ -109,15 +109,15 @@ export default function CategoryClient() {
           if ((response as any).success && Array.isArray((response as any).data)) {
             categoryData = (response as any).data;
             isSuccess = true;
-            console.log('✅ Success: Found categories in response.data:', categoryData.length);
+            console.log('✅ Success: Found categories in response.data:', categoryData?.length || 0);
           } else if (Array.isArray(response as any)) {
             categoryData = response as any;
             isSuccess = true;
-            console.log('✅ Success: Direct array response:', categoryData.length);
+            console.log('✅ Success: Direct array response:', categoryData?.length || 0);
           } else if ((response as any).data && Array.isArray((response as any).data)) {
             categoryData = (response as any).data;
             isSuccess = true;
-            console.log('✅ Success: Found categories in response.data (alternative):', categoryData.length);
+            console.log('✅ Success: Found categories in response.data (alternative):', categoryData?.length || 0);
           } else {
             console.log('❌ No valid category data found in response structure');
             console.log('Response structure:', {
