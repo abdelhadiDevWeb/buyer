@@ -134,6 +134,14 @@ export default function CategoryClient() {
         
         if (isSuccess && categoryData && (categoryData?.length || 0) > 0) {
           console.log('🎉 Setting categories:', categoryData);
+          // Debug image URLs
+          categoryData.forEach((cat, index) => {
+            if (cat.thumb && cat.thumb.url) {
+              console.log(`📸 Category ${index} (${cat.name}) image URL:`, cat.thumb.url);
+            } else {
+              console.log(`❌ Category ${index} (${cat.name}) has no image`);
+            }
+          });
           setCategories(categoryData as Category[]);
           setError(false);
         } else {
@@ -312,7 +320,21 @@ export default function CategoryClient() {
               </div>
             )}
             <img
-              src={category.thumb ? `${app.route}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+              src={(() => {
+                if (category.thumb && category.thumb.url) {
+                  // If the URL already starts with http, use it as is
+                  if (category.thumb.url.startsWith('http')) {
+                    return category.thumb.url;
+                  }
+                  // If it starts with /, it's a local asset path
+                  if (category.thumb.url.startsWith('/')) {
+                    return category.thumb.url;
+                  }
+                  // Otherwise, prepend the server route
+                  return `${app.route}${category.thumb.url}`;
+                }
+                return DEFAULT_CATEGORY_IMAGE;
+              })()}
               alt={category.name}
               style={{
                 width: level === 0 ? '48px' : '40px',
@@ -337,6 +359,10 @@ export default function CategoryClient() {
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scale(1)';
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+              }}
+              onError={(e) => {
+                console.log('❌ Category image failed to load:', category.name, e.currentTarget.src);
+                e.currentTarget.src = DEFAULT_CATEGORY_IMAGE;
               }}
             />
             <div style={{ flex: 1 }}>
@@ -428,9 +454,22 @@ export default function CategoryClient() {
           overflow: 'hidden',
         }}>
           <img
-            src={auction.thumbs && auction.thumbs.length > 0 
-              ? `${app.route}${auction.thumbs[0].url}` 
-              : DEFAULT_AUCTION_IMAGE}
+            src={(() => {
+              if (auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url) {
+                const url = auction.thumbs[0].url;
+                // If the URL already starts with http, use it as is
+                if (url.startsWith('http')) {
+                  return url;
+                }
+                // If it starts with /, it's a local asset path
+                if (url.startsWith('/')) {
+                  return url;
+                }
+                // Otherwise, prepend the server route
+                return `${app.route}${url}`;
+              }
+              return DEFAULT_AUCTION_IMAGE;
+            })()}
             alt={auction.title}
             style={{
               width: '100%',
@@ -438,6 +477,10 @@ export default function CategoryClient() {
               objectFit: 'cover',
             }}
             crossOrigin="use-credentials"
+            onError={(e) => {
+              console.log('❌ Auction image failed to load:', auction.title, e.currentTarget.src);
+              e.currentTarget.src = DEFAULT_AUCTION_IMAGE;
+            }}
           />
           <div style={{
             position: 'absolute',
@@ -537,9 +580,22 @@ export default function CategoryClient() {
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
             }}>
               <img
-                src={auction.owner?.avatar?.url 
-                  ? `${app.route}${auction.owner.avatar.url}` 
-                  : '/assets/images/avatar.jpg'}
+                src={(() => {
+                  if (auction.owner?.avatar?.url) {
+                    const url = auction.owner.avatar.url;
+                    // If the URL already starts with http, use it as is
+                    if (url.startsWith('http')) {
+                      return url;
+                    }
+                    // If it starts with /, it's a local asset path
+                    if (url.startsWith('/')) {
+                      return url;
+                    }
+                    // Otherwise, prepend the server route
+                    return `${app.route}${url}`;
+                  }
+                  return '/assets/images/avatar.jpg';
+                })()}
                 alt="Owner"
                 style={{
                   width: '100%',
@@ -547,6 +603,10 @@ export default function CategoryClient() {
                   objectFit: 'cover',
                 }}
                 crossOrigin="use-credentials"
+                onError={(e) => {
+                  console.log('❌ Owner avatar failed to load:', e.currentTarget.src);
+                  e.currentTarget.src = '/assets/images/avatar.jpg';
+                }}
               />
             </div>
             <div>
