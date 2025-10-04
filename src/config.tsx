@@ -26,13 +26,13 @@ export const API_BASE_URL = app.baseURL;
 
 // Helper function to get the full frontend URL
 export const getFrontendUrl = (): string => {
-  let a = "development" ;
-  if (a === 'development') {
-    return `http://localhost:3001`;
-  }
-  // if (process.env.NODE_ENV === 'development') {
+  // let a = "development" ;
+  // if (a === 'development') {
   //   return `http://localhost:3001`;
   // }
+  if (process.env.NODE_ENV === 'development') {
+    return `http://localhost:3001`;
+  }
   return app.frontendUrl;
 };
 

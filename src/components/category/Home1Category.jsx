@@ -17,7 +17,35 @@ const Home1Category = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
+  const [imageErrors, setImageErrors] = useState({});
   const DEFAULT_CATEGORY_IMAGE = "/assets/images/logo-white.png";
+  const FALLBACK_CATEGORY_IMAGE = "/assets/images/cat.avif";
+
+  // Helper function to get the correct image URL
+  const getCategoryImageUrl = (category) => {
+    // If it's from API response (has thumb.url)
+    if (category.thumb && category.thumb.url) {
+      return `${app.route}${category.thumb.url}`;
+    }
+    // If it's from fallback data (has image property)
+    if (category.image) {
+      // Check if it's already a full URL or a relative path
+      if (category.image.startsWith('http')) {
+        return category.image;
+      }
+      // If it's a relative path, make it absolute
+      return category.image.startsWith('/') ? category.image : `/${category.image}`;
+    }
+    return FALLBACK_CATEGORY_IMAGE;
+  };
+
+  // Handle image load errors
+  const handleImageError = (categoryId) => {
+    setImageErrors(prev => ({
+      ...prev,
+      [categoryId]: true
+    }));
+  };
 
   // Simplified Swiper settings for responsive carousel
   const settings = useMemo(
@@ -199,7 +227,7 @@ const Home1Category = () => {
               transition: 'all 0.3s ease',
             }}>
               <img
-                src={subcategory.thumb ? `${app.route}${subcategory.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+                src={imageErrors[subcategory._id || subcategory.id] ? FALLBACK_CATEGORY_IMAGE : getCategoryImageUrl(subcategory)}
                 alt={subcategory.name}
                 style={{
                   width: '100%',
@@ -207,7 +235,8 @@ const Home1Category = () => {
                   borderRadius: level === 0 ? '10px' : '6px',
                   objectFit: 'cover',
                 }}
-                crossOrigin="use-credentials"
+                onError={() => handleImageError(subcategory._id || subcategory.id)}
+                loading="lazy"
               />
             </div>
             <span style={{
@@ -359,7 +388,7 @@ const Home1Category = () => {
                 justifyContent: 'center',
               }}>
                 <img
-                  src={category.thumb ? `${app.route}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+                  src={imageErrors[id] ? FALLBACK_CATEGORY_IMAGE : getCategoryImageUrl(category)}
                   alt={name}
                   style={{
                     width: '90%',
@@ -369,7 +398,8 @@ const Home1Category = () => {
                     transition: 'all 0.4s ease',
                     transform: isHovered ? 'scale(1.1)' : 'scale(1)',
                   }}
-                  crossOrigin="use-credentials"
+                  onError={() => handleImageError(id)}
+                  loading="lazy"
                 />
               </div>
             </div>
