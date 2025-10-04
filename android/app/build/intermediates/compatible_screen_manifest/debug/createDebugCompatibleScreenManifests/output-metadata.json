@@ -4,7 +4,7 @@
     "type": "COMPATIBLE_SCREEN_MANIFEST",
     "kind": "Directory"
   },
-  "applicationId": "com.mazadclick.buyer",
+  "applicationId": "mazad.app",
   "variantName": "debug",
   "elements": []
 }

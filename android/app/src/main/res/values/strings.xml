@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mazad Click</string>
+    <string name="title_activity_main">Mazad Click</string>
+    <string name="package_name">mazad.app</string>
+    <string name="custom_url_scheme">mazad.app</string>
+</resources>

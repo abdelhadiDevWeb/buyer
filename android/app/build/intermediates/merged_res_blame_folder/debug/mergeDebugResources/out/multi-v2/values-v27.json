@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.mazadclick.buyer.app-mergeDebugResources-25:/values-v27/values-v27.xml",
+            "outputFile": "mazad.app-mergeDebugResources-25:/values-v27/values-v27.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\7490\\.gradle\\caches\\8.9\\transforms\\2fa0f7aba173f92b0f38d4b0e11e83c1\\transformed\\core-splashscreen-1.0.1\\res\\values-v27\\values-v27.xml",
+                    "source": "C:\\Users\\7490\\.gradle\\caches\\8.11.1\\transforms\\ef234481c09f01fb9f0508a5da2b1126\\transformed\\core-splashscreen-1.0.1\\res\\values-v27\\values-v27.xml",
                     "from": {
                         "startLines": "2,3,4,7",
                         "startColumns": "4,4,4,4",
