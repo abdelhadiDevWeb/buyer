@@ -59,6 +59,15 @@ android {
     namespace "mazad.app"
     compileSdk rootProject.ext.compileSdkVersion
 
+     signingConfigs {
+        release {
+            storeFile file("../../my-release-key.jks")  
+            storePassword "noteasy"
+            keyAlias "my-key-alias"
+            keyPassword "noteasy"
+        }
+    }
+
     defaultConfig {
         applicationId "mazad.app"
         minSdkVersion rootProject.ext.minSdkVersion
