@@ -19,13 +19,13 @@ function quantityReducer(state, action) {
 
 // Function to format price with currency symbol - using Math.floor for whole numbers
 const formatPrice = (price) => {
-  return `${Math.floor(Number(price)).toLocaleString()},00 `;
+  return `${Math.floor(Number(price)).toLocaleString()}`;
 };
 
 // Function to parse formatted price back to number - using Math.floor for whole numbers
 const parseFormattedPrice = (formattedPrice) => {
-  // Remove ",00 " and commas, then parse as number
-  const cleanValue = formattedPrice.replace(/,00\s*$/, '').replace(/,/g, '');
+  // Remove commas and parse as number
+  const cleanValue = formattedPrice.replace(/,/g, '');
   const parsed = parseFloat(cleanValue);
   return isNaN(parsed) ? 0 : Math.floor(parsed);
 };
@@ -41,8 +41,17 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
 
   const initialNumericValue = parseInitialValue(initialValue);
 
-  // Fixed increment/decrement value of 100
-  const incrementValue = 100;
+  // Dynamic increment/decrement based on starting price
+  const getIncrementValue = () => {
+    const startPrice = Number(startingPrice) || 0;
+    if (startPrice > 500000) {
+      // If starting price > 500,000 DA, use 1% of starting price
+      return Math.max(100, Math.floor(startPrice * 0.01));
+    } else {
+      // If starting price ≤ 500,000 DA, use 0.05% of starting price
+      return Math.max(50, Math.floor(startPrice * 0.0005));
+    }
+  };
 
   // Initialize state with the parsed numeric value
   const [state1, dispatch1] = useReducer(quantityReducer, {
@@ -58,30 +67,44 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
   }, [state1.quantity]);
 
   const increment1 = () => {
-    // Add 100 to current value
-    dispatch1({ type: "INCREMENT", payload: incrementValue });
+    // Add dynamic increment based on starting price
+    const incrementAmount = getIncrementValue();
+    dispatch1({ type: "INCREMENT", payload: incrementAmount });
   };
 
   const decrement1 = () => {
-    // Subtract 100 from current value, but don't go below 1
-    dispatch1({ type: "DECREMENT", payload: incrementValue });
+    // Subtract dynamic increment from current value, but don't go below 1
+    const incrementAmount = getIncrementValue();
+    dispatch1({ type: "DECREMENT", payload: incrementAmount });
   };
 
   const handleInputChange1 = (e) => {
     const inputValue = e.target.value;
-    setDisplayValue(inputValue);
     
-    // Parse the formatted value back to a number
-    const numericValue = parseFormattedPrice(inputValue);
+    // Extract only digits from the input
+    const digitsOnly = inputValue.replace(/[^\d]/g, '');
     
-    if (!isNaN(numericValue) && numericValue >= 0) {
-      dispatch1({ type: "SET", payload: numericValue });
-    }
+    // Convert to number
+    const numericValue = parseInt(digitsOnly) || 0;
+    
+    // Format with thousands separator (no ",00")
+    const formattedValue = numericValue.toLocaleString();
+    
+    // Update display
+    setDisplayValue(formattedValue);
+    
+    // Update state
+    dispatch1({ type: "SET", payload: numericValue });
   };
 
   const handleInputBlur = () => {
     // Ensure the display value is properly formatted when user leaves the input
     setDisplayValue(formatPrice(state1.quantity));
+  };
+
+  const handleInputKeyDown = (e) => {
+    // No special handling needed since we removed ",00" protection
+    // Users can now freely edit the input
   };
 
   return (
@@ -91,7 +114,7 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
         style={{ cursor: "pointer" }}
         onClick={decrement1}
         aria-label="Decrease quantity"
-        title={`Diminuer de ${formatPrice(incrementValue)}`}
+        title={`Diminuer de ${formatPrice(getIncrementValue())}`}
       >
         <svg 
           width="14" 
@@ -109,6 +132,7 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
         value={displayValue}
         onChange={handleInputChange1}
         onBlur={handleInputBlur}
+        onKeyDown={handleInputKeyDown}
         className="quantity__input"
         placeholder={placeholder || formatPrice(initialNumericValue)}
       />
@@ -117,7 +141,7 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
         style={{ cursor: "pointer" }}
         onClick={increment1}
         aria-label="Increase quantity"
-        title={`Augmenter de ${formatPrice(incrementValue)}`}
+        title={`Augmenter de ${formatPrice(getIncrementValue())}`}
       >
         <svg 
           width="14" 

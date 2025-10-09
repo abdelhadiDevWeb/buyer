@@ -12,14 +12,17 @@ const app = {
   // baseURL: "http://localhost:3000/",
 
   socket: 'https://mazadclick-server.onrender.com',
-  route: "https://mazadclick-server.onrender.com/static",
+  route: "https://mazadclick-server.onrender.com",
   baseURL: "https://mazadclick-server.onrender.com",
 
   // Frontend URLs - Dynamic based on environment
   frontendUrl: process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://buyer-mazad.vercel.app',
   frontendPort: process.env.NODE_ENV === 'development' ? ':3001' : '',
 
-  apiKey: '8f2a61c94d7e3b5f9c0a8d2e6b4f1c7a',
+  // Seller Application URL - Dynamic based on environment
+  sellerUrl: process.env.NEXT_PUBLIC_SELLER_URL || 'http://localhost:3002/',
+
+  apiKey: '64d2e8b7c3a9f1e5d8b2a4c6e9f0d3a5',
 };
 
 export const API_BASE_URL = app.baseURL;
@@ -39,6 +42,11 @@ export const getFrontendUrl = (): string => {
 // Helper function to get frontend URL for redirects
 export const getFrontendBaseUrl = (): string => {
   return getFrontendUrl();
+};
+
+// Helper function to get the seller URL
+export const getSellerUrl = (): string => {
+  return app.sellerUrl;
 };
 
 export default app;

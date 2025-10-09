@@ -433,18 +433,31 @@ const Home1Category = () => {
           <h3 style={{
             fontSize: '18px',
             fontWeight: '700',
-            background: isHovered ? categoryGradient : 'linear-gradient(135deg, #1e293b, #334155)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: '#1e293b',
             margin: '0 0 8px 0',
             lineHeight: '1.3',
             transition: 'all 0.4s ease',
             transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
-            textShadow: isHovered ? '0 4px 20px rgba(0, 99, 177, 0.3)' : 'none',
           }}>
             {name}
           </h3>
+          
+          {/* Category Description */}
+          {category.description && (
+            <p style={{
+              fontSize: '13px',
+              color: '#64748b',
+              lineHeight: '1.5',
+              margin: '0 0 12px 0',
+              textAlign: 'center',
+              maxHeight: isHovered ? '40px' : '32px',
+              overflow: 'hidden',
+              transition: 'all 0.4s ease',
+              opacity: isHovered ? 1 : 0.8,
+            }}>
+              {category.description}
+            </p>
+          )}
           
           {/* Subcategory Info with Icon */}
           <div style={{
@@ -456,19 +469,12 @@ const Home1Category = () => {
             color: '#64748b',
             fontWeight: '500',
           }}>
-            {hasSubcategories ? (
+            {hasSubcategories && (
               <>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
                 <span>{category.children.length} categories</span>
-              </>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                </svg>
-                <span>Browse collection</span>
               </>
             )}
           </div>

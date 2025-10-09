@@ -96,6 +96,10 @@ const Footer = () => {
           }
           .footer-logo-section {
             grid-column: span 1;
+            align-items: center;
+          }
+          .footer-logo-section > div {
+            align-self: center !important;
           }
         }
       `}</style>
@@ -118,21 +122,44 @@ const Footer = () => {
             alignItems: 'flex-start',
             justifyContent: 'flex-start',
             paddingTop: '0',
-            marginTop: '-40px'
+            marginTop: '0'
           }}>
-            <img 
-              src="/assets/img/logo.png" 
-              alt="Mazad.Click Logo" 
-              style={{ 
-                height: '160px', 
-                width: 'auto',
-                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.2))',
-                marginBottom: '25px',
-                marginTop: '0',
-                alignSelf: 'flex-start',
-                maxWidth: '100%'
-              }} 
-            />
+            <Link href="/" style={{ 
+              display: 'inline-block',
+              marginBottom: '25px',
+              transition: 'transform 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-3px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            >
+              <img 
+                src="/assets/img/logo.png" 
+                alt="Mazad.Click Logo" 
+                style={{ 
+                  height: '80px', 
+                  width: '190px',
+                  display: 'block',
+                  objectFit: 'cover',
+                  objectPosition: 'center center',
+                  borderRadius: '16px',
+                  boxShadow: '0 4px 20px rgba(0, 99, 177, 0.25)',
+                  filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1))',
+                  transition: 'box-shadow 0.3s ease, filter 0.3s ease'
+                }} 
+                onMouseOver={(e) => {
+                  e.currentTarget.style.boxShadow = '0 6px 25px rgba(0, 99, 177, 0.35)';
+                  e.currentTarget.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15))';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 99, 177, 0.25)';
+                  e.currentTarget.style.filter = 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1))';
+                }}
+              />
+            </Link>
             <p style={{ 
               color: '#666', 
               fontSize: '16px', 
