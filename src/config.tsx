@@ -11,9 +11,9 @@ const app = {
   // route: "http://localhost:3000",
   // baseURL: "http://localhost:3000/",
 
-  socket: 'http://localhost:3000/',
-  route: "http://localhost:3000/static/",
-  baseURL: "http://localhost:3000/",
+  socket: 'https://mazadclick-server.onrender.com/',
+  route: "https://mazadclick-server.onrender.com/static/",
+  baseURL: "https://mazadclick-server.onrender.com/",
 
   // Frontend URLs - Dynamic based on environment
   frontendUrl: process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://buyer-mazad.vercel.app',
