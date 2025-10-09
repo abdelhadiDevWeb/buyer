@@ -28,6 +28,7 @@ import GlobalLoader from "@/components/common/GlobalLoader";
 import InteractiveBackground from "@/components/common/InteractiveBackground";
 import BidChecker from "@/components/BidChecker";
 import WinnerAnnouncement from "@/components/WinnerAnnouncement";
+import TokenHandler from "@/app/components/TokenHandler";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   // --- Hooks must be called inside the component function body ---
@@ -74,10 +75,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     enableMouseTrail={true}
                     particleCount={50}
                   />
-                  <GlobalLoader />
-                  <BidChecker />
-                  <WinnerAnnouncement />
-                  {children}
+                  <TokenHandler>
+                    <GlobalLoader />
+                    <BidChecker />
+                    <WinnerAnnouncement />
+                    {children}
+                  </TokenHandler>
                   <ScrollTopBtn />
                   <FloatingAdminChat />
                   <FloatingLanguageSwitcher />

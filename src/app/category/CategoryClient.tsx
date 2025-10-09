@@ -7,18 +7,25 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import app from '../../config';
 
+// Category interface for component usage (tree structure)
 interface Category {
-  _id?: string;
-  id?: number;
+  _id: string;
   name: string;
-  item?: string;
-  itemCount?: number;
-  image?: string;
-  thumb?: { url?: string } | null;
-  car_type?: string;
-  children?: Category[];
+  type: string;
+  description?: string;
+  thumb?: {
+    _id: string;
+    url: string;
+    filename: string;
+  } | null;
+  attributes?: string[];
   parent?: string | null;
-  level?: number;
+  children?: Category[]; // Changed to Category[] for tree structure
+  level: number;
+  path: string[];
+  fullPath: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Auction {
@@ -70,7 +77,7 @@ export default function CategoryClient() {
   }, [searchParams]);
 
   const getAllSubcategoryIds = (category: Category): string[] => {
-    const categoryId = category._id || category.id?.toString() || '';
+    const categoryId = category._id || '';
     let subcategoryIds = [categoryId];
     if (category.children && category.children.length > 0) {
       category.children.forEach(child => {
@@ -82,7 +89,7 @@ export default function CategoryClient() {
 
   const findCategoryById = (categories: Category[], targetId: string): Category | null => {
     for (const category of categories) {
-      const categoryId = category._id || category.id?.toString() || '';
+      const categoryId = category._id || '';
       if (categoryId === targetId) {
         return category;
       }
@@ -217,7 +224,7 @@ export default function CategoryClient() {
   };
 
   const selectCategory = (category: Category) => {
-    const categoryId = category._id || category.id?.toString() || '';
+    const categoryId = category._id || '';
     setSelectedCategory(categoryId);
     setSelectedCategoryName(category.name);
     setViewMode('auctions');
@@ -249,178 +256,324 @@ export default function CategoryClient() {
     }
   }, [auctions, searchTerm]);
 
-  const renderCategoryHierarchy = (categories: Category[], level = 0): JSX.Element[] => {
-    return categories.map((category) => {
-      const categoryId = category._id || category.id?.toString() || '';
-      const hasSubcategories = hasChildren(category);
-      const isExpanded = expandedCategories[categoryId];
+  const renderCategoryCard = (category: Category, index: number = 0): JSX.Element => {
+      const categoryId = category._id || '';
+    const name = category.name;
       const isHovered = hoveredCategory === categoryId;
+    const isExpanded = expandedCategories[categoryId];
+    const hasSubcategories = hasChildren(category);
+
+    // Dynamic gradient based on category index
+    const gradients = [
+      'linear-gradient(135deg, #0063b1 0%, #00a3e0 100%)',
+      'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+      'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)',
+      'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+      'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+      'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+      'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+      'linear-gradient(135deg, #0891b2 0%, #0d9488 100%)',
+    ];
+    const categoryGradient = gradients[index % gradients.length];
 
       return (
-        <div key={categoryId} style={{ marginBottom: '8px' }}>
           <div
+        key={categoryId}
+        className="category-card-professional"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '16px 20px',
-              marginLeft: `${level * 24}px`,
-              background: level === 0 
-                ? 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)' 
-                : 'rgba(255, 255, 255, 0.8)',
-              borderRadius: '16px',
-              border: level === 0 ? '2px solid #e2e8f0' : '1px solid #f1f5f9',
-              transition: 'all 0.3s ease',
-              cursor: hasSubcategories ? 'pointer' : 'default',
               position: 'relative',
+          background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+          borderRadius: '20px',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
               boxShadow: isHovered 
-                ? '0 8px 25px rgba(59, 130, 246, 0.15)' 
-                : '0 2px 8px rgba(0, 0, 0, 0.05)',
-              transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+            ? '0 20px 60px rgba(0, 99, 177, 0.25), 0 0 0 1px rgba(0, 99, 177, 0.1)' 
+            : '0 8px 32px rgba(0, 0, 0, 0.06), 0 1px 0 rgba(255, 255, 255, 0.5)',
+          transform: isHovered ? 'translateY(-12px) scale(1.02)' : 'translateY(0) scale(1)',
+          overflow: isExpanded ? 'visible' : 'hidden',
+          zIndex: isExpanded ? 20 : 1,
             }}
             onMouseEnter={() => setHoveredCategory(categoryId)}
             onMouseLeave={() => setHoveredCategory(null)}
-            onClick={() => {
-              if (hasSubcategories) {
-                toggleCategory(categoryId);
-              }
-            }}
           >
-            {level > 0 && (
+        {/* Gradient Accent */}
               <div style={{
                 position: 'absolute',
-                left: '-12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '24px',
-                height: '1px',
-                background: '#cbd5e1',
-              }} />
-            )}
-            {hasSubcategories && (
+          top: '0',
+          left: '0',
+          right: '0',
+          height: '4px',
+          background: categoryGradient,
+          borderRadius: '20px 20px 0 0',
+        }} />
+
+        {/* Floating Decorative Elements */}
               <div style={{
-                width: '28px',
-                height: '28px',
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          width: '32px',
+          height: '32px',
+          background: `${categoryGradient}`,
                 borderRadius: '50%',
-                background: isExpanded ? '#3b82f6' : '#f1f5f9',
+          opacity: isHovered ? 0.8 : 0.3,
+          transition: 'all 0.4s ease',
+          transform: isHovered ? 'scale(1.2) rotate(45deg)' : 'scale(1) rotate(0deg)',
+        }} />
+
+        {/* Category Content */}
+        <div 
+          onClick={() => selectCategory(category)}
+          style={{
+            padding: '24px',
+            cursor: 'pointer',
+            textAlign: 'center',
+            position: 'relative',
+          }}
+        >
+          {/* Category Image with Creative Frame */}
+          <div style={{
+            position: 'relative',
+            display: 'inline-block',
+            marginBottom: '16px',
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '20px',
+              background: categoryGradient,
+              padding: '3px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginRight: '16px',
-                transition: 'all 0.3s ease',
-                transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+              transition: 'all 0.4s ease',
+              transform: isHovered ? 'rotate(6deg) scale(1.1)' : 'rotate(0deg) scale(1)',
+              boxShadow: isHovered 
+                ? '0 12px 40px rgba(0, 99, 177, 0.3)' 
+                : '0 4px 20px rgba(0, 0, 0, 0.1)',
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '17px',
+                overflow: 'hidden',
+                background: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
-                <svg 
-                  width="14" 
-                  height="14" 
-                  viewBox="0 0 24 24" 
-                  fill={isExpanded ? 'white' : '#64748b'}
-                >
-                  <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-                </svg>
-              </div>
-            )}
             <img
               src={(() => {
                 if (category.thumb && category.thumb.url) {
-                  // If the URL already starts with http, use it as is
                   if (category.thumb.url.startsWith('http')) {
                     return category.thumb.url;
                   }
-                  // If it starts with /, it's a local asset path
                   if (category.thumb.url.startsWith('/')) {
                     return category.thumb.url;
                   }
-                  // Otherwise, prepend the server route
                   return `${app.route}${category.thumb.url}`;
                 }
                 return DEFAULT_CATEGORY_IMAGE;
               })()}
-              alt={category.name}
+                  alt={name}
               style={{
-                width: level === 0 ? '48px' : '40px',
-                height: level === 0 ? '48px' : '40px',
-                borderRadius: '12px',
+                    width: '90%',
+                    height: '90%',
                 objectFit: 'cover',
-                marginRight: '16px',
-                border: '2px solid white',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-              crossOrigin="use-credentials"
-              onClick={(e) => {
-                e.stopPropagation();
-                selectCategory(category);
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                    borderRadius: '14px',
+                    transition: 'all 0.4s ease',
+                    transform: isHovered ? 'scale(1.1)' : 'scale(1)',
               }}
               onError={(e) => {
                 console.log('❌ Category image failed to load:', category.name, e.currentTarget.src);
                 e.currentTarget.src = DEFAULT_CATEGORY_IMAGE;
               }}
-            />
-            <div style={{ flex: 1 }}>
-              <h4 
-                style={{
-                  fontSize: level === 0 ? '18px' : '16px',
-                  fontWeight: level === 0 ? '700' : '600',
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            
+            {/* Badge for subcategories */}
+            {hasSubcategories && (
+              <div style={{
+                position: 'absolute',
+                top: '-8px',
+                right: '-8px',
+                width: '24px',
+                height: '24px',
+                background: categoryGradient,
+                borderRadius: '50%',
+                border: '3px solid white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                color: 'white',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                animation: isHovered ? 'pulse 2s infinite' : 'none',
+              }}>
+                {category.children?.length || 0}
+              </div>
+            )}
+          </div>
+          
+          {/* Category Name with Modern Typography */}
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: '700',
                   color: '#1e293b',
-                  margin: '0 0 4px 0',
+            margin: '0 0 8px 0',
                   lineHeight: '1.3',
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                  borderRadius: '8px',
-                  transition: 'all 0.3s ease',
-                  display: 'inline-block',
-                }}
+            transition: 'all 0.4s ease',
+            transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+          }}>
+            {name}
+          </h3>
+          
+          {/* Category Description */}
+          {category.description && (
+            <p style={{
+              fontSize: '13px',
+              color: '#64748b',
+              lineHeight: '1.5',
+              margin: '0 0 12px 0',
+              textAlign: 'center',
+              maxHeight: isHovered ? '40px' : '32px',
+              overflow: 'hidden',
+              transition: 'all 0.4s ease',
+              opacity: isHovered ? 1 : 0.8,
+            }}>
+              {category.description}
+            </p>
+          )}
+          
+          {/* Subcategory Info with Icon */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            fontSize: '13px',
+            color: '#64748b',
+            fontWeight: '500',
+          }}>
+            {hasSubcategories && (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <span>{category.children?.length || 0} categories</span>
+              </>
+            )}
+          </div>
+
+          {/* Animated Underline */}
+          <div style={{
+            width: isHovered ? '60px' : '30px',
+            height: '3px',
+            background: categoryGradient,
+            borderRadius: '3px',
+            margin: '12px auto 0',
+            transition: 'all 0.4s ease',
+            opacity: isHovered ? 1 : 0.6,
+          }} />
+        </div>
+        
+        {/* Modern Expand Button */}
+        {hasSubcategories && (
+          <div style={{
+            borderTop: '1px solid rgba(0, 99, 177, 0.08)',
+            padding: '12px 20px',
+            background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%)',
+            borderRadius: '0 0 20px 20px',
+          }}>
+            <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  selectCategory(category);
+                toggleCategory(categoryId);
+              }}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                background: 'transparent',
+                border: 'none',
+                color: '#0063b1',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                padding: '8px 12px',
+                borderRadius: '12px',
+                transition: 'all 0.3s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))';
-                  e.currentTarget.style.color = '#3b82f6';
-                  e.currentTarget.style.transform = 'translateX(4px)';
+                e.currentTarget.style.background = 'rgba(0, 99, 177, 0.1)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = '#1e293b';
-                  e.currentTarget.style.transform = 'translateX(0)';
+              }}
+            >
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                style={{
+                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s ease',
                 }}
               >
-                {category.name}
-              </h4>
-              <p style={{
-                fontSize: '14px',
-                color: '#64748b',
-                margin: 0,
-              }}>
-                {hasSubcategories 
-                  ? `${category.children!.length} subcategories • Click row to expand, name to browse all` 
-                  : 'Click name or image to view auctions'
-                }
-              </p>
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+              <span>{isExpanded ? 'Hide' : 'Explore'} subcategories</span>
+            </button>
             </div>
-          </div>
-          {hasSubcategories && expandedCategories[categoryId] && (
+        )}
+        
+        {/* Enhanced Subcategories Dropdown */}
+        {hasSubcategories && isExpanded && (
+          <div 
+            className="subcategory-dropdown-modern"
+            style={{
+              position: 'absolute',
+              top: 'calc(100% - 1px)',
+              left: '0',
+              right: '0',
+              background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%)',
+              border: '1px solid rgba(0, 99, 177, 0.15)',
+              borderTop: `3px solid`,
+              borderImage: `${categoryGradient} 1`,
+              borderRadius: '0 0 20px 20px',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.5)',
+              zIndex: 100,
+              maxHeight: '350px',
+              overflowY: 'auto',
+              animation: 'slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div style={{
-              marginTop: '8px',
-              paddingLeft: '16px',
-              borderLeft: level < 2 ? '2px solid #f1f5f9' : 'none',
-              marginLeft: `${level * 24 + 16}px`,
+              padding: '16px 0',
             }}>
-              {renderCategoryHierarchy(category.children!, level + 1)}
+              {category.children?.map((subcategory, subIndex) => renderCategoryCard(subcategory, subIndex))}
+            </div>
             </div>
           )}
         </div>
       );
-    });
+  };
+
+  const renderCategoryGrid = (categories: Category[]): JSX.Element[] => {
+    return categories.map((category, index) => renderCategoryCard(category, index));
   };
 
   const renderAuctionCard = (auction: Auction) => {
@@ -702,6 +855,33 @@ export default function CategoryClient() {
   }
 
   return (
+    <>
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes slideDown {
+          0% {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+      `}</style>
     <div style={{ 
         padding: '80px 0', 
         minHeight: '100vh',
@@ -827,12 +1007,16 @@ export default function CategoryClient() {
         {viewMode === 'categories' ? (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '24px',
-            maxWidth: '1200px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '32px',
+            maxWidth: '1400px',
             margin: '0 auto',
+            padding: '20px',
+            overflow: 'visible',
+            position: 'relative',
+            zIndex: 1,
           }}>
-            {renderCategoryHierarchy(filteredCategories)}
+            {renderCategoryGrid(filteredCategories)}
           </div>
         ) : (
           <div>
@@ -884,25 +1068,8 @@ export default function CategoryClient() {
         )}
       </div>
 
-      {/* Global Styles */}
-      <style jsx global>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.05);
-            opacity: 0.8;
-          }
-        }
-      `}</style>
     </div>
+    </>
   );
 }
 

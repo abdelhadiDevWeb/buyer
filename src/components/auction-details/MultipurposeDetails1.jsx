@@ -1482,6 +1482,33 @@ const handleBidSubmit = async (e) => {
                               </td>
                             </tr>
                             <tr>
+                              <td className="fw-bold">Quantité disponible</td>
+                              <td>
+                                <span style={{
+                                  color: '#0063b1',
+                                  fontWeight: '600',
+                                  fontSize: '16px'
+                                }}>
+                                  {auctionData?.quantity || "Non spécifiée"}
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="fw-bold">Prix total (Prix actuel × Quantité)</td>
+                              <td>
+                                <span style={{
+                                  color: '#28a745',
+                                  fontWeight: '700',
+                                  fontSize: '18px'
+                                }}>
+                                  {auctionData?.quantity && auctionData?.quantity !== "Non spécifiée" 
+                                    ? formatPrice(safeCurrentPrice * parseInt(auctionData.quantity))
+                                    : formatPrice(safeCurrentPrice)
+                                  }
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
                               <td className="fw-bold">Type d'enchère</td>
                               <td>{auctionData?.bidType || "PRODUCT"}</td>
                             </tr>
@@ -3003,6 +3030,105 @@ const handleBidSubmit = async (e) => {
                                             WebkitTextFillColor: hasAuctionEnded ? "#888" : "transparent",
                                           }}>
                                             {Number(auction.currentPrice || auction.startingPrice || 0).toLocaleString()} DA
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      {/* Quantity Section */}
+                                      <div style={{
+                                        background: hasAuctionEnded 
+                                          ? "#f8f8f8" 
+                                          : "linear-gradient(135deg, #e3f2fd, #f3e5f5)",
+                                        borderRadius: "12px",
+                                        padding: "12px",
+                                        marginBottom: "12px",
+                                        border: hasAuctionEnded 
+                                          ? "1px solid #e0e0e0" 
+                                          : "1px solid rgba(0, 99, 177, 0.1)",
+                                      }}>
+                                        <div style={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          gap: "8px",
+                                        }}>
+                                          <div style={{
+                                            width: "8px",
+                                            height: "8px",
+                                            borderRadius: "50%",
+                                            background: hasAuctionEnded ? "#888" : "#0063b1",
+                                            animation: hasAuctionEnded ? "none" : "pulse 2s infinite",
+                                          }}></div>
+                                          <span style={{
+                                            fontSize: "14px",
+                                            fontWeight: "600",
+                                            color: hasAuctionEnded ? "#888" : "#0063b1",
+                                          }}>
+                                            Quantité disponible
+                                          </span>
+                                        </div>
+                                        <div style={{ textAlign: "center", marginTop: "8px" }}>
+                                          <p style={{
+                                            fontSize: "18px",
+                                            fontWeight: "700",
+                                            margin: 0,
+                                            color: hasAuctionEnded ? "#888" : "#0063b1",
+                                          }}>
+                                            {auction.quantity || "Non spécifiée"}
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      {/* Total Price Section */}
+                                      <div style={{
+                                        background: hasAuctionEnded 
+                                          ? "#f8f8f8" 
+                                          : "linear-gradient(135deg, #e8f5e8, #f0f8f0)",
+                                        borderRadius: "12px",
+                                        padding: "12px",
+                                        marginBottom: "12px",
+                                        border: hasAuctionEnded 
+                                          ? "1px solid #e0e0e0" 
+                                          : "1px solid rgba(40, 167, 69, 0.2)",
+                                      }}>
+                                        <div style={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          gap: "8px",
+                                        }}>
+                                          <div style={{
+                                            width: "8px",
+                                            height: "8px",
+                                            borderRadius: "50%",
+                                            background: hasAuctionEnded ? "#888" : "#28a745",
+                                            animation: hasAuctionEnded ? "none" : "pulse 2s infinite",
+                                          }}></div>
+                                          <span style={{
+                                            fontSize: "14px",
+                                            fontWeight: "600",
+                                            color: hasAuctionEnded ? "#888" : "#28a745",
+                                          }}>
+                                            Prix total (Prix actuel × Quantité)
+                                          </span>
+                                        </div>
+                                        <div style={{ textAlign: "center", marginTop: "8px" }}>
+                                          <p style={{
+                                            fontSize: "20px",
+                                            fontWeight: "800",
+                                            margin: 0,
+                                            color: hasAuctionEnded ? "#888" : "#28a745",
+                                            background: hasAuctionEnded 
+                                              ? "#888" 
+                                              : "linear-gradient(90deg, #28a745, #20c997)",
+                                            WebkitBackgroundClip: "text",
+                                            backgroundClip: "text",
+                                            WebkitTextFillColor: hasAuctionEnded ? "#888" : "transparent",
+                                          }}>
+                                            {auction.quantity && auction.quantity !== "Non spécifiée" 
+                                              ? (Number(auction.currentPrice || auction.startingPrice || 0) * parseInt(auction.quantity)).toLocaleString() + " DA"
+                                              : Number(auction.currentPrice || auction.startingPrice || 0).toLocaleString() + " DA"
+                                            }
                                           </p>
                                         </div>
                                       </div>
