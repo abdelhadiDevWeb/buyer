@@ -500,6 +500,73 @@ function ProfilePage() {
                                             {auth.user?.email}
                                         </motion.p>
 
+                                        {/* Professional and Verified Badges */}
+                                        <motion.div
+                                            className="user-badges-container"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.5, delay: 1.3 }}
+                                            style={{
+                                                display: 'flex',
+                                                gap: '8px',
+                                                marginTop: '8px',
+                                                flexWrap: 'wrap',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            {/* Professional Badge */}
+                                            {auth.user?.type === "PROFESSIONAL" && (
+                                                <motion.div
+                                                    className="user-badge professional"
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ duration: 0.3, delay: 1.4 }}
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        padding: '4px 8px',
+                                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                        color: 'white',
+                                                        borderRadius: '12px',
+                                                        fontSize: '12px',
+                                                        fontWeight: '600',
+                                                        boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                                                        border: '1px solid rgba(255, 255, 255, 0.2)'
+                                                    }}
+                                                >
+                                                    <i className="bi bi-star-fill" style={{ fontSize: '10px' }}></i>
+                                                    <span>PRO</span>
+                                                </motion.div>
+                                            )}
+
+                                            {/* Verified Badge */}
+                                            {(auth.user as any)?.isVerified && (
+                                                <motion.div
+                                                    className="user-badge verified"
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ duration: 0.3, delay: 1.5 }}
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        padding: '4px 8px',
+                                                        background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                                                        color: 'white',
+                                                        borderRadius: '12px',
+                                                        fontSize: '12px',
+                                                        fontWeight: '600',
+                                                        boxShadow: '0 2px 8px rgba(17, 153, 142, 0.3)',
+                                                        border: '1px solid rgba(255, 255, 255, 0.2)'
+                                                    }}
+                                                >
+                                                    <i className="bi bi-check-circle-fill" style={{ fontSize: '10px' }}></i>
+                                                    <span>VERIFIED</span>
+                                                </motion.div>
+                                            )}
+                                        </motion.div>
+
                                         {/* Modern Star Rating Display */}
                                         <motion.div
                                             className="modern-star-rating-container"
@@ -743,7 +810,7 @@ function ProfilePage() {
                                         </motion.div>
 
                                         {/* User Type Badge */}
-                                        {identityStatus === "WAITING" && (
+                                        {/* {identityStatus === "WAITING" && (
                                             <motion.div
                                                 className="user-type-badge waiting"
                                                 initial={{ opacity: 0, scale: 0.8 }}
@@ -753,7 +820,7 @@ function ProfilePage() {
                                                 <i className="bi bi-clock"></i>
                                                 <span>Under review</span>
                                             </motion.div>
-                                        )}
+                                        )} */}
                                     </div>
                                 </div>
                             </motion.div>
@@ -763,14 +830,14 @@ function ProfilePage() {
                     {/* Main Content Grid */}
                     <div className="modern-content-grid">
                         {/* Reseller Status Cards Section */}
-                        <motion.div
+                        {/* <motion.div
                             className="modern-reseller-section"
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 1.0 }}
                         >
                             {/* Case 1: User is already a RESELLER */}
-                            {auth.user?.type === "RESELLER" && (
+                            {/* {auth.user?.type === "RESELLER" && (
                                 <motion.div
                                     className="modern-status-card reseller-active"
                                     whileHover={{
@@ -802,10 +869,10 @@ function ProfilePage() {
                                         </div>
                                     </div>
                                 </motion.div>
-                            )}
+                            )} */}
 
                             {/* Case 2: User has identity but is NOT RESELLER - Wait for support */}
-                            {auth.user?.type !== "RESELLER" && auth.user?.isHasIdentity && (
+                            {/* {auth.user?.type !== "RESELLER" && auth.user?.isHasIdentity && (
                                 <motion.div
                                     className="modern-status-card pending"
                                     whileHover={{
@@ -847,10 +914,10 @@ function ProfilePage() {
                                         </div>
                                     </div>
                                 </motion.div>
-                            )}
+                            )} */}
 
                             {/* Case 3: User does NOT have identity and is NOT RESELLER - Show become reseller button */}
-                            {auth.user?.type !== "RESELLER" && !auth.user?.isHasIdentity && !isLoadingIdentity && (
+                            {/* {auth.user?.type !== "RESELLER" && !auth.user?.isHasIdentity && !isLoadingIdentity && (
                                 <motion.div
                                     className="modern-status-card action-needed"
                                     whileHover={{
@@ -895,8 +962,8 @@ function ProfilePage() {
                                         />
                                     </motion.button>
                                 </motion.div>
-                            )}
-                        </motion.div>
+                            )} */}
+                        {/* </motion.div> */}
 
                         {/* Profile Tabs Section */}
                         <motion.div

@@ -93,13 +93,34 @@ const Footer = () => {
           .footer-main-grid {
             grid-template-columns: 1fr;
             gap: 30px;
+            padding: 0 16px;
           }
           .footer-logo-section {
             grid-column: span 1;
             align-items: center;
+            text-align: center;
           }
           .footer-logo-section > div {
             align-self: center !important;
+          }
+          .footer-logo-section img {
+            height: 60px !important;
+            width: 140px !important;
+          }
+          .footer-logo-section p {
+            max-width: 100% !important;
+            text-align: center;
+          }
+        }
+        
+        @media (max-width: 375px) {
+          .footer-main-grid {
+            gap: 24px;
+            padding: 0 12px;
+          }
+          .footer-logo-section img {
+            height: 50px !important;
+            width: 120px !important;
           }
         }
       `}</style>
@@ -143,19 +164,15 @@ const Footer = () => {
                   height: '80px', 
                   width: '190px',
                   display: 'block',
-                  objectFit: 'cover',
+                  objectFit: 'contain',
                   objectPosition: 'center center',
-                  borderRadius: '16px',
-                  boxShadow: '0 4px 20px rgba(0, 99, 177, 0.25)',
                   filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1))',
-                  transition: 'box-shadow 0.3s ease, filter 0.3s ease'
+                  transition: 'filter 0.3s ease'
                 }} 
                 onMouseOver={(e) => {
-                  e.currentTarget.style.boxShadow = '0 6px 25px rgba(0, 99, 177, 0.35)';
                   e.currentTarget.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15))';
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 99, 177, 0.25)';
                   e.currentTarget.style.filter = 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1))';
                 }}
               />

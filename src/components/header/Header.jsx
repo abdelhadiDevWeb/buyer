@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import React, { useReducer, useState, useEffect, useRef } from "react";
 import useAuth from "@/hooks/useAuth";
 import { authStore } from "@/contexts/authStore";
-import { BiSearch } from 'react-icons/bi';
 import ChatNotifications from '@/components/chat/ChatNotifications';
 import NotificationBellStable from '@/components/NotificationBellStable';
 import BellNotifications from '@/components/header/BellNotifications';
@@ -45,8 +44,6 @@ function reducer(state, action) {
         ...state,
         isSidebarOpen: !state.isSidebarOpen,
       };
-    case "setScrollY":
-      return { ...state, scrollY: action.payload };
     default:
       return state;
   }
@@ -58,19 +55,20 @@ export const Header = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const pathName = usePathname();
   const { isLogged, isReady, initializeAuth, auth } = useAuth();
-  const [search, setSearch] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [switchAccount , setSwitchAccount] = useState(false)
   
   // Add windowWidth state
   const [windowWidth, setWindowWidth] = useState(1024);
   
-  // Responsive state
+  // Enhanced responsive state
   const isMobile = windowWidth <= 768;
   const isTablet = windowWidth > 768 && windowWidth <= 1024;
   const isDesktop = windowWidth > 1024;
+  const isIPhone = windowWidth >= 375 && windowWidth <= 428;
+  const isSamsung = windowWidth >= 360 && windowWidth <= 412;
+  const isSmallMobile = windowWidth <= 375;
   const socketContext = useCreateSocket();
   const badgeRef = useRef(null);
   const [windowVal , setWindowVal] = useState('')
@@ -109,30 +107,18 @@ export const Header = () => {
   const [currentBidWonNotification, setCurrentBidWonNotification] = useState(null);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  // Handle scroll effect
+  // Handle window resize only
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
-  
-    
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
     
-    window.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
     
     // Set initial size
     setWindowWidth(window.innerWidth);
     
     return () => {
-      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
@@ -349,23 +335,25 @@ export const Header = () => {
         width: '100%',
         position: 'sticky',
         top: 0,
-        zIndex: 1000,
+        zIndex: 9999,
         transition: 'all 0.3s ease'
       }}
     >
       <div style={{
-        background: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'white',
-        backdropFilter: scrolled ? 'blur(10px)' : 'none',
-        boxShadow: scrolled ? '0 4px 20px rgba(0, 0, 0, 0.08)' : '0 2px 10px rgba(0, 0, 0, 0.05)',
-        padding: isMobile ? '8px 0' : (scrolled ? '12px 0' : '16px 0'),
+        background: 'white',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+        padding: isMobile ? '8px 0' : '16px 0',
         transition: 'all 0.3s ease'
       }}>
         <div className="container-responsive" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: isMobile ? '60px' : isTablet ? '70px' : '80px',
-          transition: 'height 0.3s ease'
+          height: isSmallMobile ? '56px' : isMobile ? '60px' : isTablet ? '70px' : '80px',
+          transition: 'height 0.3s ease',
+          paddingLeft: isSmallMobile ? '12px' : isMobile ? '16px' : '20px',
+          paddingRight: isSmallMobile ? '12px' : isMobile ? '16px' : '20px',
+          maxWidth: '100vw'
         }}>
           {/* Logo */}
           <div style={{ 
@@ -387,17 +375,17 @@ export const Header = () => {
                   alt="Mazad.Click Logo"
                   className="header-logo"
                   style={{ 
-                    height: isMobile ? '50px' : isTablet ? '65px' : '75px',
-                    width: isMobile ? '120px' : isTablet ? '155px' : '180px',
+
+                    height: isMobile ? '50px' : isTablet ? '65px' : '65px',
+                    width: isMobile ? '120px' : isTablet ? '155px' : '165px',
+
                     transition: 'all 0.3s ease',
-                    objectFit: 'cover',
+                    objectFit: 'contain',
                     objectPosition: 'center center',
                     borderRadius: isMobile ? '12px' : '16px',
-                    boxShadow: scrolled 
-                      ? '0 2px 10px rgba(0, 99, 177, 0.2)' 
-                      : '0 4px 15px rgba(0, 99, 177, 0.25)',
                     display: 'block',
-                    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
+                    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                    maxWidth: '100%'
                   }}
                 />
               </div>
@@ -458,70 +446,6 @@ export const Header = () => {
           }}>
             {/* Language Switcher moved to floating button at bottom-right */}
             
-            {/* Search Input - Desktop and Tablet */}
-            {isClient && !isMobile && (
-              <div style={{
-                position: 'relative',
-                borderRadius: '30px',
-                overflow: 'hidden',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                transition: 'all 0.3s ease'
-              }}>
-                <input
-                  type="text"
-                  placeholder={t('common.search')}
-                  style={{
-                    border: 'none',
-                    padding: isTablet ? '8px 16px' : '10px 20px',
-                    paddingRight: '45px',
-                    fontSize: isTablet ? '13px' : '14px',
-                    width: isTablet ? '180px' : '220px',
-                    background: '#f8f9fa',
-                    outline: 'none',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.parentElement.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)';
-                    e.currentTarget.style.background = 'white';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.parentElement.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)';
-                    e.currentTarget.style.background = '#f8f9fa';
-                  }}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <button
-                  style={{
-                    position: 'absolute',
-                    right: '5px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'transparent',
-                    border: 'none',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: '#666',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.color = '#0063b1';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.color = '#666';
-                  }}
-                >
-                  <svg width={18} height={18} viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 16C11.866 16 15 12.866 15 9C15 5.13401 11.866 2 8 2C4.13401 2 1 5.13401 1 9C1 12.866 4.13401 16 8 16Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M17 17L13 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            )}
 
           
 
@@ -660,7 +584,7 @@ export const Header = () => {
                     borderRadius: '12px',
                     boxShadow: '0 5px 25px rgba(0,0,0,0.12)',
                     minWidth: '280px',
-                    zIndex: 10,
+                    zIndex: 9999,
                     overflow: 'hidden',
                     animation: 'fadeIn 0.25s ease-out'
                   }}>
@@ -828,7 +752,7 @@ export const Header = () => {
                   alignItems: 'center',
                   gap: '6px',
                   cursor: 'pointer',
-                  zIndex: 1010
+                  zIndex: 9999
                 }}
               >
                 <span style={{
@@ -861,10 +785,10 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Enhanced Mobile Menu */}
       {isClient && isMenuOpen && windowWidth <= 992 && (
         <div 
-          className="safe-top safe-bottom mobile-scroll"
+          className="safe-top safe-bottom"
           style={{
             position: 'fixed',
             top: 0,
@@ -872,64 +796,17 @@ export const Header = () => {
             width: '100%',
             height: '100vh',
             background: 'white',
-            zIndex: 1000,
-            overflowY: 'auto',
-            paddingTop: isMobile ? '70px' : '90px',
+            zIndex: 9999,
+            paddingTop: isSmallMobile ? '65px' : isMobile ? '70px' : '90px',
+            paddingBottom: isIPhone ? 'env(safe-area-inset-bottom)' : '0',
             animation: 'fadeIn 0.3s ease-out'
           }}
         >
           <div className="container-responsive" style={{ 
-            padding: isMobile ? '16px' : '20px',
-            minHeight: 'calc(100vh - 70px)'
+            padding: isSmallMobile ? '12px' : isMobile ? '16px' : '20px',
+            minHeight: isSmallMobile ? 'calc(100vh - 65px)' : isMobile ? 'calc(100vh - 70px)' : 'calc(100vh - 90px)',
+            maxWidth: '100vw'
           }}>
-            {/* Mobile Search */}
-            <div style={{
-              position: 'relative',
-              borderRadius: '30px',
-              overflow: 'hidden',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-              marginBottom: '24px'
-            }}>
-              <input
-                type="text"
-                placeholder={t('common.search')}
-                className="form-responsive"
-                style={{
-                  border: 'none',
-                  padding: isMobile ? '12px 16px' : '12px 20px',
-                  paddingRight: '45px',
-                  fontSize: '16px', // Prevents zoom on iOS
-                  width: '100%',
-                  background: '#f8f9fa',
-                  outline: 'none',
-                  borderRadius: '30px'
-                }}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <button
-                style={{
-                  position: 'absolute',
-                  right: '5px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'transparent',
-                  border: 'none',
-                  width: '40px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#666'
-                }}
-              >
-                <svg width={18} height={18} viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 16C11.866 16 15 12.866 15 9C15 5.13401 11.866 2 8 2C4.13401 2 1 5.13401 1 9C1 12.866 4.13401 16 8 16Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M17 17L13 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
 
             {/* Mobile Navigation */}
             <nav>

@@ -11,7 +11,7 @@ const app = {
   // route: "http://localhost:3000",
   // baseURL: "http://localhost:3000/",
 
-  socket: 'https://mazadclick-server.onrender.com/',
+  socket: 'https://mazadclick-server.onrender.com',
   route: "https://mazadclick-server.onrender.com/static/",
   baseURL: "https://mazadclick-server.onrender.com/",
 
