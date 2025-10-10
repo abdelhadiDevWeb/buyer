@@ -682,17 +682,19 @@ const Home1Category = () => {
 
       </div>
 
-      {/* Professional Categories Grid */}
+      {/* Enhanced Responsive Categories Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: '32px',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(280px, 40vw, 320px), 1fr))',
+        gap: 'clamp(20px, 4vw, 32px)',
         maxWidth: '1400px',
         margin: '0 auto',
-        padding: '20px',
+        padding: 'clamp(16px, 3vw, 20px)',
         overflow: 'visible',
         position: 'relative',
         zIndex: 1,
+        width: '100%',
+        boxSizing: 'border-box',
       }}>
         {renderCategoryGrid(categories)}
       </div>

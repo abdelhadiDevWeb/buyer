@@ -19,6 +19,7 @@ import { useCreateSocket } from '@/contexts/socket';
 import { getSellerUrl } from '@/config';
 import { CategoryAPI } from '@/app/api/category';
 import { useRouter } from 'next/navigation';
+import ResponsiveTest from '@/components/common/ResponsiveTest';
 
 export default function Home() {
   const { initializeAuth } = useAuth();
@@ -28,6 +29,20 @@ export default function Home() {
     category: false,
     auction: false
   });
+  
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // State for dropdown menus
   const [auctionDropdownOpen, setAuctionDropdownOpen] = useState(false);
@@ -330,17 +345,29 @@ export default function Home() {
           0% {
             background-position: 0% 50%;
           }
-          25% {
-            background-position: 100% 50%;
-          }
           50% {
-            background-position: 100% 100%;
-          }
-          75% {
-            background-position: 0% 100%;
+            background-position: 100% 50%;
           }
           100% {
             background-position: 0% 50%;
+          }
+        }
+        
+        @keyframes smoothGradient {
+          0% {
+            background-position: 0% 0%;
+          }
+          100% {
+            background-position: 200% 200%;
+          }
+        }
+        
+        @keyframes gentleFloat {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
           }
         }
 
@@ -367,20 +394,12 @@ export default function Home() {
 
         @keyframes particleFloat {
           0%, 100% {
-            transform: translate(0, 0) rotate(0deg);
+            transform: translateY(0px);
             opacity: 0.6;
           }
-          25% {
-            transform: translate(10px, -10px) rotate(90deg);
-            opacity: 1;
-          }
           50% {
-            transform: translate(-5px, -20px) rotate(180deg);
-            opacity: 0.8;
-          }
-          75% {
-            transform: translate(-10px, -5px) rotate(270deg);
-            opacity: 0.9;
+            transform: translateY(-8px);
+            opacity: 1;
           }
         }
         
@@ -981,13 +1000,13 @@ export default function Home() {
           height: 200%;
            background: radial-gradient(
              circle at 30% 20%, 
-             rgba(255, 255, 255, 0.15) 0%,
-             rgba(219, 234, 254, 0.12) 15%,
-             rgba(147, 197, 253, 0.08) 30%,
-             rgba(96, 165, 250, 0.05) 45%,
+             rgba(255, 255, 255, 0.08) 0%,
+             rgba(219, 234, 254, 0.06) 15%,
+             rgba(147, 197, 253, 0.04) 30%,
+             rgba(96, 165, 250, 0.02) 45%,
              transparent 60%
            );
-          animation: float 20s ease-in-out infinite;
+          animation: gentleFloat 25s ease-in-out infinite;
           z-index: 0;
         }
 
@@ -1000,14 +1019,25 @@ export default function Home() {
           height: 200%;
            background: radial-gradient(
              circle at 70% 80%, 
-             rgba(30, 58, 138, 0.08) 0%,
-             rgba(59, 130, 246, 0.06) 20%,
-             rgba(96, 165, 250, 0.04) 40%,
-             rgba(147, 197, 253, 0.02) 60%,
+             rgba(30, 58, 138, 0.04) 0%,
+             rgba(59, 130, 246, 0.03) 20%,
+             rgba(96, 165, 250, 0.02) 40%,
+             rgba(147, 197, 253, 0.01) 60%,
              transparent 80%
            );
-          animation: float 25s ease-in-out infinite reverse;
+          animation: gentleFloat 30s ease-in-out infinite reverse;
           z-index: 0;
+        }
+
+        /* Performance optimizations for animations */
+        .hero-background,
+        .hero-overlay,
+        .floating-blob,
+        .floating-card,
+        .floating-particle {
+          will-change: transform, opacity;
+          transform: translateZ(0);
+          backface-visibility: hidden;
         }
 
         /* Enhanced Responsive Design */
@@ -1016,6 +1046,58 @@ export default function Home() {
             animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
+          }
+        }
+        
+        /* Mobile performance optimizations */
+        @media (max-width: 768px) {
+          .hero-background {
+            animation: none !important;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #1e40af 50%, #3b82f6 75%, #60a5fa 100%) !important;
+          }
+          
+          .hero-overlay {
+            animation: none !important;
+          }
+          
+          .floating-blob,
+          .floating-card,
+          .floating-particle {
+            animation: none !important;
+          }
+          
+          .floating-elements {
+            display: none !important;
+          }
+          
+          .hero-banner-section::before,
+          .hero-banner-section::after {
+            animation: none !important;
+            opacity: 0.3 !important;
+          }
+          
+          .gradient-text {
+            animation: none !important;
+            background: none !important;
+            color: white !important;
+            -webkit-text-fill-color: white !important;
+          }
+        }
+        
+        /* Small mobile devices - further reduce animations */
+        @media (max-width: 480px) {
+          * {
+            animation: none !important;
+            transition: none !important;
+          }
+          
+          .hero-background,
+          .hero-overlay,
+          .floating-blob,
+          .floating-card,
+          .floating-particle {
+            animation: none !important;
+            transition: none !important;
           }
         }
         
@@ -1060,6 +1142,8 @@ export default function Home() {
                   width: '100%',
                   maxWidth: '100vw',
                   overflowX: 'hidden',
+                  paddingTop: 'env(safe-area-inset-top)',
+                  paddingBottom: 'env(safe-area-inset-bottom)',
                 }}>
                   {/* Hero Banner Section */}
                   <section 
@@ -1073,16 +1157,17 @@ export default function Home() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      padding: '80px 20px',
-                      paddingTop: '120px',
-                      paddingBottom: '80px',
+                      padding: 'clamp(40px, 8vw, 80px) clamp(16px, 4vw, 20px)',
+                      paddingTop: 'clamp(80px, 15vw, 120px)',
+                      paddingBottom: 'clamp(40px, 8vw, 80px)',
                       width: '100%',
                       maxWidth: '100vw',
+                      
                     }}
                   >
-                    {/* Animated Blue Gradient Background */}
+                    {/* Smooth Animated Gradient Background */}
                     <div 
-                      className="hero-background animated-gradient"
+                      className="hero-background"
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -1090,29 +1175,20 @@ export default function Home() {
                         width: '100%',
                         height: '100%',
                          background: `linear-gradient(
-                           45deg,
+                          135deg,
                            #0f172a 0%,
-                           #1e293b 8%,
-                           #334155 16%,
-                           #1e3a8a 24%,
-                           #1e40af 32%,
-                           #2563eb 40%,
-                           #3b82f6 48%,
-                           #60a5fa 56%,
-                           #93c5fd 64%,
-                           #60a5fa 72%,
-                           #3b82f6 80%,
-                           #2563eb 88%,
-                           #1e40af 96%,
-                           #1e3a8a 100%
-                         )`,
-                        backgroundSize: '400% 400%',
-                        animation: 'gradientShift 8s ease infinite',
+                          #1e293b 25%,
+                          #1e40af 50%,
+                          #3b82f6 75%,
+                          #60a5fa 100%
+                        )`,
+                        backgroundSize: '200% 200%',
+                        animation: isMobile ? 'none' : 'smoothGradient 20s ease-in-out infinite',
                         zIndex: 1,
                       }}
                     />
                     
-                    {/* Additional Animated Overlay */}
+                    {/* Elegant Overlay */}
                     <div 
                       className="hero-overlay"
                       style={{
@@ -1123,44 +1199,44 @@ export default function Home() {
                       height: '100%',
                          background: `linear-gradient(
                            135deg,
-                           rgba(15, 23, 42, 0.9) 0%,
-                           rgba(30, 41, 59, 0.8) 12%,
-                           rgba(51, 65, 85, 0.7) 24%,
-                           rgba(30, 58, 138, 0.6) 36%,
-                           rgba(37, 99, 235, 0.5) 48%,
-                           rgba(59, 130, 246, 0.4) 60%,
-                           rgba(96, 165, 250, 0.3) 72%,
-                           rgba(147, 197, 253, 0.2) 84%,
-                           rgba(59, 130, 246, 0.4) 96%,
-                           rgba(30, 58, 138, 0.8) 100%
-                         )`,
-                        backgroundSize: '300% 300%',
-                        animation: 'gradientShift 12s ease infinite reverse',
+                          rgba(15, 23, 42, 0.7) 0%,
+                          rgba(30, 41, 59, 0.5) 50%,
+                          rgba(59, 130, 246, 0.3) 100%
+                        )`,
                         zIndex: 2,
+                        opacity: 0.8,
                       }}
                     />
                     
-                    {/* Floating Morphing Blobs */}
-                    <div className="morphing-blob" style={{
+                    {/* Elegant Floating Elements */}
+                    {!isMobile && (
+                      <>
+                        <div className="floating-blob" style={{
                       position: 'absolute',
-                      top: '10%',
-                      right: '15%',
-                      width: '200px',
-                      height: '200px',
+                          top: '15%',
+                          right: '10%',
+                          width: '180px',
+                          height: '180px',
+                          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+                          borderRadius: '50%',
                       zIndex: 1,
-                      opacity: 0.3,
+                          animation: 'gentleFloat 8s ease-in-out infinite',
                     }} />
                     
-                    <div className="morphing-blob" style={{
+                        <div className="floating-blob" style={{
                       position: 'absolute',
-                      bottom: '20%',
-                      left: '10%',
-                      width: '150px',
-                      height: '150px',
+                          bottom: '25%',
+                          left: '8%',
+                          width: '120px',
+                          height: '120px',
+                          background: 'radial-gradient(circle, rgba(96, 165, 250, 0.12) 0%, transparent 70%)',
+                          borderRadius: '50%',
                       zIndex: 1,
-                      opacity: 0.2,
-                      animationDelay: '10s',
+                          animation: 'gentleFloat 12s ease-in-out infinite reverse',
+                          animationDelay: '4s',
                     }} />
+                      </>
+                    )}
 
                     {/* Floating Elements with Simple Animations */}
                     <div className="floating-elements" style={{
@@ -1171,64 +1247,72 @@ export default function Home() {
                       height: '100%',
                       pointerEvents: 'none',
                       zIndex: 2,
+                      display: isMobile ? 'none' : 'block',
                     }}>
-                      {/* Floating Particles */}
-                      {Array.from({ length: 6 }).map((_, i) => (
+                      {/* Subtle Floating Particles */}
+                      {Array.from({ length: 4 }).map((_, i) => (
                         <div 
                           key={i}
                           className="floating-particle"
                           style={{
-                            top: `${20 + i * 12}%`,
-                            left: `${15 + i * 10}%`,
-                            width: `${6 + i * 2}px`,
-                            height: `${6 + i * 2}px`,
-                             background: `linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.7) 25%, rgba(59, 130, 246, 0.6) 50%, rgba(96, 165, 250, 0.5) 75%, rgba(147, 197, 253, 0.4) 100%)`,
-                            animationDelay: `${i * 1}s`,
+                            top: `${25 + i * 15}%`,
+                            left: `${20 + i * 15}%`,
+                            width: `${4 + i}px`,
+                            height: `${4 + i}px`,
+                            background: `rgba(147, 197, 253, 0.4)`,
+                            borderRadius: '50%',
+                            animationDelay: `${i * 2}s`,
+                            animation: 'gentleFloat 6s ease-in-out infinite',
                           }}
                         />
                       ))}
 
-                      <div className="floating-card glass-morphism" style={{
+                      <div className="floating-card" style={{
                         position: 'absolute',
-                        top: '15%',
-                        right: '10%',
-                        width: '140px',
-                        height: '90px',
-                        borderRadius: '20px',
-                        animation: 'float 6s ease-in-out infinite',
+                        top: '20%',
+                        right: '15%',
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '50%',
+                        animation: 'gentleFloat 10s ease-in-out infinite',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                             background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.2) 0%, rgba(30, 41, 59, 0.18) 20%, rgba(59, 130, 246, 0.15) 40%, rgba(96, 165, 250, 0.12) 60%, rgba(147, 197, 253, 0.1) 80%, rgba(219, 234, 254, 0.08) 100%)',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
                       }}>
                         <div style={{
-                          width: '24px',
-                          height: '24px',
+                          width: '16px',
+                          height: '16px',
                           borderRadius: '50%',
-                          background: 'var(--primary-gradient)',
-                          animation: 'pulse 2s infinite',
+                          background: 'rgba(147, 197, 253, 0.6)',
+                          animation: 'gentleFloat 4s ease-in-out infinite',
                         }} />
                       </div>
                       
-                      <div className="floating-card glass-morphism" style={{
+                      <div className="floating-card" style={{
                         position: 'absolute',
-                        bottom: '20%',
-                        left: '8%',
-                        width: '110px',
-                        height: '70px',
-                        borderRadius: '16px',
-                        animation: 'float 8s ease-in-out infinite reverse',
+                        bottom: '30%',
+                        left: '12%',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        animation: 'gentleFloat 8s ease-in-out infinite reverse',
+                        animationDelay: '2s',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                         background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.25) 0%, rgba(37, 99, 235, 0.22) 20%, rgba(29, 78, 216, 0.18) 40%, rgba(59, 130, 246, 0.15) 60%, rgba(96, 165, 250, 0.12) 80%, rgba(147, 197, 253, 0.08) 100%)',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
                       }}>
                         <div style={{
-                          width: '20px',
-                          height: '20px',
+                          width: '12px',
+                          height: '12px',
                           borderRadius: '50%',
-                          background: 'var(--accent-gradient)',
-                          animation: 'spin 3s linear infinite',
+                          background: 'rgba(96, 165, 250, 0.5)',
+                          animation: 'gentleFloat 3s ease-in-out infinite',
                         }} />
                       </div>
                     </div>
@@ -1313,7 +1397,7 @@ export default function Home() {
                             />
                             
                             {/* Search Button */}
-                            <button
+                            {/* <button
                               type="submit"
                               style={{
                                 background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
@@ -1340,7 +1424,7 @@ export default function Home() {
                               }}
                             >
                               Rechercher
-                            </button>
+                            </button> */}
                           </div>
                         </form>
 
@@ -1443,29 +1527,21 @@ export default function Home() {
                           marginBottom: '32px',
                           marginTop: '32px',
                           color: 'white',
-                          textShadow: '0 4px 20px rgba(30, 64, 175, 0.6), 0 8px 40px rgba(59, 130, 246, 0.4)',
+                          textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
                           cursor: 'default',
                         }}
                       >
                         La première plateforme B2B innovante{' '}
-                        <span className="gradient-text" style={{
-                           background: 'linear-gradient(135deg, #93c5fd 0%, #60a5fa 12%, #3b82f6 24%, #2563eb 36%, #1d4ed8 48%, #1e40af 60%, #1e3a8a 72%, #1e293b 84%, #0f172a 96%, #312e81 100%)',
-                          backgroundSize: '300% 300%',
-                          WebkitBackgroundClip: 'text',
-                          backgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          position: 'relative',
-                          display: 'inline-block',
-                          animation: 'gradientShift 4s ease infinite',
+                        <span style={{
+                          color: 'white',
+                          fontWeight: '900',
                         }}>
                           d'enchères et de soumissions
                         </span>
                         <br />
                         <span style={{
-                           background: 'linear-gradient(90deg, #f0f4ff 0%, #e0e7ff 12%, #c7d2fe 24%, #a5b4fc 36%, #93c5fd 48%, #60a5fa 60%, #3b82f6 72%, #2563eb 84%, #1d4ed8 96%, #1e40af 100%)',
-                          WebkitBackgroundClip: 'text',
-                          backgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
+                          color: 'white',
+                          fontWeight: '900',
                         }}>
                           en ligne
                         </span>
@@ -1663,7 +1739,7 @@ export default function Home() {
                       </div>
 
                       {/* Trust Indicators */}
-                      <div 
+                      {/* <div 
                         className="hero-trust-indicators"
                         style={{
                           display: 'grid',
@@ -1752,7 +1828,7 @@ export default function Home() {
                             </div>
                           </div>
                         ))}
-                      </div>
+                      </div> */}
                     </div>
                   </section>
                   
@@ -1911,6 +1987,7 @@ export default function Home() {
                   }}></div>
                 </main>
                 <Footer />
+                <ResponsiveTest />
               </AxiosInterceptor>
             </RequestProvider>
           </SnackbarProvider>
