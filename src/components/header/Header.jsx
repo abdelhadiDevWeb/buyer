@@ -197,9 +197,10 @@ export const Header = () => {
         const data = await response.json();
         console.log('✅ Mark as seller response:', data);
 
-        if (data.success && data.sellerUrl) {
-          // Redirect to seller app with tokens
-          const sellerAppUrl = new URL(data.sellerUrl);
+        if (data.success) {
+          // Use the seller URL from config
+          const sellerAppUrl = new URL(getSellerUrl());
+          // const sellerAppUrl = new URL("https://mazad-click-seller.vercel.app/");
           sellerAppUrl.searchParams.append('token', auth.tokens.accessToken);
           sellerAppUrl.searchParams.append('refreshToken', auth.tokens.refreshToken);
           sellerAppUrl.searchParams.append('from', 'buyer');

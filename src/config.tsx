@@ -11,7 +11,7 @@ const app = {
   // route: "http://localhost:3000",
   // baseURL: "http://localhost:3000/",
 
-  socket: 'https://mazadclick-server.onrender.com',
+  socket: 'https://mazadclick-server.onrender.com/',
   route: "https://mazadclick-server.onrender.com/static/",
   baseURL: "https://mazadclick-server.onrender.com/",
 
@@ -20,7 +20,7 @@ const app = {
   frontendPort: process.env.NODE_ENV === 'development' ? ':3001' : '',
 
   // Seller Application URL - Dynamic based on environment
-  sellerUrl: process.env.NEXT_PUBLIC_SELLER_URL || 'https://mazad-click-seller.vercel.app/',
+  sellerUrl:  'https://mazad-click-seller.vercel.app/',
 
   apiKey: '64d2e8b7c3a9f1e5d8b2a4c6e9f0d3a5',
 };
