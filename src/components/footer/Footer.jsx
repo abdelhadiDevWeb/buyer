@@ -410,30 +410,32 @@ const Footer = () => {
       <div className="copyright-section container" style={{ 
         padding: '20px 0',
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: '15px'
       }}>
         <div style={{ 
-          fontSize: '14px', 
+          fontSize: 'clamp(12px, 3vw, 14px)', 
           color: 'var(--text-secondary, #666)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          flexWrap: 'wrap'
+          textAlign: 'center',
+          lineHeight: '1.4',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
         }}>
           ©2024 <Link href="/" style={{ 
             color: 'var(--primary-color, #0063b1)', 
             textDecoration: 'none',
-            fontWeight: '600'
+            fontWeight: '600',
+            display: 'inline'
           }}>MazadClick</Link>
-          <span style={{ color: 'var(--text-muted, #999)' }}>• {t('footer.copyright')}</span>
-          <span style={{ color: 'var(--text-muted, #999)' }}>• {t('footer.createdBy')}</span>
+          <span style={{ color: 'var(--text-muted, #999)' }}> • Tous droits réservés • Créé par </span>
           <Link href="https://noteasy-dz.com/" target="_blank" style={{ 
             color: 'var(--primary-color, #0063b1)', 
             textDecoration: 'none',
-            fontWeight: '600'
+            fontWeight: '600',
+            display: 'inline'
           }}>NotEasy</Link>
         </div>
         <div>
@@ -475,3 +477,5 @@ const Footer = () => {
 }
 
 export default Footer
+
+
