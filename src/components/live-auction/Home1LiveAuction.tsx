@@ -237,27 +237,31 @@ const Home1LiveAuction = () => {
     },
     breakpoints: {
       280: {
-        slidesPerView: 1,
+        slidesPerView: 1.2,
         spaceBetween: 15,
       },
+      400: {
+        slidesPerView: 1.3,
+        spaceBetween: 18,
+      },
       576: {
-        slidesPerView: 2,
+        slidesPerView: 1.6,
         spaceBetween: 20,
       },
       768: {
-        slidesPerView: 2,
+        slidesPerView: 2.0,
         spaceBetween: 20,
       },
       992: {
-        slidesPerView: 3,
+        slidesPerView: 2.5,
         spaceBetween: 25,
       },
       1200: {
-        slidesPerView: 4,
+        slidesPerView: 3,
         spaceBetween: 25,
       },
       1400: {
-        slidesPerView: 4,
+        slidesPerView: 3.5,
         spaceBetween: 30,
       },
     },
@@ -511,9 +515,9 @@ const Home1LiveAuction = () => {
                           boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)',
                           border: '1px solid rgba(0, 0, 0, 0.05)',
                           width: '100%',
-                          maxWidth: '320px',
+                          maxWidth: 'clamp(320px, 55vw, 420px)',
                           position: 'relative',
-                          minHeight: '360px',
+                          minHeight: '380px',
                         }}
                       >
                         {/* Auction Image */}
@@ -590,13 +594,13 @@ const Home1LiveAuction = () => {
                         </div>
 
                         {/* Auction Details */}
-                        <div style={{ padding: 'clamp(16px, 3vw, 20px)' }}>
+                        <div style={{ padding: 'clamp(20px, 4vw, 28px)' }}>
                           {/* Title */}
                           <h3 style={{
                             fontSize: '18px',
                             fontWeight: '600',
                             color: '#333',
-                            marginBottom: '12px',
+                            marginBottom: '18px',
                             lineHeight: '1.3',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -610,7 +614,7 @@ const Home1LiveAuction = () => {
                             display: 'grid',
                             gridTemplateColumns: '1fr 1fr',
                             gap: '12px',
-                            marginBottom: '16px',
+                            marginBottom: '18px',
                           }}>
                             <div>
                               <p style={{
@@ -665,7 +669,7 @@ const Home1LiveAuction = () => {
                           {/* Description */}
                           {auction.description && (
                             <div style={{
-                              marginBottom: '16px',
+                              marginBottom: '18px',
                             }}>
                               <p style={{
                                 fontSize: '12px',
@@ -706,7 +710,7 @@ const Home1LiveAuction = () => {
                             background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
                             borderRadius: '12px',
                             padding: '12px',
-                            marginBottom: '16px',
+                            marginBottom: '18px',
                             border: '1px solid #e9ecef',
                           }}>
                             <div style={{
@@ -762,7 +766,7 @@ const Home1LiveAuction = () => {
                             background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
                             borderRadius: '12px',
                             padding: '12px',
-                            marginBottom: '16px',
+                            marginBottom: '18px',
                             border: '1px solid #e9ecef',
                           }}>
                             <div style={{
@@ -806,8 +810,8 @@ const Home1LiveAuction = () => {
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '10px',
-                            marginBottom: '16px',
+                            gap: '12px',
+                            marginBottom: '20px',
                           }}>
                             <img
                               src={auction.seller?.photoURL || auction.owner?.photoURL || DEFAULT_PROFILE_IMAGE}
@@ -888,32 +892,36 @@ const Home1LiveAuction = () => {
                 <button
                   className="auction-slider-prev"
                   style={{
-                    background: 'white',
+                    background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
                     border: 'none',
-                    width: '50px',
-                    height: '50px',
+                    width: 'clamp(45px, 8vw, 50px)',
+                    height: 'clamp(45px, 8vw, 50px)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                    boxShadow: '0 6px 20px rgba(0, 99, 177, 0.3)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     pointerEvents: 'auto',
-                    marginLeft: '-25px',
+                    marginLeft: 'clamp(-60px, -10vw, -65px)',
+                    color: 'white',
+                    fontSize: 'clamp(16px, 3vw, 18px)',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(90deg, #0063b1, #00a3e0)';
-                    e.currentTarget.style.color = 'white';
-                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.background = 'linear-gradient(135deg, #00a3e0, #0063b1)';
+                    e.currentTarget.style.transform = 'scale(1.1) translateX(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 99, 177, 0.4)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#333';
-                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.background = 'linear-gradient(135deg, #0063b1, #00a3e0)';
+                    e.currentTarget.style.transform = 'scale(1) translateX(0)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 99, 177, 0.3)';
                   }}
+                  aria-label="Previous auctions"
+                  title="Voir les enchères précédentes"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="clamp(18px, 4vw, 20px)" height="clamp(18px, 4vw, 20px)" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M15.41 7.41L14 6L8 12L14 18L15.41 16.59L10.83 12Z"/>
                   </svg>
                 </button>
@@ -921,32 +929,36 @@ const Home1LiveAuction = () => {
                 <button
                   className="auction-slider-next"
                   style={{
-                    background: 'white',
+                    background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
                     border: 'none',
-                    width: '50px',
-                    height: '50px',
+                    width: 'clamp(45px, 8vw, 50px)',
+                    height: 'clamp(45px, 8vw, 50px)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                    boxShadow: '0 6px 20px rgba(0, 99, 177, 0.3)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     pointerEvents: 'auto',
-                    marginRight: '-25px',
+                    marginRight: 'clamp(-20px, -4vw, -25px)',
+                    color: 'white',
+                    fontSize: 'clamp(16px, 3vw, 18px)',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(90deg, #0063b1, #00a3e0)';
-                    e.currentTarget.style.color = 'white';
-                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.background = 'linear-gradient(135deg, #00a3e0, #0063b1)';
+                    e.currentTarget.style.transform = 'scale(1.1) translateX(2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 99, 177, 0.4)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#333';
-                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.background = 'linear-gradient(135deg, #0063b1, #00a3e0)';
+                    e.currentTarget.style.transform = 'scale(1) translateX(0)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 99, 177, 0.3)';
                   }}
+                  aria-label="Next auctions"
+                  title="Voir les enchères suivantes"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="clamp(18px, 4vw, 20px)" height="clamp(18px, 4vw, 20px)" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8.59 16.59L10 18L16 12L10 6L8.59 7.41L13.17 12Z"/>
                   </svg>
                 </button>

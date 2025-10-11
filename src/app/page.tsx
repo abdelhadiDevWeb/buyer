@@ -954,7 +954,7 @@ export default function Home() {
         }
 
         .dropdown-menu {
-          position: absolute;
+          position: static;
           top: calc(100% + 10px);
           left: 0;
           right: 0;
