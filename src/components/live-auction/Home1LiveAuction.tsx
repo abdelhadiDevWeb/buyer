@@ -84,6 +84,28 @@ export function calculateTimeRemaining(endDate: string): Timer {
   };
 }
 
+// Helper function to get the correct image URL
+const getAuctionImageUrl = (auction: Auction) => {
+  if (auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url) {
+    const imageUrl = auction.thumbs[0].url;
+    console.log('🔍 Auction Image URL Debug:', {
+      originalUrl: imageUrl,
+      appRoute: app.route,
+      constructedUrl: `${app.route}${imageUrl}`
+    });
+    
+    // Handle different URL formats
+    if (imageUrl.startsWith('http')) {
+      return imageUrl; // Already a full URL
+    } else if (imageUrl.startsWith('/')) {
+      return `${app.route}${imageUrl}`; // Starts with slash
+    } else {
+      return `${app.route}/${imageUrl}`; // No slash, add one
+    }
+  }
+  return DEFAULT_AUCTION_IMAGE;
+};
+
 const Home1LiveAuction = () => {
   const { t } = useTranslation();
   const [liveAuctions, setLiveAuctions] = useState<Auction[]>([]);
@@ -307,6 +329,15 @@ const Home1LiveAuction = () => {
             transition: none !important;
             position: relative !important;
             z-index: 10 !important;
+            min-height: 200px !important;
+          }
+          
+          .section-header {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
           }
           
           .auction-carousel-container {
@@ -328,6 +359,26 @@ const Home1LiveAuction = () => {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
+          }
+          
+          /* Ensure empty state is visible on mobile */
+          .empty-state-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            margin: 20px 0 !important;
+          }
+          
+          /* Ensure view all button is visible on mobile */
+          .view-all-button-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            margin: 30px 0 !important;
           }
         }
 
@@ -472,9 +523,7 @@ const Home1LiveAuction = () => {
                           overflow: 'hidden',
                         }}>
                           <img
-                            src={auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url
-                              ? `${app.route}${auction.thumbs[0].url}`
-                              : DEFAULT_AUCTION_IMAGE}
+                            src={getAuctionImageUrl(auction)}
                             alt={auction.title || auction.name || 'Auction'}
                             style={{
                               width: '100%',
@@ -489,8 +538,8 @@ const Home1LiveAuction = () => {
                               e.currentTarget.style.transform = 'scale(1)';
                             }}
                             onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = DEFAULT_AUCTION_IMAGE;
+                              console.error('❌ Auction Image Load Error:', getAuctionImageUrl(auction));
+                              (e.target as HTMLImageElement).src = DEFAULT_AUCTION_IMAGE;
                             }}
                           />
 
@@ -910,16 +959,24 @@ const Home1LiveAuction = () => {
               }}></div>
             </div>
           ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '60px 20px',
-              background: 'white',
-              borderRadius: '20px',
-              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)',
-              opacity: 0,
-              transform: 'translateY(30px)',
-              animation: 'fadeInUp 0.8s ease-out forwards',
-            }}>
+            <div 
+              className="empty-state-container"
+              style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                background: 'white',
+                borderRadius: '20px',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)',
+                opacity: 0,
+                transform: 'translateY(30px)',
+                animation: 'fadeInUp 0.8s ease-out forwards',
+                margin: '20px 0',
+                minHeight: '200px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <div style={{
                 fontSize: '48px',
                 marginBottom: '20px',
@@ -972,14 +1029,16 @@ const Home1LiveAuction = () => {
           )}
 
 
-          {/* View All Button */}
-          <div style={{
-            textAlign: 'center',
-            marginTop: '50px',
-            opacity: 0,
-            transform: 'translateY(30px)',
-            animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
-          }}>
+          {/* View All Button - Always visible on mobile */}
+          <div 
+            className="view-all-button-container"
+            style={{
+              textAlign: 'center',
+              marginTop: '50px',
+              opacity: 0,
+              transform: 'translateY(30px)',
+              animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
+            }}>
             <Link
               href="/auction-sidebar"
               style={{

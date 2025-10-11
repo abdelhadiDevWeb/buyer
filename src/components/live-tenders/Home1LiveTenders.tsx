@@ -54,6 +54,28 @@ export function calculateTimeRemaining(endDate: string): Timer {
   };
 }
 
+// Helper function to get the correct tender image URL
+const getTenderImageUrl = (tender: Tender) => {
+  if (tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url) {
+    const imageUrl = tender.attachments[0].url;
+    console.log('🔍 Tender Image URL Debug:', {
+      originalUrl: imageUrl,
+      appRoute: app.route,
+      constructedUrl: `${app.route}${imageUrl}`
+    });
+    
+    // Handle different URL formats
+    if (imageUrl.startsWith('http')) {
+      return imageUrl; // Already a full URL
+    } else if (imageUrl.startsWith('/')) {
+      return `${app.route}${imageUrl}`; // Starts with slash
+    } else {
+      return `${app.route}/${imageUrl}`; // No slash, add one
+    }
+  }
+  return DEFAULT_TENDER_IMAGE;
+};
+
 const Home1LiveTenders = () => {
   const { t } = useTranslation();
   const { isLogged, auth } = useAuth();
@@ -63,22 +85,41 @@ const Home1LiveTenders = () => {
   const [timers, setTimers] = useState<{ [key: string]: Timer }>({});
   const [animatedCards, setAnimatedCards] = useState<number[]>([]);
 
+
   // Fetch tenders
   useEffect(() => {
     const fetchTenders = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
         const data = await TendersAPI.getActiveTenders();
 
-        // Keep all tenders (including ended) and limit to 8 for display
-        const tendersData = (data as any).data || data;
-        const limitedTenders = (tendersData || []).slice(0, 8);
-
+        // Process data based on response structure
+        let tendersData = [];
+        
+        if (data) {
+          if (Array.isArray(data)) {
+            tendersData = data;
+          } else if (data.data && Array.isArray(data.data)) {
+            tendersData = data.data;
+          } else if (data.success && data.data && Array.isArray(data.data)) {
+            tendersData = data.data;
+          } else {
+            tendersData = [];
+          }
+        } else {
+          tendersData = [];
+        }
+        
+        // Limit to 8 for display
+        const limitedTenders = tendersData.slice(0, 8);
         setLiveTenders(limitedTenders);
         setError(null);
       } catch (err) {
         console.error("Error fetching tenders:", err);
         setError("Failed to load tenders");
+        setLiveTenders([]);
       } finally {
         setLoading(false);
       }
@@ -223,8 +264,11 @@ const Home1LiveTenders = () => {
               borderRadius: '12px',
               padding: '20px',
               color: '#856404',
+              maxWidth: '600px',
+              margin: '0 auto',
             }}>
-              <h3>{error}</h3>
+              <h3>❌ Erreur de chargement des appels d'offres</h3>
+              <p>{error}</p>
             </div>
           </div>
         </div>
@@ -257,6 +301,15 @@ const Home1LiveTenders = () => {
             transition: none !important;
             position: relative !important;
             z-index: 10 !important;
+            min-height: 200px !important;
+          }
+          
+          .section-header {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
           }
           
           .tender-carousel-container {
@@ -278,6 +331,26 @@ const Home1LiveTenders = () => {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
+          }
+          
+          /* Ensure empty state is visible on mobile */
+          .empty-state-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            margin: 20px 0 !important;
+          }
+          
+          /* Ensure view all button is visible on mobile */
+          .view-all-button-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            margin: 30px 0 !important;
           }
         }
 
@@ -358,12 +431,8 @@ const Home1LiveTenders = () => {
             <h2 style={{
               fontSize: 'clamp(2rem, 4vw, 3rem)',
               fontWeight: '800',
-              color: '#222',
+              color: '#27F5CC',
               marginBottom: '16px',
-              background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
             }}>
               Appels d'Offres en Cours
             </h2>
@@ -376,9 +445,10 @@ const Home1LiveTenders = () => {
             }}>
               Soumettez vos offres et remportez des contrats intéressants
             </p>
+            
           </div>
 
-          {/* Tenders Content */}
+          {/* Tenders Content - Always show on mobile, even with no data */}
           {liveTenders.length > 0 ? (
             <div className="tender-carousel-container" style={{ position: 'relative' }}>
               <Swiper
@@ -425,14 +495,14 @@ const Home1LiveTenders = () => {
                           position: 'relative',
                           height: 'clamp(160px, 25vw, 200px)',
                           overflow: 'hidden',
-                          background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
+                          background: 'linear-gradient(135deg, #27F5CC, #00D4AA)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}>
                           {tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url ? (
                             <img
-                              src={`${app.route}${tender.attachments[0].url}`}
+                              src={getTenderImageUrl(tender)}
                               alt={tender.title || 'Tender'}
                               style={{
                                 width: '100%',
@@ -441,8 +511,9 @@ const Home1LiveTenders = () => {
                                 transition: 'transform 0.4s ease',
                               }}
                               onError={(e) => {
+                                console.error('❌ Tender Image Load Error:', getTenderImageUrl(tender));
                                 const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
+                                target.src = DEFAULT_TENDER_IMAGE;
                               }}
                             />
                           ) : (
@@ -462,7 +533,7 @@ const Home1LiveTenders = () => {
                             right: '10px',
                             background: isEnded
                               ? 'rgba(0,0,0,0.55)'
-                              : (isUrgent ? 'linear-gradient(45deg, #ff4444, #ff6666)' : 'linear-gradient(45deg, #8b5cf6, #a855f7)'),
+                              : (isUrgent ? 'linear-gradient(45deg, #ff4444, #ff6666)' : 'linear-gradient(45deg, #27F5CC, #00D4AA)'),
                             color: 'white',
                             padding: '8px 12px',
                             borderRadius: '20px',
@@ -631,13 +702,13 @@ const Home1LiveTenders = () => {
                                 width: '8px',
                                 height: '8px',
                                 borderRadius: '50%',
-                                background: '#8b5cf6',
+                                background: '#27F5CC',
                                 animation: 'pulse 2s infinite',
                               }}></div>
                               <span style={{
                                 fontSize: '14px',
                                 fontWeight: '600',
-                                color: '#8b5cf6',
+                                color: '#27F5CC',
                               }}>
                                 {((tender as any).participantsCount || 0)} participant{(((tender as any).participantsCount || 0) !== 1) ? 's' : ''}
                               </span>
@@ -691,28 +762,28 @@ const Home1LiveTenders = () => {
                               gap: '8px',
                               width: '100%',
                               padding: '12px 20px',
-                              background: isEnded ? '#c7c7c7' : 'linear-gradient(90deg, #8b5cf6, #a855f7)',
+                              background: isEnded ? '#c7c7c7' : 'linear-gradient(90deg, #27F5CC, #00D4AA)',
                               color: 'white',
                               textDecoration: 'none',
                               borderRadius: '25px',
                               fontWeight: '600',
                               fontSize: '14px',
                               transition: 'all 0.3s ease',
-                              boxShadow: isEnded ? 'none' : '0 4px 12px rgba(139, 92, 246, 0.3)',
+                              boxShadow: isEnded ? 'none' : '0 4px 12px rgba(39, 245, 204, 0.3)',
                               pointerEvents: isEnded ? 'none' : 'auto'
                             }}
                             onMouseEnter={(e) => {
                               if (!isEnded) {
-                                e.currentTarget.style.background = 'linear-gradient(90deg, #a855f7, #8b5cf6)';
+                                e.currentTarget.style.background = 'linear-gradient(90deg, #00D4AA, #27F5CC)';
                                 e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = '0 8px 20px rgba(139, 92, 246, 0.4)';
+                                e.currentTarget.style.boxShadow = '0 8px 20px rgba(39, 245, 204, 0.4)';
                               }
                             }}
                             onMouseLeave={(e) => {
                               if (!isEnded) {
-                                e.currentTarget.style.background = 'linear-gradient(90deg, #8b5cf6, #a855f7)';
+                                e.currentTarget.style.background = 'linear-gradient(90deg, #27F5CC, #00D4AA)';
                                 e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(39, 245, 204, 0.3)';
                               }
                             }}
                           >
@@ -813,16 +884,24 @@ const Home1LiveTenders = () => {
               }}></div>
             </div>
           ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '60px 20px',
-              background: 'white',
-              borderRadius: '20px',
-              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)',
-              opacity: 0,
-              transform: 'translateY(30px)',
-              animation: 'fadeInUp 0.8s ease-out forwards',
-            }}>
+            <div 
+              className="empty-state-container"
+              style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                background: 'white',
+                borderRadius: '20px',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)',
+                opacity: 0,
+                transform: 'translateY(30px)',
+                animation: 'fadeInUp 0.8s ease-out forwards',
+                margin: '20px 0',
+                minHeight: '200px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <div style={{
                 fontSize: '48px',
                 marginBottom: '20px',
@@ -833,7 +912,7 @@ const Home1LiveTenders = () => {
                 color: '#333',
                 marginBottom: '12px',
               }}>
-                Aucun appel d'offres actif
+                📋 Aucun appel d'offres actif
               </h3>
               <p style={{
                 fontSize: '16px',
@@ -845,14 +924,16 @@ const Home1LiveTenders = () => {
             </div>
           )}
 
-          {/* View All Button */}
-          <div style={{
-            textAlign: 'center',
-            marginTop: '50px',
-            opacity: 0,
-            transform: 'translateY(30px)',
-            animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
-          }}>
+          {/* View All Button - Always visible on mobile */}
+          <div 
+            className="view-all-button-container"
+            style={{
+              textAlign: 'center',
+              marginTop: '50px',
+              opacity: 0,
+              transform: 'translateY(30px)',
+              animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
+            }}>
             <Link
               href="/tender-sidebar"
               style={{
@@ -860,24 +941,24 @@ const Home1LiveTenders = () => {
                 alignItems: 'center',
                 gap: '10px',
                 padding: '16px 32px',
-                background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
+                background: 'linear-gradient(90deg, #27F5CC, #00D4AA)',
                 color: 'white',
                 textDecoration: 'none',
                 borderRadius: '50px',
                 fontWeight: '600',
                 fontSize: '16px',
-                boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)',
+                boxShadow: '0 8px 25px rgba(39, 245, 204, 0.3)',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(90deg, #a855f7, #8b5cf6)';
+                e.currentTarget.style.background = 'linear-gradient(90deg, #00D4AA, #27F5CC)';
                 e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(139, 92, 246, 0.4)';
+                e.currentTarget.style.boxShadow = '0 12px 30px rgba(39, 245, 204, 0.4)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(90deg, #8b5cf6, #a855f7)';
+                e.currentTarget.style.background = 'linear-gradient(90deg, #27F5CC, #00D4AA)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.3)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(39, 245, 204, 0.3)';
               }}
             >
               Voir tous les appels d'offres

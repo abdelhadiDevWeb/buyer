@@ -4,8 +4,6 @@ import { Autoplay, EffectFade, Navigation, Pagination } from "swiper/modules";
 import Link from "next/link";
 import { useMemo, useEffect, useState, useRef } from "react";
 import { CategoryAPI } from "../../app/api/category";
-// Import static data as fallback
-import categoryData from "../../data/category.json"
 import app from '../../config'; // Import config to access route
 import { useTranslation } from 'react-i18next';
 
@@ -25,7 +23,21 @@ const Home1Category = () => {
   const getCategoryImageUrl = (category) => {
     // If it's from API response (has thumb.url)
     if (category.thumb && category.thumb.url) {
-      return `${app.route}${category.thumb.url}`;
+      const imageUrl = category.thumb.url;
+      console.log('🔍 Category Image URL Debug:', {
+        originalUrl: imageUrl,
+        appRoute: app.route,
+        constructedUrl: `${app.route}${imageUrl}`
+      });
+      
+      // Handle different URL formats
+      if (imageUrl.startsWith('http')) {
+        return imageUrl; // Already a full URL
+      } else if (imageUrl.startsWith('/')) {
+        return `${app.route}${imageUrl}`; // Starts with slash
+      } else {
+        return `${app.route}/${imageUrl}`; // No slash, add one
+      }
     }
     // If it's from fallback data (has image property)
     if (category.image) {
@@ -102,34 +114,12 @@ const Home1Category = () => {
         
       } catch (error) {
         console.error('❌ Error fetching categories from API:', error);
-        console.log('🔄 Falling back to static data...');
+        console.log('🔄 No categories available from API');
         
-        // Try loading static fallback data
-        if (categoryData && categoryData['auction-category'] && Array.isArray(categoryData['auction-category']) && categoryData['auction-category'].length > 0) {
-          console.log('📦 Loading static fallback data:', categoryData['auction-category'].length, 'categories');
-          
-          // Transform the fallback data to match expected structure
-          const transformedCategories = categoryData['auction-category'].map(cat => ({
-            _id: cat.id.toString(),
-            id: cat.id,
-            name: cat.name,
-            thumb: {
-              url: cat.image
-            },
-            children: [],
-            description: cat.description || `Discover amazing ${cat.name.toLowerCase()} auctions and find exactly what you're looking for.`
-          }));
-          
-          setCategories(transformedCategories);
-          setError(false);
-          setErrorMessage('');
-          console.log('✅ Static categories loaded successfully');
-        } else {
-          console.error('❌ No static fallback data available');
-          setCategories([]);
-          setError(true);
-          setErrorMessage('Failed to load categories');
-        }
+        // Don't use static fallback data - show empty state instead
+        setCategories([]);
+        setError(true);
+        setErrorMessage('No categories available at the moment');
       } finally {
         setLoading(false);
         console.log('🏁 Category loading completed');
@@ -647,10 +637,10 @@ const Home1Category = () => {
       }}>
         <div style={{ fontSize: '48px', marginBottom: '20px', opacity: 0.6 }}>📂</div>
         <h3 style={{ color: '#0063b1', marginBottom: '10px', fontSize: '20px', fontWeight: '600' }}>
-          No Categories Found
+          📂 Aucune catégorie disponible
         </h3>
         <p style={{ color: '#64748b', fontSize: '14px' }}>
-          {errorMessage || 'Categories will be available soon'}
+          {errorMessage || 'Les catégories seront disponibles bientôt'}
         </p>
       </div>
     );

@@ -803,6 +803,50 @@ export const Header = () => {
             animation: 'fadeIn 0.3s ease-out'
           }}
         >
+          {/* Close Button */}
+          <button
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: 'absolute',
+              top: isSmallMobile ? '20px' : isMobile ? '25px' : '30px',
+              right: isSmallMobile ? '15px' : isMobile ? '20px' : '25px',
+              background: 'transparent',
+              border: 'none',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              borderRadius: '50%',
+              transition: 'background-color 0.3s ease',
+              zIndex: 10000
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#f5f5f5';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+            }}
+            aria-label="Close menu"
+          >
+            <svg 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                d="M18 6L6 18M6 6L18 18" 
+                stroke="#333" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
           <div className="container-responsive" style={{ 
             padding: isSmallMobile ? '12px' : isMobile ? '16px' : '20px',
             minHeight: isSmallMobile ? 'calc(100vh - 65px)' : isMobile ? 'calc(100vh - 70px)' : 'calc(100vh - 90px)',

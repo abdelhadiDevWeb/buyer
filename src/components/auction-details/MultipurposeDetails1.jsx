@@ -863,7 +863,7 @@ const handleBidSubmit = async (e) => {
 
   // Function to format price with currency symbol - using Math.floor to ensure whole numbers
   const formatPrice = (price) => {
-    return `${Math.floor(Number(price)).toLocaleString()},00 `;
+    return `${Math.floor(Number(price)).toLocaleString()} `;
   };
 
   // Handle auto-bid for professional users

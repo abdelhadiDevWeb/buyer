@@ -45,11 +45,11 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
   const getIncrementValue = () => {
     const startPrice = Number(startingPrice) || 0;
     if (startPrice > 500000) {
-      // If starting price > 500,000 DA, use 1% of starting price
-      return Math.max(100, Math.floor(startPrice * 0.01));
+      // If starting price > 500,000 DA, use 0.5% (half of 1%) of starting price
+      return Math.floor(startPrice * 0.005);
     } else {
-      // If starting price ≤ 500,000 DA, use 0.05% of starting price
-      return Math.max(50, Math.floor(startPrice * 0.0005));
+      // If starting price ≤ 500,000 DA, use 1% of starting price
+      return Math.floor(startPrice * 0.01);
     }
   };
 
