@@ -80,6 +80,28 @@ export function calculateTimeRemaining(endDate: string): Timer {
   };
 }
 
+// Helper function to get the correct professional auction image URL
+const getProfessionalAuctionImageUrl = (auction: ProfessionalAuction) => {
+  if (auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url) {
+    const imageUrl = auction.thumbs[0].url;
+    console.log('🔍 Professional Auction Image URL Debug:', {
+      originalUrl: imageUrl,
+      appRoute: app.route,
+      constructedUrl: `${app.route}${imageUrl}`
+    });
+    
+    // Handle different URL formats
+    if (imageUrl.startsWith('http')) {
+      return imageUrl; // Already a full URL
+    } else if (imageUrl.startsWith('/')) {
+      return `${app.route}${imageUrl}`; // Starts with slash
+    } else {
+      return `${app.route}/${imageUrl}`; // No slash, add one
+    }
+  }
+  return DEFAULT_AUCTION_IMAGE;
+};
+
 const ProfessionalAuctions: React.FC = () => {
   const { t } = useTranslation();
   const { isLogged, auth } = useAuth();
@@ -373,16 +395,74 @@ const ProfessionalAuctions: React.FC = () => {
           padding-left: 10px;
           padding-right: 10px;
         }
+        /* Mobile responsiveness fixes */
         @media (max-width: 768px) {
+          .professional-auctions-section {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            padding: 40px 16px !important;
+            transform: none !important;
+            transition: none !important;
+            position: relative !important;
+            z-index: 10 !important;
+            min-height: 200px !important;
+          }
+          
+          .section-header {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+          }
+          
+          .auction-carousel-container {
+            padding: 0 16px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          
+          .professional-auction-slider {
+            padding: 0 16px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+
+          /* Force all auction content to be visible */
+          .professional-auction-card, .swiper-slide, .auction-item {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          
+          /* Ensure empty state is visible on mobile */
+          .empty-state-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            margin: 20px 0 !important;
+          }
+          
+          /* Ensure view all button is visible on mobile */
+          .view-all-button-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            margin: 30px 0 !important;
+          }
+          
           .professional-auction-slider .swiper-slide:first-child {
             margin-left: 15px;
           }
           .professional-auction-slider .swiper-slide:last-child {
             margin-right: 15px;
-          }
-          .auction-carousel-container {
-            padding-left: 10px !important;
-            padding-right: 10px !important;
           }
         }
         .professional-auction-card-animate {
@@ -587,11 +667,7 @@ const ProfessionalAuctions: React.FC = () => {
                           overflow: 'hidden',
                         }}>
                           <img
-                            src={
-                              auction.thumbs && auction.thumbs.length > 0
-                                ? `${app.route}${auction.thumbs[0].url}`
-                                : DEFAULT_AUCTION_IMAGE
-                            }
+                            src={getProfessionalAuctionImageUrl(auction)}
                             alt={auction.title}
                             style={{
                               width: '100%',
@@ -600,6 +676,7 @@ const ProfessionalAuctions: React.FC = () => {
                               transition: 'transform 0.3s ease',
                             }}
                             onError={(e) => {
+                              console.error('❌ Professional Auction Image Load Error:', getProfessionalAuctionImageUrl(auction));
                               (e.target as HTMLImageElement).src = DEFAULT_AUCTION_IMAGE;
                             }}
                           />
@@ -855,13 +932,21 @@ const ProfessionalAuctions: React.FC = () => {
               }} />
             </div>
           ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '60px 20px',
-              background: 'white',
-              borderRadius: '16px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-            }}>
+            <div 
+              className="empty-state-container"
+              style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                background: 'white',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+                margin: '20px 0',
+                minHeight: '200px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <div style={{
                 width: '80px',
                 height: '80px',
@@ -894,14 +979,16 @@ const ProfessionalAuctions: React.FC = () => {
             </div>
           )}
 
-          {/* View All Button */}
-          <div style={{
-            textAlign: 'center',
-            marginTop: '50px',
-            opacity: 0,
-            transform: 'translateY(30px)',
-            animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
-          }}>
+          {/* View All Button - Always visible on mobile */}
+          <div 
+            className="view-all-button-container"
+            style={{
+              textAlign: 'center',
+              marginTop: '50px',
+              opacity: 0,
+              transform: 'translateY(30px)',
+              animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
+            }}>
             <Link href="/auction-sidebar">
               <button
                 style={{

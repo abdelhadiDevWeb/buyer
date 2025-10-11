@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation';
 import ResponsiveTest from '@/components/common/ResponsiveTest';
 
 export default function Home() {
-  const { initializeAuth } = useAuth();
+  const { initializeAuth, isLogged, auth } = useAuth();
   const router = useRouter();
   const [animatedSections, setAnimatedSections] = useState({
     banner: false,
@@ -1929,19 +1929,24 @@ export default function Home() {
                   ></div>
                   
                   {/* Professional Auctions Section - Only for Professional Users */}
-                  <section 
-                    data-section="professional"
-                    className="section-spacing section-bg-1"
-                    style={{
-                      position: 'relative',
-                      zIndex: 2,
-                      opacity: isMobile ? 1 : 1,
-                      transform: isMobile ? 'none' : 'none',
-                      transition: isMobile ? 'none' : 'none',
-                    }}
-                  >
-                    <ProfessionalAuctions />
-                  </section>
+                  {isLogged && auth?.user?.type === 'PROFESSIONAL' && (
+                    <section 
+                      data-section="professional"
+                      className="section-spacing section-bg-1"
+                      style={{
+                        position: 'relative',
+                        zIndex: 2,
+                        opacity: isMobile ? 1 : 1,
+                        transform: isMobile ? 'none' : 'none',
+                        transition: isMobile ? 'none' : 'none',
+                        display: isMobile ? 'block' : 'block',
+                        visibility: isMobile ? 'visible' : 'visible',
+                        minHeight: isMobile ? '300px' : 'auto',
+                      }}
+                    >
+                      <ProfessionalAuctions />
+                    </section>
+                  )}
                   
                   {/* Section Divider with Animation */}
                   <div 
@@ -1953,7 +1958,7 @@ export default function Home() {
                     }}
                   ></div>
                   
-                  {/* Live Auctions Section */}
+                  {/* Live Auctions Section - Always visible on mobile */}
                   <section 
                     ref={auctionRef}
                     data-section="auction"
@@ -1964,6 +1969,9 @@ export default function Home() {
                       opacity: isMobile ? 1 : (animatedSections.auction ? 1 : 0),
                       transform: isMobile ? 'none' : (animatedSections.auction ? 'translateX(0)' : 'translateX(50px)'),
                       transition: isMobile ? 'none' : 'all 0.8s ease-out',
+                      display: isMobile ? 'block' : 'block',
+                      visibility: isMobile ? 'visible' : 'visible',
+                      minHeight: isMobile ? '300px' : 'auto',
                     }}
                   >
                     <Home1LiveAuction />
@@ -1980,7 +1988,7 @@ export default function Home() {
                   ></div>
                   
                   
-                  {/* Live Tenders Section */}
+                  {/* Live Tenders Section - Always visible on mobile */}
                   <section 
                     data-section="tenders"
                     className="section-spacing section-bg-1"
@@ -1990,6 +1998,9 @@ export default function Home() {
                       opacity: isMobile ? 1 : 1,
                       transform: isMobile ? 'none' : 'none',
                       transition: isMobile ? 'none' : 'none',
+                      display: isMobile ? 'block' : 'block',
+                      visibility: isMobile ? 'visible' : 'visible',
+                      minHeight: isMobile ? '300px' : 'auto',
                     }}
                   >
                     <Home1LiveTenders />
