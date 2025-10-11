@@ -220,6 +220,7 @@ const Home1LiveAuction = () => {
   // Swiper settings
   const settings = useMemo(() => ({
     slidesPerView: "auto" as const,
+    centeredSlides: false,
     speed: 1200,
     spaceBetween: 25,
     autoplay: {
@@ -237,32 +238,54 @@ const Home1LiveAuction = () => {
     },
     breakpoints: {
       280: {
-        slidesPerView: 1.2,
-        spaceBetween: 15,
+        slidesPerView: 1,
+        spaceBetween: 0,
+        centeredSlides: true,
+      },
+      320: {
+        slidesPerView: 1,
+        spaceBetween: 0,
+        centeredSlides: true,
+      },
+      375: {
+        slidesPerView: 1,
+        spaceBetween: 0,
+        centeredSlides: true,
       },
       400: {
-        slidesPerView: 1.3,
-        spaceBetween: 18,
+        slidesPerView: 1,
+        spaceBetween: 0,
+        centeredSlides: true,
+      },
+      480: {
+        slidesPerView: 1,
+        spaceBetween: 0,
+        centeredSlides: true,
       },
       576: {
-        slidesPerView: 1.6,
-        spaceBetween: 20,
+        slidesPerView: 1,
+        spaceBetween: 10,
+        centeredSlides: true,
       },
       768: {
-        slidesPerView: 2.0,
-        spaceBetween: 20,
+        slidesPerView: 1.2,
+        spaceBetween: 15,
+        centeredSlides: true,
       },
       992: {
-        slidesPerView: 2.5,
-        spaceBetween: 25,
+        slidesPerView: 1.5,
+        spaceBetween: 20,
+        centeredSlides: true,
       },
       1200: {
-        slidesPerView: 3,
+        slidesPerView: 2,
         spaceBetween: 25,
+        centeredSlides: true,
       },
       1400: {
-        slidesPerView: 3.5,
+        slidesPerView: 2.5,
         spaceBetween: 30,
+        centeredSlides: true,
       },
     },
   }), []);
@@ -345,24 +368,91 @@ const Home1LiveAuction = () => {
           }
           
           .auction-carousel-container {
-            padding: 0 16px !important;
-            display: block !important;
+            padding: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
             visibility: visible !important;
             opacity: 1 !important;
+            overflow: visible !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+            margin: 0 auto !important;
+          }
+          
+          /* Center wrapper for Swiper */
+          .auction-carousel-container > div {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 auto !important;
           }
           
           .swiper {
-            padding: 0 16px !important;
-            display: block !important;
+            padding: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
             visibility: visible !important;
             opacity: 1 !important;
+            overflow: visible !important;
+            width: 100% !important;
+            max-width: 100vw !important;
           }
 
           /* Force all auction content to be visible */
           .auction-card, .swiper-slide, .auction-item {
-            display: block !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
             visibility: visible !important;
             opacity: 1 !important;
+            width: auto !important;
+          }
+          
+          /* Mobile-specific auction card improvements */
+          .auction-card-animate {
+            width: clamp(280px, 85vw, 400px) !important;
+            max-width: clamp(280px, 85vw, 400px) !important;
+            min-width: 280px !important;
+            margin: 0 auto !important;
+            flex-shrink: 0 !important;
+            position: relative !important;
+            left: 0 !important;
+            right: 0 !important;
+          }
+          
+          /* Mobile navigation buttons */
+          .auction-slider-prev,
+          .auction-slider-next {
+            width: 40px !important;
+            height: 40px !important;
+            position: absolute !important;
+            z-index: 11 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: linear-gradient(135deg, #0063b1, #00a3e0) !important;
+            border: none !important;
+            border-radius: 50% !important;
+            color: white !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 15px rgba(0, 99, 177, 0.3) !important;
+            transition: all 0.3s ease !important;
+          }
+          
+          .auction-slider-prev {
+            left: 10px !important;
+          }
+          
+          .auction-slider-next {
+            right: 10px !important;
+          }
+          
+          .slider-navigation {
+            padding: 0 10px !important;
           }
           
           /* Ensure empty state is visible on mobile */
@@ -383,6 +473,33 @@ const Home1LiveAuction = () => {
             transform: none !important;
             animation: none !important;
             margin: 30px 0 !important;
+          }
+        }
+
+        /* Extra small mobile devices */
+        @media (max-width: 375px) {
+          .auction-card-animate {
+            width: 280px !important;
+            max-width: 280px !important;
+            min-width: 280px !important;
+            margin: 0 auto !important;
+            position: relative !important;
+            left: 0 !important;
+            right: 0 !important;
+          }
+          
+          .auction-carousel-container {
+            padding: 0 10px !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+          }
+          
+          .swiper {
+            padding: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
           }
         }
 
@@ -448,10 +565,41 @@ const Home1LiveAuction = () => {
           animation: pulse 0.5s infinite;
           color: #ff4444;
         }
+
+        /* Navigation button improvements */
+        .auction-slider-prev,
+        .auction-slider-next {
+          opacity: 1 !important;
+          visibility: visible !important;
+          display: flex !important;
+        }
+
+        .auction-slider-prev:hover,
+        .auction-slider-next:hover {
+          transform: scale(1.1) !important;
+          box-shadow: 0 6px 20px rgba(0, 99, 177, 0.4) !important;
+        }
+
+        /* Ensure navigation is always visible */
+        .slider-navigation {
+          opacity: 1 !important;
+          visibility: visible !important;
+          display: flex !important;
+        }
       `}</style>
 
-      <div className="modern-auctions-section" style={{ padding: 'clamp(40px, 8vw, 80px) 0' }}>
-        <div className="container-responsive">
+      <div className="modern-auctions-section" style={{ 
+        padding: 'clamp(40px, 8vw, 80px) 0',
+        overflow: 'visible',
+        width: '100%',
+        maxWidth: '100vw'
+      }}>
+        <div className="container-responsive" style={{
+          width: '100%',
+          maxWidth: '100vw',
+          overflow: 'visible',
+          padding: '0 16px'
+        }}>
           {/* Section Header */}
           <div className="section-header" style={{
             textAlign: 'center',
@@ -485,15 +633,36 @@ const Home1LiveAuction = () => {
 
           {/* Auctions Content */}
           {liveAuctions.length > 0 ? (
-            <div className="auction-carousel-container" style={{ position: 'relative' }}>
-              <Swiper
-                {...settings}
-                className="swiper auction-slider"
-                style={{
-                  padding: '20px 0 50px',
-                  overflow: 'visible',
-                }}
-              >
+            <div className="auction-carousel-container" style={{ 
+              position: 'relative',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%',
+              padding: '0',
+              margin: '0 auto',
+              paddingLeft: '20px',
+              paddingRight: '20px',
+            }}>
+              <div style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '0',
+                margin: '0 auto',
+                maxWidth: '100%',
+              }}>
+                <Swiper
+                  {...settings}
+                  className="swiper auction-slider"
+                  style={{
+                    padding: '20px 0 50px',
+                    overflow: 'visible',
+                    width: '100%',
+                    maxWidth: '100%',
+                  }}
+                >
                 {liveAuctions.map((auction, idx) => {
                   const timer = timers[auction._id] || { days: "00", hours: "00", minutes: "00", seconds: "00", hasEnded: false };
                   const isAnimated = animatedCards.includes(idx);
@@ -505,26 +674,38 @@ const Home1LiveAuction = () => {
                   // Auction thumbs data available for debugging if needed
 
                   return (
-                    <SwiperSlide key={auction._id} style={{ height: 'auto', display: 'flex', justifyContent: 'center' }}>
+                    <SwiperSlide key={auction._id} style={{ 
+                      height: 'auto', 
+                      display: 'flex', 
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      width: 'auto',
+                      padding: '0 12px'
+                    }}>
                       <div
                         className={`auction-card-animate auction-card-hover ${isAnimated ? 'animated' : ''}`}
                         style={{
                           background: 'white',
                           borderRadius: 'clamp(16px, 3vw, 20px)',
                           overflow: 'hidden',
-                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)',
-                          border: '1px solid rgba(0, 0, 0, 0.05)',
-                          width: '100%',
-                          maxWidth: 'clamp(320px, 55vw, 420px)',
+                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                          border: '1px solid rgba(0, 0, 0, 0.08)',
+                          width: 'clamp(280px, 85vw, 400px)',
+                          maxWidth: 'clamp(280px, 85vw, 400px)',
+                          minWidth: '280px',
                           position: 'relative',
-                          minHeight: '380px',
+                          minHeight: 'clamp(380px, 60vw, 420px)',
+                          transition: 'all 0.3s ease',
+                          margin: '0 auto',
+                          flexShrink: 0,
                         }}
                       >
                         {/* Auction Image */}
                         <div style={{
                           position: 'relative',
-                          height: 'clamp(160px, 25vw, 200px)',
+                          height: 'clamp(180px, 30vw, 220px)',
                           overflow: 'hidden',
+                          borderRadius: 'clamp(16px, 3vw, 20px) 16px 0 0',
                         }}>
                           <img
                             src={getAuctionImageUrl(auction)}
@@ -597,14 +778,15 @@ const Home1LiveAuction = () => {
                         <div style={{ padding: 'clamp(20px, 4vw, 28px)' }}>
                           {/* Title */}
                           <h3 style={{
-                            fontSize: '18px',
-                            fontWeight: '600',
-                            color: '#333',
-                            marginBottom: '18px',
-                            lineHeight: '1.3',
+                            fontSize: 'clamp(16px, 4vw, 20px)',
+                            fontWeight: '700',
+                            color: '#1a1a1a',
+                            marginBottom: 'clamp(12px, 3vw, 16px)',
+                            lineHeight: '1.4',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
+                            letterSpacing: '-0.02em',
                           }}>
                             {auction.title || auction.name || 'Auction Title'}
                           </h3>
@@ -613,23 +795,25 @@ const Home1LiveAuction = () => {
                           <div style={{
                             display: 'grid',
                             gridTemplateColumns: '1fr 1fr',
-                            gap: '12px',
-                            marginBottom: '18px',
+                            gap: 'clamp(10px, 3vw, 16px)',
+                            marginBottom: 'clamp(16px, 4vw, 20px)',
                           }}>
                             <div>
                               <p style={{
-                                fontSize: '12px',
+                                fontSize: 'clamp(11px, 2.5vw, 13px)',
                                 color: '#666',
                                 margin: '0 0 4px 0',
                                 fontWeight: '600',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
                               }}>
                                 Quantité
                               </p>
                               <p style={{
-                                fontSize: '14px',
-                                color: '#333',
+                                fontSize: 'clamp(13px, 3vw, 15px)',
+                                color: '#1a1a1a',
                                 margin: 0,
-                                fontWeight: '500',
+                                fontWeight: '600',
                               }}>
                                 {auction.quantity || 'Non spécifiée'}
                               </p>
@@ -637,18 +821,20 @@ const Home1LiveAuction = () => {
 
                             <div>
                               <p style={{
-                                fontSize: '12px',
+                                fontSize: 'clamp(11px, 2.5vw, 13px)',
                                 color: '#666',
                                 margin: '0 0 4px 0',
                                 fontWeight: '600',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
                               }}>
                                 Localisation
                               </p>
                               <p style={{
-                                fontSize: '14px',
-                                color: '#333',
+                                fontSize: 'clamp(13px, 3vw, 15px)',
+                                color: '#1a1a1a',
                                 margin: 0,
-                                fontWeight: '500',
+                                fontWeight: '600',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
@@ -661,9 +847,10 @@ const Home1LiveAuction = () => {
                           {/* Separator Line */}
                           <div style={{
                             width: '100%',
-                            height: '1px',
-                            background: 'linear-gradient(90deg, transparent, #e9ecef, transparent)',
-                            margin: '0 0 16px 0',
+                            height: '2px',
+                            background: 'linear-gradient(90deg, transparent, rgba(0, 99, 177, 0.2), transparent)',
+                            margin: 'clamp(12px, 3vw, 16px) 0',
+                            borderRadius: '1px',
                           }}></div>
 
                           {/* Description */}
@@ -877,6 +1064,7 @@ const Home1LiveAuction = () => {
                   );
                 })}
               </Swiper>
+              </div>
 
               {/* Navigation Buttons */}
               <div className="slider-navigation" style={{
@@ -886,42 +1074,45 @@ const Home1LiveAuction = () => {
                 width: '100%',
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
                 pointerEvents: 'none',
                 zIndex: 10,
+                padding: '0 20px',
               }}>
                 <button
                   className="auction-slider-prev"
                   style={{
                     background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
                     border: 'none',
-                    width: 'clamp(45px, 8vw, 50px)',
-                    height: 'clamp(45px, 8vw, 50px)',
+                    width: 'clamp(40px, 7vw, 45px)',
+                    height: 'clamp(40px, 7vw, 45px)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 6px 20px rgba(0, 99, 177, 0.3)',
+                    boxShadow: '0 4px 15px rgba(0, 99, 177, 0.3)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     pointerEvents: 'auto',
-                    marginLeft: 'clamp(-60px, -10vw, -65px)',
                     color: 'white',
-                    fontSize: 'clamp(16px, 3vw, 18px)',
+                    fontSize: 'clamp(14px, 3vw, 16px)',
+                    position: 'relative',
+                    zIndex: 11,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #00a3e0, #0063b1)';
-                    e.currentTarget.style.transform = 'scale(1.1) translateX(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 99, 177, 0.4)';
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 99, 177, 0.4)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #0063b1, #00a3e0)';
-                    e.currentTarget.style.transform = 'scale(1) translateX(0)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 99, 177, 0.3)';
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 99, 177, 0.3)';
                   }}
                   aria-label="Previous auctions"
                   title="Voir les enchères précédentes"
                 >
-                  <svg width="clamp(18px, 4vw, 20px)" height="clamp(18px, 4vw, 20px)" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="clamp(16px, 3vw, 18px)" height="clamp(16px, 3vw, 18px)" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M15.41 7.41L14 6L8 12L14 18L15.41 16.59L10.83 12Z"/>
                   </svg>
                 </button>
@@ -931,34 +1122,35 @@ const Home1LiveAuction = () => {
                   style={{
                     background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
                     border: 'none',
-                    width: 'clamp(45px, 8vw, 50px)',
-                    height: 'clamp(45px, 8vw, 50px)',
+                    width: 'clamp(40px, 7vw, 45px)',
+                    height: 'clamp(40px, 7vw, 45px)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 6px 20px rgba(0, 99, 177, 0.3)',
+                    boxShadow: '0 4px 15px rgba(0, 99, 177, 0.3)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     pointerEvents: 'auto',
-                    marginRight: 'clamp(-20px, -4vw, -25px)',
                     color: 'white',
-                    fontSize: 'clamp(16px, 3vw, 18px)',
+                    fontSize: 'clamp(14px, 3vw, 16px)',
+                    position: 'relative',
+                    zIndex: 11,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #00a3e0, #0063b1)';
-                    e.currentTarget.style.transform = 'scale(1.1) translateX(2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 99, 177, 0.4)';
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 99, 177, 0.4)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #0063b1, #00a3e0)';
-                    e.currentTarget.style.transform = 'scale(1) translateX(0)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 99, 177, 0.3)';
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 99, 177, 0.3)';
                   }}
                   aria-label="Next auctions"
                   title="Voir les enchères suivantes"
                 >
-                  <svg width="clamp(18px, 4vw, 20px)" height="clamp(18px, 4vw, 20px)" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="clamp(16px, 3vw, 18px)" height="clamp(16px, 3vw, 18px)" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8.59 16.59L10 18L16 12L10 6L8.59 7.41L13.17 12Z"/>
                   </svg>
                 </button>
