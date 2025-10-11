@@ -296,6 +296,41 @@ const Home1LiveAuction = () => {
           }
         }
 
+        /* Mobile responsiveness fixes */
+        @media (max-width: 768px) {
+          .modern-auctions-section {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            padding: 40px 16px !important;
+            transform: none !important;
+            transition: none !important;
+            position: relative !important;
+            z-index: 10 !important;
+          }
+          
+          .auction-carousel-container {
+            padding: 0 16px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          
+          .swiper {
+            padding: 0 16px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+
+          /* Force all auction content to be visible */
+          .auction-card, .swiper-slide, .auction-item {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+        }
+
         @keyframes slideInFromLeft {
           from {
             opacity: 0;

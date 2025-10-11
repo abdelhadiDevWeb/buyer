@@ -52,7 +52,7 @@ interface ApiUser {
 }
 
 export default function UsersPage() {
-  const { initializeAuth } = useAuth();
+  const { initializeAuth, isLogged, isReady } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,8 +181,14 @@ export default function UsersPage() {
 
   useEffect(() => {
     initializeAuth();
-    fetchUsers();
-  }, [activeUserType, initializeAuth, fetchUsers]);
+  }, [initializeAuth]);
+
+  useEffect(() => {
+    // Only fetch users if user is logged in
+    if (isReady && isLogged) {
+      fetchUsers();
+    }
+  }, [activeUserType, initializeAuth, fetchUsers, isReady, isLogged]);
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);
@@ -621,6 +627,221 @@ export default function UsersPage() {
     router.push(`/users/${userId}`);
   };
 
+  const handleLoginClick = () => {
+    // Redirect to login page using the seller URL from config
+    window.location.href = `${process.env.NEXT_PUBLIC_SELLER_URL || 'https://mazad-click-seller.vercel.app/'}login`;
+  };
+
+  // Show login prompt if user is not authenticated
+  if (isReady && !isLogged) {
+    return (
+      <>
+        <AxiosInterceptor>
+          <Header />
+          <main className="users-page-wrapper" style={{
+            minHeight: '100vh',
+            padding: '60px 0',
+            position: 'relative',
+            zIndex: 1,
+          }}>
+            <div className="container">
+              {/* Login Prompt Section */}
+              <div className="text-center py-5">
+                <div className="card" style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: '30px',
+                  padding: '60px 40px',
+                  maxWidth: '600px',
+                  margin: '0 auto',
+                  boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  {/* Background decoration */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-50px',
+                    right: '-50px',
+                    width: '150px',
+                    height: '150px',
+                    background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
+                    borderRadius: '50%',
+                    opacity: 0.1
+                  }}></div>
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '-30px',
+                    left: '-30px',
+                    width: '100px',
+                    height: '100px',
+                    background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+                    borderRadius: '50%',
+                    opacity: 0.1
+                  }}></div>
+
+                  {/* Lock Icon */}
+                  <div style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 30px',
+                    boxShadow: '0 10px 30px rgba(0, 99, 177, 0.3)'
+                  }}>
+                    <i className="bi bi-shield-lock" style={{ 
+                      fontSize: '2.5rem', 
+                      color: 'white' 
+                    }}></i>
+                  </div>
+
+                  {/* Title */}
+                  <h2 style={{
+                    fontWeight: '700',
+                    color: '#1F2937',
+                    marginBottom: '15px',
+                    fontSize: '2rem'
+                  }}>
+                    Authentication Required
+                  </h2>
+
+                  {/* Description */}
+                  <p style={{
+                    color: '#6B7280',
+                    fontSize: '1.1rem',
+                    lineHeight: '1.6',
+                    marginBottom: '40px',
+                    maxWidth: '450px',
+                    margin: '0 auto 40px'
+                  }}>
+                    You need to be logged in to view our community members and discover professionals, resellers, and clients who make our marketplace thrive.
+                  </p>
+
+                  {/* Benefits List */}
+                  <div style={{
+                    textAlign: 'left',
+                    marginBottom: '40px',
+                    maxWidth: '400px',
+                    margin: '0 auto 40px'
+                  }}>
+                    <h5 style={{
+                      color: '#374151',
+                      fontWeight: '600',
+                      marginBottom: '20px',
+                      textAlign: 'center'
+                    }}>
+                      What you'll discover:
+                    </h5>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #10B981, #059669)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <i className="bi bi-check" style={{ fontSize: '12px', color: 'white' }}></i>
+                        </div>
+                        <span style={{ color: '#4B5563', fontSize: '0.95rem' }}>
+                          Verified professionals and their ratings
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #10B981, #059669)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <i className="bi bi-check" style={{ fontSize: '12px', color: 'white' }}></i>
+                        </div>
+                        <span style={{ color: '#4B5563', fontSize: '0.95rem' }}>
+                          Trusted resellers and their portfolios
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #10B981, #059669)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <i className="bi bi-check" style={{ fontSize: '12px', color: 'white' }}></i>
+                        </div>
+                        <span style={{ color: '#4B5563', fontSize: '0.95rem' }}>
+                          Active community members and their stats
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Login Button */}
+                  <button
+                    onClick={handleLoginClick}
+                    style={{
+                      background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
+                      border: 'none',
+                      borderRadius: '50px',
+                      padding: '16px 40px',
+                      color: 'white',
+                      fontSize: '1.1rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 8px 25px rgba(0, 99, 177, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      margin: '0 auto'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 12px 35px rgba(0, 99, 177, 0.4)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 99, 177, 0.3)';
+                    }}
+                  >
+                    <i className="bi bi-box-arrow-in-right" style={{ fontSize: '1.2rem' }}></i>
+                    Login to View Members
+                  </button>
+
+                  {/* Additional Info */}
+                  <p style={{
+                    color: '#9CA3AF',
+                    fontSize: '0.9rem',
+                    marginTop: '30px',
+                    marginBottom: '0'
+                  }}>
+                    Don't have an account? <span style={{ color: '#0063b1', fontWeight: '600' }}>Sign up</span> to join our community!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </AxiosInterceptor>
+      </>
+    );
+  }
+
   return (
     <>
       <AxiosInterceptor>
@@ -902,7 +1123,7 @@ export default function UsersPage() {
 
             {/* Users Grid */}
             <div className="users-grid">
-              {error.hasError ? renderErrorState() : loading ? renderLoadingState() : filteredUsers.length === 0 ? (
+              {error.hasError ? renderErrorState() : (!isReady || loading) ? renderLoadingState() : filteredUsers.length === 0 ? (
                 <div className="text-center py-5">
                   <div className="card" style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -1105,7 +1326,7 @@ export default function UsersPage() {
             </div>
 
             {/* Stats Section */}
-            {!error.hasError && !loading && users.length > 0 && (
+            {!error.hasError && !loading && users.length > 0 && isReady && isLogged && (
               <div className="stats-section mt-5">
                 <div className="row">
                   <div className="col-md-3 mb-3">
