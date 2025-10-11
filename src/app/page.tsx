@@ -35,7 +35,17 @@ export default function Home() {
   
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      
+      // On mobile, immediately show all sections without animations
+      if (mobile) {
+        setAnimatedSections({
+          banner: true,
+          category: true,
+          auction: true
+        });
+      }
     };
     
     checkMobile();
@@ -228,7 +238,20 @@ export default function Home() {
     if (categoryRef.current) observer.observe(categoryRef.current);
     if (auctionRef.current) observer.observe(auctionRef.current);
 
-    return () => observer.disconnect();
+    // Fallback: Force visibility after 2 seconds if still not visible
+    const fallbackTimer = setTimeout(() => {
+      console.log('⏰ Fallback timer triggered, forcing section visibility');
+      setAnimatedSections(prev => ({
+        banner: prev.banner || true,
+        category: prev.category || true,
+        auction: prev.auction || true
+      }));
+    }, 2000);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 
   return (
@@ -1048,6 +1071,43 @@ export default function Home() {
             transition-duration: 0.01ms !important;
           }
         }
+
+        /* Mobile Section Visibility Fix */
+        @media (max-width: 768px) {
+          .section-spacing {
+            padding: 40px 16px !important;
+            margin: 0 !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
+          
+          .modern-auctions-section,
+          .modern-tenders-section {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            padding: 40px 16px !important;
+            transform: none !important;
+            transition: none !important;
+          }
+          
+          .container-responsive {
+            padding: 0 16px !important;
+            max-width: 100% !important;
+          }
+          
+          /* Force all sections to be visible on mobile */
+          section[data-section] {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+            transform: none !important;
+            transition: none !important;
+          }
+        }
         
         /* Mobile performance optimizations */
         @media (max-width: 768px) {
@@ -1850,9 +1910,9 @@ export default function Home() {
                     style={{
                       position: 'relative',
                       zIndex: 2,
-                      opacity: animatedSections.category ? 1 : 0,
-                      transform: animatedSections.category ? 'translateX(0)' : 'translateX(-50px)',
-                      transition: 'all 0.8s ease-out',
+                      opacity: isMobile ? 1 : (animatedSections.category ? 1 : 0),
+                      transform: isMobile ? 'none' : (animatedSections.category ? 'translateX(0)' : 'translateX(-50px)'),
+                      transition: isMobile ? 'none' : 'all 0.8s ease-out',
                     }}
                   >
                     <Home1Category />
@@ -1875,6 +1935,9 @@ export default function Home() {
                     style={{
                       position: 'relative',
                       zIndex: 2,
+                      opacity: isMobile ? 1 : 1,
+                      transform: isMobile ? 'none' : 'none',
+                      transition: isMobile ? 'none' : 'none',
                     }}
                   >
                     <ProfessionalAuctions />
@@ -1898,9 +1961,9 @@ export default function Home() {
                     style={{
                       position: 'relative',
                       zIndex: 1,
-                      opacity: animatedSections.auction ? 1 : 0,
-                      transform: animatedSections.auction ? 'translateX(0)' : 'translateX(50px)',
-                      transition: 'all 0.8s ease-out',
+                      opacity: isMobile ? 1 : (animatedSections.auction ? 1 : 0),
+                      transform: isMobile ? 'none' : (animatedSections.auction ? 'translateX(0)' : 'translateX(50px)'),
+                      transition: isMobile ? 'none' : 'all 0.8s ease-out',
                     }}
                   >
                     <Home1LiveAuction />
@@ -1916,6 +1979,7 @@ export default function Home() {
                     }}
                   ></div>
                   
+                  
                   {/* Live Tenders Section */}
                   <section 
                     data-section="tenders"
@@ -1923,6 +1987,9 @@ export default function Home() {
                     style={{
                       position: 'relative',
                       zIndex: 2,
+                      opacity: isMobile ? 1 : 1,
+                      transform: isMobile ? 'none' : 'none',
+                      transition: isMobile ? 'none' : 'none',
                     }}
                   >
                     <Home1LiveTenders />

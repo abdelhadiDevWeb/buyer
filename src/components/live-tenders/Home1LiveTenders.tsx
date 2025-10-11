@@ -246,6 +246,41 @@ const Home1LiveTenders = () => {
           }
         }
 
+        /* Mobile responsiveness fixes */
+        @media (max-width: 768px) {
+          .modern-tenders-section {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            padding: 40px 16px !important;
+            transform: none !important;
+            transition: none !important;
+            position: relative !important;
+            z-index: 10 !important;
+          }
+          
+          .tender-carousel-container {
+            padding: 0 16px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          
+          .swiper {
+            padding: 0 16px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+
+          /* Force all tender content to be visible */
+          .tender-card, .swiper-slide, .tender-item {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+        }
+
         @keyframes slideInFromLeft {
           from {
             opacity: 0;

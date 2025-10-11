@@ -72,32 +72,42 @@ const Home1Category = () => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
+        console.log('🔄 Fetching categories from API...');
+        
         const response = await CategoryAPI.getCategoryTree();
+        console.log('📡 API Response:', response);
         
         // Handle different response structures
         let categoryDataResponse = null;
         
         if (response?.success && Array.isArray(response.data)) {
           categoryDataResponse = response.data;
+          console.log('✅ Categories loaded from API:', categoryDataResponse.length);
         } else if (Array.isArray(response)) {
           categoryDataResponse = response;
+          console.log('✅ Categories loaded from API (array):', categoryDataResponse.length);
         } else if (response?.data && Array.isArray(response.data)) {
           categoryDataResponse = response.data;
+          console.log('✅ Categories loaded from API (nested):', categoryDataResponse.length);
         }
         
         if (categoryDataResponse && categoryDataResponse.length > 0) {
           setCategories(categoryDataResponse);
           setError(false);
           setErrorMessage('');
+          console.log('✅ Categories set successfully');
         } else {
-          throw new Error('Invalid response structure');
+          throw new Error('No categories found in API response');
         }
         
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error('❌ Error fetching categories from API:', error);
+        console.log('🔄 Falling back to static data...');
         
         // Try loading static fallback data
         if (categoryData && categoryData['auction-category'] && Array.isArray(categoryData['auction-category']) && categoryData['auction-category'].length > 0) {
+          console.log('📦 Loading static fallback data:', categoryData['auction-category'].length, 'categories');
+          
           // Transform the fallback data to match expected structure
           const transformedCategories = categoryData['auction-category'].map(cat => ({
             _id: cat.id.toString(),
@@ -106,18 +116,23 @@ const Home1Category = () => {
             thumb: {
               url: cat.image
             },
-            children: []
+            children: [],
+            description: cat.description || `Discover amazing ${cat.name.toLowerCase()} auctions and find exactly what you're looking for.`
           }));
+          
           setCategories(transformedCategories);
           setError(false);
           setErrorMessage('');
+          console.log('✅ Static categories loaded successfully');
         } else {
+          console.error('❌ No static fallback data available');
           setCategories([]);
           setError(true);
           setErrorMessage('Failed to load categories');
         }
       } finally {
         setLoading(false);
+        console.log('🏁 Category loading completed');
       }
     };
 

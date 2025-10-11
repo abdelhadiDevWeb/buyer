@@ -198,19 +198,19 @@ export const Header = () => {
         console.log('✅ Mark as seller response:', data);
 
         if (data.success) {
-          // Use the seller URL from config
-          const sellerAppUrl = new URL(getSellerUrl());
-          // const sellerAppUrl = new URL("https://mazad-click-seller.vercel.app/");
+          // Use the seller URL from config and add /dashboard/app path
+          const sellerBaseUrl = getSellerUrl();
+          const sellerAppUrl = new URL('/dashboard/app', sellerBaseUrl);
           sellerAppUrl.searchParams.append('token', auth.tokens.accessToken);
           sellerAppUrl.searchParams.append('refreshToken', auth.tokens.refreshToken);
           sellerAppUrl.searchParams.append('from', 'buyer');
           
-          console.log('🔄 Redirecting to seller app:', sellerAppUrl.toString());
+          console.log('🔄 Redirecting to seller dashboard:', sellerAppUrl.toString());
           
           // Clear buyer session before redirecting
           authStore.getState().clear();
           
-          // Redirect to seller app
+          // Redirect to seller app dashboard
           window.location.href = sellerAppUrl.toString();
         } else {
           throw new Error(data.message || 'Failed to mark user as seller');
