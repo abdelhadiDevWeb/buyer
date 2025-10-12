@@ -345,6 +345,23 @@ const Home1LiveAuction = () => {
           }
         }
 
+        /* Mobile navigation button visibility */
+        @media (max-width: 768px) {
+          .auction-slider-prev,
+          .auction-slider-next {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: absolute !important;
+          }
+          
+          .slider-navigation {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+        }
+
         /* Mobile responsiveness fixes */
         @media (max-width: 768px) {
           .modern-auctions-section {
@@ -365,12 +382,17 @@ const Home1LiveAuction = () => {
             opacity: 1 !important;
             transform: none !important;
             animation: none !important;
+            position: relative !important;
+            z-index: 1 !important;
+            width: 100% !important;
+            text-align: center !important;
+            margin-bottom: 30px !important;
           }
           
           .auction-carousel-container {
-            padding: 0 !important;
+            padding: 0 20px 0 75px !important;
             display: flex !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
             align-items: center !important;
             visibility: visible !important;
             opacity: 1 !important;
@@ -378,12 +400,14 @@ const Home1LiveAuction = () => {
             width: 100% !important;
             max-width: 100vw !important;
             margin: 0 auto !important;
+            position: relative !important;
+            z-index: 2 !important;
           }
           
           /* Center wrapper for Swiper */
           .auction-carousel-container > div {
             display: flex !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
             align-items: center !important;
             width: 100% !important;
             padding: 0 !important;
@@ -393,7 +417,7 @@ const Home1LiveAuction = () => {
           .swiper {
             padding: 0 !important;
             display: flex !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
             align-items: center !important;
             visibility: visible !important;
             opacity: 1 !important;
@@ -424,35 +448,40 @@ const Home1LiveAuction = () => {
             right: 0 !important;
           }
           
-          /* Mobile navigation buttons */
+          /* Mobile navigation buttons - On the card box */
           .auction-slider-prev,
           .auction-slider-next {
-            width: 40px !important;
-            height: 40px !important;
+            width: 35px !important;
+            height: 35px !important;
             position: absolute !important;
-            z-index: 11 !important;
+            z-index: 20 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            background: linear-gradient(135deg, #0063b1, #00a3e0) !important;
-            border: none !important;
+            background: linear-gradient(135deg, rgba(0, 99, 177, 0.9), rgba(0, 163, 224, 0.9)) !important;
+            border: 2px solid rgba(255, 255, 255, 0.8) !important;
             border-radius: 50% !important;
             color: white !important;
             cursor: pointer !important;
-            box-shadow: 0 4px 15px rgba(0, 99, 177, 0.3) !important;
+            box-shadow: 0 4px 20px rgba(0, 99, 177, 0.4) !important;
             transition: all 0.3s ease !important;
+            backdrop-filter: blur(10px) !important;
           }
           
           .auction-slider-prev {
-            left: 10px !important;
+            left: -130px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
           }
           
           .auction-slider-next {
-            right: 10px !important;
+            right: 20px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
           }
           
           .slider-navigation {
-            padding: 0 10px !important;
+            padding: 0 !important;
           }
           
           /* Ensure empty state is visible on mobile */
@@ -489,9 +518,9 @@ const Home1LiveAuction = () => {
           }
           
           .auction-carousel-container {
-            padding: 0 10px !important;
+            padding: 0 15px 0 65px !important;
             display: flex !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
             align-items: center !important;
           }
           
@@ -598,15 +627,16 @@ const Home1LiveAuction = () => {
           width: '100%',
           maxWidth: '100vw',
           overflow: 'visible',
-          padding: '0 16px'
+          padding: '0 16px',
         }}>
           {/* Section Header */}
           <div className="section-header" style={{
             textAlign: 'center',
             marginBottom: 'clamp(30px, 6vw, 50px)',
-            opacity: 0,
-            transform: 'translateY(30px)',
-            animation: 'fadeInUp 0.8s ease-out forwards',
+            width: '100%',
+            display: 'block',
+            position: 'relative',
+            zIndex: 1,
           }}>
             <h2 style={{
               fontSize: 'clamp(2rem, 4vw, 3rem)',
@@ -636,18 +666,16 @@ const Home1LiveAuction = () => {
             <div className="auction-carousel-container" style={{ 
               position: 'relative',
               display: 'flex',
-              justifyContent: 'center',
+              justifyContent: 'flex-start',
               alignItems: 'center',
               width: '100%',
-              padding: '0',
+              padding: '0 20px 0 75px',
               margin: '0 auto',
-              paddingLeft: '20px',
-              paddingRight: '20px',
             }}>
               <div style={{
                 width: '100%',
                 display: 'flex',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
                 alignItems: 'center',
                 padding: '0',
                 margin: '0 auto',
@@ -1066,7 +1094,7 @@ const Home1LiveAuction = () => {
               </Swiper>
               </div>
 
-              {/* Navigation Buttons */}
+              {/* Navigation Buttons - On the card box */}
               <div className="slider-navigation" style={{
                 position: 'absolute',
                 top: '50%',
@@ -1076,28 +1104,30 @@ const Home1LiveAuction = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 pointerEvents: 'none',
-                zIndex: 10,
-                padding: '0 20px',
+                zIndex: 20,
+                padding: '0',
               }}>
                 <button
                   className="auction-slider-prev"
                   style={{
-                    background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
-                    border: 'none',
-                    width: 'clamp(40px, 7vw, 45px)',
-                    height: 'clamp(40px, 7vw, 45px)',
+                    background: 'linear-gradient(135deg, rgba(0, 99, 177, 0.9), rgba(0, 163, 224, 0.9))',
+                    border: '2px solid rgba(255, 255, 255, 0.8)',
+                    width: 'clamp(35px, 6vw, 40px)',
+                    height: 'clamp(35px, 6vw, 40px)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 15px rgba(0, 99, 177, 0.3)',
+                    boxShadow: '0 4px 20px rgba(0, 99, 177, 0.4)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     pointerEvents: 'auto',
                     color: 'white',
-                    fontSize: 'clamp(14px, 3vw, 16px)',
+                    fontSize: 'clamp(12px, 2.5vw, 14px)',
                     position: 'relative',
-                    zIndex: 11,
+                    zIndex: 21,
+                    backdropFilter: 'blur(10px)',
+                    marginLeft: '0',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #00a3e0, #0063b1)';
@@ -1112,7 +1142,7 @@ const Home1LiveAuction = () => {
                   aria-label="Previous auctions"
                   title="Voir les enchères précédentes"
                 >
-                  <svg width="clamp(16px, 3vw, 18px)" height="clamp(16px, 3vw, 18px)" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="clamp(14px, 2.5vw, 16px)" height="clamp(14px, 2.5vw, 16px)" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M15.41 7.41L14 6L8 12L14 18L15.41 16.59L10.83 12Z"/>
                   </svg>
                 </button>
@@ -1120,22 +1150,24 @@ const Home1LiveAuction = () => {
                 <button
                   className="auction-slider-next"
                   style={{
-                    background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
-                    border: 'none',
-                    width: 'clamp(40px, 7vw, 45px)',
-                    height: 'clamp(40px, 7vw, 45px)',
+                    background: 'linear-gradient(135deg, rgba(0, 99, 177, 0.9), rgba(0, 163, 224, 0.9))',
+                    border: '2px solid rgba(255, 255, 255, 0.8)',
+                    width: 'clamp(35px, 6vw, 40px)',
+                    height: 'clamp(35px, 6vw, 40px)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 15px rgba(0, 99, 177, 0.3)',
+                    boxShadow: '0 4px 20px rgba(0, 99, 177, 0.4)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     pointerEvents: 'auto',
                     color: 'white',
-                    fontSize: 'clamp(14px, 3vw, 16px)',
+                    fontSize: 'clamp(12px, 2.5vw, 14px)',
                     position: 'relative',
-                    zIndex: 11,
+                    zIndex: 21,
+                    backdropFilter: 'blur(10px)',
+                    marginRight: '0',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #00a3e0, #0063b1)';
@@ -1150,7 +1182,7 @@ const Home1LiveAuction = () => {
                   aria-label="Next auctions"
                   title="Voir les enchères suivantes"
                 >
-                  <svg width="clamp(16px, 3vw, 18px)" height="clamp(16px, 3vw, 18px)" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="clamp(14px, 2.5vw, 16px)" height="clamp(14px, 2.5vw, 16px)" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8.59 16.59L10 18L16 12L10 6L8.59 7.41L13.17 12Z"/>
                   </svg>
                 </button>
