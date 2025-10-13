@@ -46,7 +46,7 @@ interface AvatarData {
     filename?: string;
 }
 
-import app from '@/config';
+import app, { getSellerUrl } from '@/config';
 
 const API_BASE_URL = app.baseURL;
 
@@ -195,7 +195,7 @@ function ProfilePage() {
             if (error.response?.status === 401) {
                 enqueueSnackbar('Session expired', { variant: 'error' });
                 set({ tokens: undefined, user: undefined });
-                router.push('/auth/login');
+                router.push(`${getSellerUrl()}login`);
             } else {
                 const errorMessage = error.response?.data?.message || error.message || 'Failed to update profile';
                 enqueueSnackbar(errorMessage, { variant: "error" });
@@ -242,7 +242,7 @@ function ProfilePage() {
             if (error.response?.status === 401) {
                 enqueueSnackbar(t("sessionExpired"), { variant: 'error' });
                 set({ tokens: undefined, user: undefined });
-                router.push('/auth/login');
+                router.push(`${getSellerUrl()}login`);
             } else {
                 const errorMessage = error.message || t("failedToUpdatePassword");
                 enqueueSnackbar(errorMessage, { variant: "error" });
@@ -358,7 +358,7 @@ function ProfilePage() {
                 <div className="login-prompt">
                     <h2>Authentication Required</h2>
                     <p>Please log in to access your profile.</p>
-                    <button onClick={() => router.push('/auth/login')}>Go to Login</button>
+                    <button onClick={() => router.push(`${getSellerUrl()}login`)}>Go to Login</button>
                 </div>
             </div>
         );

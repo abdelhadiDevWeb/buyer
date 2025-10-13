@@ -367,13 +367,37 @@ export default function CategoryClient() {
             <img
               src={(() => {
                 if (category.thumb && category.thumb.url) {
-                  if (category.thumb.url.startsWith('http')) {
-                    return category.thumb.url;
+                  const imageUrl = category.thumb.url;
+                  if (imageUrl.startsWith('http')) {
+                    return imageUrl;
+                  } else if (imageUrl.startsWith('/static/')) {
+                    const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                    console.log('🎯 CATEGORY PAGE CATEGORY IMAGE:', {
+                      originalUrl: imageUrl,
+                      finalUrl: finalUrl,
+                      categoryId: category._id,
+                      categoryName: name
+                    });
+                    return finalUrl;
+                  } else if (imageUrl.startsWith('/')) {
+                    const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                    console.log('🎯 CATEGORY PAGE CATEGORY IMAGE:', {
+                      originalUrl: imageUrl,
+                      finalUrl: finalUrl,
+                      categoryId: category._id,
+                      categoryName: name
+                    });
+                    return finalUrl;
+                  } else {
+                    const finalUrl = `${app.baseURL}${imageUrl}`;
+                    console.log('🎯 CATEGORY PAGE CATEGORY IMAGE:', {
+                      originalUrl: imageUrl,
+                      finalUrl: finalUrl,
+                      categoryId: category._id,
+                      categoryName: name
+                    });
+                    return finalUrl;
                   }
-                  if (category.thumb.url.startsWith('/')) {
-                    return category.thumb.url;
-                  }
-                  return `${app.route}${category.thumb.url}`;
                 }
                 return DEFAULT_CATEGORY_IMAGE;
               })()}
@@ -613,13 +637,34 @@ export default function CategoryClient() {
                 // If the URL already starts with http, use it as is
                 if (url.startsWith('http')) {
                   return url;
+                } else if (url.startsWith('/static/')) {
+                  const finalUrl = `${app.baseURL}${url.substring(1)}`;
+                  console.log('🎯 CATEGORY PAGE AUCTION IMAGE:', {
+                    originalUrl: url,
+                    finalUrl: finalUrl,
+                    auctionId: auction._id,
+                    auctionTitle: auction.title
+                  });
+                  return finalUrl;
+                } else if (url.startsWith('/')) {
+                  const finalUrl = `${app.baseURL}${url.substring(1)}`;
+                  console.log('🎯 CATEGORY PAGE AUCTION IMAGE:', {
+                    originalUrl: url,
+                    finalUrl: finalUrl,
+                    auctionId: auction._id,
+                    auctionTitle: auction.title
+                  });
+                  return finalUrl;
+                } else {
+                  const finalUrl = `${app.baseURL}${url}`;
+                  console.log('🎯 CATEGORY PAGE AUCTION IMAGE:', {
+                    originalUrl: url,
+                    finalUrl: finalUrl,
+                    auctionId: auction._id,
+                    auctionTitle: auction.title
+                  });
+                  return finalUrl;
                 }
-                // If it starts with /, it's a local asset path
-                if (url.startsWith('/')) {
-                  return url;
-                }
-                // Otherwise, prepend the server route
-                return `${app.route}${url}`;
               }
               return DEFAULT_AUCTION_IMAGE;
             })()}
@@ -739,13 +784,34 @@ export default function CategoryClient() {
                     // If the URL already starts with http, use it as is
                     if (url.startsWith('http')) {
                       return url;
+                    } else if (url.startsWith('/static/')) {
+                      const finalUrl = `${app.baseURL}${url.substring(1)}`;
+                      console.log('🎯 CATEGORY PAGE USER AVATAR:', {
+                        originalUrl: url,
+                        finalUrl: finalUrl,
+                        auctionId: auction._id,
+                        ownerName: auction.owner?.firstName || auction.owner?.name
+                      });
+                      return finalUrl;
+                    } else if (url.startsWith('/')) {
+                      const finalUrl = `${app.baseURL}${url.substring(1)}`;
+                      console.log('🎯 CATEGORY PAGE USER AVATAR:', {
+                        originalUrl: url,
+                        finalUrl: finalUrl,
+                        auctionId: auction._id,
+                        ownerName: auction.owner?.firstName || auction.owner?.name
+                      });
+                      return finalUrl;
+                    } else {
+                      const finalUrl = `${app.baseURL}${url}`;
+                      console.log('🎯 CATEGORY PAGE USER AVATAR:', {
+                        originalUrl: url,
+                        finalUrl: finalUrl,
+                        auctionId: auction._id,
+                        ownerName: auction.owner?.firstName || auction.owner?.name
+                      });
+                      return finalUrl;
                     }
-                    // If it starts with /, it's a local asset path
-                    if (url.startsWith('/')) {
-                      return url;
-                    }
-                    // Otherwise, prepend the server route
-                    return `${app.route}${url}`;
                   }
                   return '/assets/images/avatar.jpg';
                 })()}
@@ -1072,5 +1138,9 @@ export default function CategoryClient() {
     </>
   );
 }
+
+
+
+
 
 

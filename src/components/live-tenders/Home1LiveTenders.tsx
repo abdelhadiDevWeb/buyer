@@ -56,24 +56,71 @@ export function calculateTimeRemaining(endDate: string): Timer {
 
 // Helper function to get the correct tender image URL
 const getTenderImageUrl = (tender: Tender) => {
+  console.log('🎯 ===== TENDER IMAGE URL PROCESSING =====');
+  console.log('📋 Tender Info:', {
+    id: tender._id,
+    title: tender.title || tender.name,
+    hasAttachments: !!tender.attachments,
+    attachmentsLength: tender.attachments?.length || 0
+  });
+  
+  if (tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url) {
+    const imageUrl = tender.attachments[0].url;
+    console.log('🔍 Original Image Data:', {
+      originalUrl: imageUrl,
+      appRoute: app.route,
+      appBaseURL: app.baseURL,
+      imageType: typeof imageUrl,
+      imageLength: imageUrl.length
+=======
   if (tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url) {
     const imageUrl = tender.attachments[0].url;
     console.log('🔍 Tender Image URL Debug:', {
       originalUrl: imageUrl,
       appRoute: app.route,
       constructedUrl: `${app.route}${imageUrl}`
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
     });
     
     // Handle different URL formats
     if (imageUrl.startsWith('http')) {
+      console.log('✅ CASE: Full URL detected');
+      console.log('🔗 Final URL:', imageUrl);
+      console.log('📝 Action: Using full URL as-is');
       return imageUrl; // Already a full URL
     } else if (imageUrl.startsWith('/')) {
-      return `${app.route}${imageUrl}`; // Starts with slash
+      if (imageUrl.startsWith('/static/')) {
+        console.log('✅ CASE: Static path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      } else {
+        console.log('✅ CASE: Root path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      }
     } else {
-      return `${app.route}/${imageUrl}`; // No slash, add one
+      console.log('✅ CASE: Relative path detected');
+      const finalUrl = `${app.baseURL}${imageUrl}`;
+      console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl}`);
+      console.log('🔗 Final URL:', finalUrl);
+      console.log('📝 Action: Combined with baseURL');
+      return finalUrl;
     }
+  } else {
+    console.log('❌ CASE: No image data found');
+    console.log('🔍 Attachments data:', tender.attachments);
+    console.log('🔗 Fallback URL:', DEFAULT_TENDER_IMAGE);
+    console.log('📝 Action: Using default image');
+    return DEFAULT_TENDER_IMAGE;
   }
-  return DEFAULT_TENDER_IMAGE;
+  
+  console.log('🎯 ===== END TENDER IMAGE URL PROCESSING =====\n');
 };
 
 const Home1LiveTenders = () => {
@@ -502,7 +549,20 @@ const Home1LiveTenders = () => {
                         }}>
                           {tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url ? (
                             <img
+<<<<<<< HEAD
+                              src={(() => {
+                                const imageUrl = getTenderImageUrl(tender);
+                                console.log('🖼️ TENDER IMAGE RENDERING:', {
+                                  tenderId: tender._id,
+                                  tenderTitle: tender.title,
+                                  finalImageSrc: imageUrl,
+                                  timestamp: new Date().toISOString()
+                                });
+                                return imageUrl;
+                              })()}
+=======
                               src={getTenderImageUrl(tender)}
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
                               alt={tender.title || 'Tender'}
                               style={{
                                 width: '100%',
@@ -510,8 +570,31 @@ const Home1LiveTenders = () => {
                                 objectFit: 'cover',
                                 transition: 'transform 0.4s ease',
                               }}
+                              onLoad={() => {
+                                const imageUrl = getTenderImageUrl(tender);
+                                console.log('✅ ===== TENDER IMAGE LOAD SUCCESS =====');
+                                console.log('🎉 Successfully loaded:', imageUrl);
+                                console.log('📋 Tender Info:', {
+                                  id: tender._id,
+                                  title: tender.title
+                                });
+                                console.log('✅ ===== END TENDER IMAGE LOAD SUCCESS =====');
+                              }}
                               onError={(e) => {
+<<<<<<< HEAD
+                                const failedUrl = getTenderImageUrl(tender);
+                                console.error('❌ ===== TENDER IMAGE LOAD ERROR =====');
+                                console.error('🚨 Failed URL:', failedUrl);
+                                console.error('📋 Tender Info:', {
+                                  id: tender._id,
+                                  title: tender.title,
+                                  attachments: tender.attachments
+                                });
+                                console.error('🔄 Switching to fallback:', DEFAULT_TENDER_IMAGE);
+                                console.error('❌ ===== END TENDER IMAGE LOAD ERROR =====');
+=======
                                 console.error('❌ Tender Image Load Error:', getTenderImageUrl(tender));
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
                                 const target = e.target as HTMLImageElement;
                                 target.src = DEFAULT_TENDER_IMAGE;
                               }}
@@ -974,3 +1057,4 @@ const Home1LiveTenders = () => {
 };
 
 export default Home1LiveTenders;
+

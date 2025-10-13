@@ -18,45 +18,155 @@ const Home1Category = () => {
   const [imageErrors, setImageErrors] = useState({});
   const DEFAULT_CATEGORY_IMAGE = "/assets/images/logo-white.png";
   const FALLBACK_CATEGORY_IMAGE = "/assets/images/cat.avif";
+  const PLACEHOLDER_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI0MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNTUlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Ob3QgRm91bmQ8L3RleHQ+PC9zdmc+";
 
   // Helper function to get the correct image URL
   const getCategoryImageUrl = (category) => {
-    // If it's from API response (has thumb.url)
-    if (category.thumb && category.thumb.url) {
-      const imageUrl = category.thumb.url;
-      console.log('🔍 Category Image URL Debug:', {
-        originalUrl: imageUrl,
-        appRoute: app.route,
-        constructedUrl: `${app.route}${imageUrl}`
-      });
+    console.log('🔍 Category Image Debug - Full Category Object:', category);
+    console.log('🔧 Config Debug:', {
+      appRoute: app.route,
+      appBaseURL: app.baseURL,
+      configType: typeof app
+    });
+    
+    // Check all possible image properties in order of preference
+    const possibleImageSources = [
+      category.thumb?.url,
+      category.thumb?.fullUrl,
+      category.image,
+      category.thumbnail,
+      category.photo,
+      category.picture,
+      category.icon,
+      category.logo
+    ].filter(Boolean); // Remove null/undefined values
+    
+    console.log('🔍 Possible image sources found:', possibleImageSources);
+    
+    for (const imageUrl of possibleImageSources) {
+      if (!imageUrl) continue;
+      
+      console.log('🔍 Processing image URL:', imageUrl);
       
       // Handle different URL formats
-      if (imageUrl.startsWith('http')) {
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        console.log('✅ Using full URL:', imageUrl);
         return imageUrl; // Already a full URL
-      } else if (imageUrl.startsWith('/')) {
-        return `${app.route}${imageUrl}`; // Starts with slash
+      } 
+      
+      // Handle relative URLs - use the correct base URL construction
+      let finalUrl;
+      if (imageUrl.startsWith('/')) {
+        // For URLs starting with /static/, use baseURL directly (don't add /static/ again)
+        if (imageUrl.startsWith('/static/')) {
+          finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+          console.log('🔍 URL starts with /static/, using baseURL + path (no double static):', finalUrl);
+        } else {
+          // For other URLs with leading slash, use baseURL + path
+          finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+          console.log('🔍 URL with leading slash, using baseURL + path:', finalUrl);
+        }
       } else {
-        return `${app.route}/${imageUrl}`; // No slash, add one
+        // For URLs without leading slash, use baseURL + path
+        finalUrl = `${app.baseURL}${imageUrl}`;
+        console.log('🔍 URL without leading slash, using baseURL + path:', finalUrl);
       }
+      
+      console.log('✅ Final constructed URL:', finalUrl);
+      
+      // Test if the URL is accessible
+      testImageUrl(finalUrl).then(isAccessible => {
+        if (isAccessible) {
+          console.log('🎉 Image is accessible:', finalUrl);
+        } else {
+          console.log('❌ Image is NOT accessible:', finalUrl);
+        }
+      });
+      
+      return finalUrl;
     }
-    // If it's from fallback data (has image property)
-    if (category.image) {
-      // Check if it's already a full URL or a relative path
-      if (category.image.startsWith('http')) {
-        return category.image;
+    
+    console.log('⚠️ No image found in any property, using fallback');
+    return PLACEHOLDER_IMAGE;
+  };
+
+  // Test image URL accessibility
+  const testImageUrl = async (url) => {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      const isAccessible = response.ok;
+      console.log(`🔍 Image URL test for ${url}:`, {
+        status: response.status,
+        ok: isAccessible,
+        contentType: response.headers.get('content-type')
+      });
+      
+      if (!isAccessible) {
+        console.log(`❌ Image not accessible: ${url}`);
       }
-      // If it's a relative path, make it absolute
-      return category.image.startsWith('/') ? category.image : `/${category.image}`;
+      
+      return isAccessible;
+    } catch (error) {
+      console.log(`❌ Image URL test failed for ${url}:`, error);
+      return false;
     }
-    return FALLBACK_CATEGORY_IMAGE;
   };
 
   // Handle image load errors
-  const handleImageError = (categoryId) => {
+  const handleImageError = (categoryId, category) => {
+    console.log('❌ Image load error for category:', categoryId, category);
+    
+    // Test the URL that failed
+    const failedUrl = getCategoryImageUrl(category);
+    testImageUrl(failedUrl);
+    
+    // Try alternative URLs if the main one failed
+    const alternativeUrls = generateAlternativeUrls(category);
+    console.log('🔍 Trying alternative URLs:', alternativeUrls);
+    
+    // Test each alternative URL
+    alternativeUrls.forEach(url => testImageUrl(url));
+    
     setImageErrors(prev => ({
       ...prev,
       [categoryId]: true
     }));
+  };
+
+  // Generate alternative URLs for a category
+  const generateAlternativeUrls = (category) => {
+    const possibleImageSources = [
+      category.thumb?.url,
+      category.thumb?.fullUrl,
+      category.image,
+      category.thumbnail,
+      category.photo,
+      category.picture,
+      category.icon,
+      category.logo
+    ].filter(Boolean);
+    
+    const alternativeUrls = [];
+    
+    possibleImageSources.forEach(imageUrl => {
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        // Use the same logic as the main function
+        if (imageUrl.startsWith('/')) {
+          alternativeUrls.push(`${app.baseURL}${imageUrl.substring(1)}`);
+        } else {
+          alternativeUrls.push(`${app.baseURL}${imageUrl}`);
+        }
+        
+        // Also try some alternative paths
+        const cleanUrl = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+        alternativeUrls.push(`${app.baseURL}uploads/${cleanUrl}`);
+        alternativeUrls.push(`${app.baseURL}images/${cleanUrl}`);
+        alternativeUrls.push(`${app.baseURL}public/${cleanUrl}`);
+        alternativeUrls.push(`${app.baseURL}assets/${cleanUrl}`);
+      }
+    });
+    
+    return [...new Set(alternativeUrls)]; // Remove duplicates
   };
 
   // Simplified Swiper settings for responsive carousel
@@ -81,6 +191,37 @@ const Home1Category = () => {
   );
 
   useEffect(() => {
+    // Debug config
+    console.log('🔧 Config Debug:', {
+      appRoute: app.route,
+      appBaseURL: app.baseURL,
+      configObject: app
+    });
+    
+    // Test server connectivity and possible image paths
+    const testServerPaths = async () => {
+      const testPaths = [
+        app.baseURL,
+        `${app.baseURL}static/`,
+        `${app.baseURL}uploads/`,
+        `${app.baseURL}images/`,
+        `${app.baseURL}public/`,
+        `${app.baseURL}assets/`,
+      ];
+      
+      console.log('🔍 Testing server paths:');
+      for (const path of testPaths) {
+        try {
+          const response = await fetch(path, { method: 'HEAD' });
+          console.log(`✅ ${path} - Status: ${response.status}`);
+        } catch (error) {
+          console.log(`❌ ${path} - Error: ${error.message}`);
+        }
+      }
+    };
+    
+    testServerPaths();
+    
     const fetchCategories = async () => {
       try {
         setLoading(true);
@@ -88,10 +229,33 @@ const Home1Category = () => {
         
         const response = await CategoryAPI.getCategoryTree();
         console.log('📡 API Response:', response);
+<<<<<<< HEAD
+        console.log('📡 API Response Structure:', {
+          hasSuccess: 'success' in response,
+          success: response?.success,
+          hasData: 'data' in response,
+          dataType: typeof response?.data,
+          isArray: Array.isArray(response?.data),
+          dataLength: Array.isArray(response?.data) ? response.data.length : 'N/A',
+          firstItem: Array.isArray(response?.data) && response.data.length > 0 ? response.data[0] : 'N/A'
+        });
+=======
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
         
         // Handle different response structures
         let categoryDataResponse = null;
         
+<<<<<<< HEAD
+        // The API returns an array directly, not wrapped in success/data
+        if (Array.isArray(response)) {
+          categoryDataResponse = response;
+          console.log('✅ Categories loaded from API (direct array):', categoryDataResponse.length);
+        } else if (response?.success && Array.isArray(response.data)) {
+          categoryDataResponse = response.data;
+          console.log('✅ Categories loaded from API (wrapped):', categoryDataResponse.length);
+        } else if (Array.isArray(response?.data)) {
+          categoryDataResponse = response.data;
+=======
         if (response?.success && Array.isArray(response.data)) {
           categoryDataResponse = response.data;
           console.log('✅ Categories loaded from API:', categoryDataResponse.length);
@@ -100,10 +264,40 @@ const Home1Category = () => {
           console.log('✅ Categories loaded from API (array):', categoryDataResponse.length);
         } else if (response?.data && Array.isArray(response.data)) {
           categoryDataResponse = response.data;
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
           console.log('✅ Categories loaded from API (nested):', categoryDataResponse.length);
         }
         
         if (categoryDataResponse && categoryDataResponse.length > 0) {
+          console.log('🔍 First category structure:', categoryDataResponse[0]);
+          console.log('🔍 First category thumb:', categoryDataResponse[0]?.thumb);
+          console.log('🔍 First category image URL would be:', getCategoryImageUrl(categoryDataResponse[0]));
+          
+          // Debug all categories to see their image properties
+          console.log('🔍 ALL CATEGORIES IMAGE DEBUG:');
+          categoryDataResponse.forEach((category, index) => {
+            console.log(`Category ${index + 1} (${category.name}):`, {
+              thumb: category.thumb,
+              image: category.image,
+              thumbnail: category.thumbnail,
+              photo: category.photo,
+              picture: category.picture,
+              icon: category.icon,
+              logo: category.logo,
+              allKeys: Object.keys(category)
+            });
+          });
+          
+          // Test the first few category image URLs
+          const testPromises = categoryDataResponse.slice(0, 3).map(async (category, index) => {
+            const url = getCategoryImageUrl(category);
+            const isAccessible = await testImageUrl(url);
+            console.log(`🔍 Category ${index + 1} (${category.name}) image accessibility:`, { url, isAccessible });
+          });
+          
+          // Don't await - let it run in background
+          Promise.all(testPromises).catch(console.error);
+          
           setCategories(categoryDataResponse);
           setError(false);
           setErrorMessage('');
@@ -232,7 +426,7 @@ const Home1Category = () => {
               transition: 'all 0.3s ease',
             }}>
               <img
-                src={imageErrors[subcategory._id || subcategory.id] ? FALLBACK_CATEGORY_IMAGE : getCategoryImageUrl(subcategory)}
+                src={imageErrors[subcategory._id || subcategory.id] ? PLACEHOLDER_IMAGE : getCategoryImageUrl(subcategory)}
                 alt={subcategory.name}
                 style={{
                   width: '100%',
@@ -240,7 +434,17 @@ const Home1Category = () => {
                   borderRadius: level === 0 ? '10px' : '6px',
                   objectFit: 'cover',
                 }}
-                onError={() => handleImageError(subcategory._id || subcategory.id)}
+                onError={() => handleImageError(subcategory._id || subcategory.id, subcategory)}
+                onLoad={() => {
+                  const imageUrl = getCategoryImageUrl(subcategory);
+                  console.log('✅ ===== SUBCATEGORY IMAGE LOAD SUCCESS =====');
+                  console.log('🎉 Successfully loaded:', imageUrl);
+                  console.log('📋 Subcategory Info:', {
+                    id: subcategory._id || subcategory.id,
+                    name: subcategory.name
+                  });
+                  console.log('✅ ===== END SUBCATEGORY IMAGE LOAD SUCCESS =====');
+                }}
                 loading="lazy"
               />
             </div>
@@ -290,6 +494,14 @@ const Home1Category = () => {
     const isHovered = hoveredCategory === id;
     const isExpanded = expandedCategories[id];
     const hasSubcategories = hasChildren(category);
+    
+    // Debug image error state
+    console.log('🔍 Category render debug:', {
+      id,
+      name,
+      hasImageError: imageErrors[id],
+      imageErrorsState: imageErrors
+    });
 
     // Dynamic gradient based on category index
     const gradients = [
@@ -393,7 +605,11 @@ const Home1Category = () => {
                 justifyContent: 'center',
               }}>
                 <img
-                  src={imageErrors[id] ? FALLBACK_CATEGORY_IMAGE : getCategoryImageUrl(category)}
+                  src={(() => {
+                    const imageUrl = imageErrors[id] ? PLACEHOLDER_IMAGE : getCategoryImageUrl(category);
+                    console.log(`🎯 Final image src for ${name}:`, imageUrl);
+                    return imageUrl;
+                  })()}
                   alt={name}
                   style={{
                     width: '90%',
@@ -403,7 +619,17 @@ const Home1Category = () => {
                     transition: 'all 0.4s ease',
                     transform: isHovered ? 'scale(1.1)' : 'scale(1)',
                   }}
-                  onError={() => handleImageError(id)}
+                  onError={() => handleImageError(id, category)}
+                  onLoad={() => {
+                    const imageUrl = getCategoryImageUrl(category);
+                    console.log('✅ ===== CATEGORY IMAGE LOAD SUCCESS =====');
+                    console.log('🎉 Successfully loaded:', imageUrl);
+                    console.log('📋 Category Info:', {
+                      id: id,
+                      name: name
+                    });
+                    console.log('✅ ===== END CATEGORY IMAGE LOAD SUCCESS =====');
+                  }}
                   loading="lazy"
                 />
               </div>
@@ -865,3 +1091,7 @@ const Home1Category = () => {
 };
 
 export default Home1Category;
+
+
+
+

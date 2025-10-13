@@ -21,6 +21,7 @@ const app = {
 
   // Seller Application URL - Dynamic based on environment
   sellerUrl:  'https://mazad-click-seller.vercel.app/',
+  // sellerUrl:  'https://mazadclick-server.onrender.com/seller',
 
   apiKey: '64d2e8b7c3a9f1e5d8b2a4c6e9f0d3a5',
 };
