@@ -72,6 +72,14 @@ const getTenderImageUrl = (tender: Tender) => {
       appBaseURL: app.baseURL,
       imageType: typeof imageUrl,
       imageLength: imageUrl.length
+=======
+  if (tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url) {
+    const imageUrl = tender.attachments[0].url;
+    console.log('🔍 Tender Image URL Debug:', {
+      originalUrl: imageUrl,
+      appRoute: app.route,
+      constructedUrl: `${app.route}${imageUrl}`
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
     });
     
     // Handle different URL formats
@@ -541,6 +549,7 @@ const Home1LiveTenders = () => {
                         }}>
                           {tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url ? (
                             <img
+<<<<<<< HEAD
                               src={(() => {
                                 const imageUrl = getTenderImageUrl(tender);
                                 console.log('🖼️ TENDER IMAGE RENDERING:', {
@@ -551,6 +560,9 @@ const Home1LiveTenders = () => {
                                 });
                                 return imageUrl;
                               })()}
+=======
+                              src={getTenderImageUrl(tender)}
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
                               alt={tender.title || 'Tender'}
                               style={{
                                 width: '100%',
@@ -569,6 +581,7 @@ const Home1LiveTenders = () => {
                                 console.log('✅ ===== END TENDER IMAGE LOAD SUCCESS =====');
                               }}
                               onError={(e) => {
+<<<<<<< HEAD
                                 const failedUrl = getTenderImageUrl(tender);
                                 console.error('❌ ===== TENDER IMAGE LOAD ERROR =====');
                                 console.error('🚨 Failed URL:', failedUrl);
@@ -579,6 +592,9 @@ const Home1LiveTenders = () => {
                                 });
                                 console.error('🔄 Switching to fallback:', DEFAULT_TENDER_IMAGE);
                                 console.error('❌ ===== END TENDER IMAGE LOAD ERROR =====');
+=======
+                                console.error('❌ Tender Image Load Error:', getTenderImageUrl(tender));
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
                                 const target = e.target as HTMLImageElement;
                                 target.src = DEFAULT_TENDER_IMAGE;
                               }}

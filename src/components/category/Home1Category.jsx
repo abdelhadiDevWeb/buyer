@@ -229,6 +229,7 @@ const Home1Category = () => {
         
         const response = await CategoryAPI.getCategoryTree();
         console.log('📡 API Response:', response);
+<<<<<<< HEAD
         console.log('📡 API Response Structure:', {
           hasSuccess: 'success' in response,
           success: response?.success,
@@ -238,10 +239,13 @@ const Home1Category = () => {
           dataLength: Array.isArray(response?.data) ? response.data.length : 'N/A',
           firstItem: Array.isArray(response?.data) && response.data.length > 0 ? response.data[0] : 'N/A'
         });
+=======
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
         
         // Handle different response structures
         let categoryDataResponse = null;
         
+<<<<<<< HEAD
         // The API returns an array directly, not wrapped in success/data
         if (Array.isArray(response)) {
           categoryDataResponse = response;
@@ -251,6 +255,16 @@ const Home1Category = () => {
           console.log('✅ Categories loaded from API (wrapped):', categoryDataResponse.length);
         } else if (Array.isArray(response?.data)) {
           categoryDataResponse = response.data;
+=======
+        if (response?.success && Array.isArray(response.data)) {
+          categoryDataResponse = response.data;
+          console.log('✅ Categories loaded from API:', categoryDataResponse.length);
+        } else if (Array.isArray(response)) {
+          categoryDataResponse = response;
+          console.log('✅ Categories loaded from API (array):', categoryDataResponse.length);
+        } else if (response?.data && Array.isArray(response.data)) {
+          categoryDataResponse = response.data;
+>>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
           console.log('✅ Categories loaded from API (nested):', categoryDataResponse.length);
         }
         
