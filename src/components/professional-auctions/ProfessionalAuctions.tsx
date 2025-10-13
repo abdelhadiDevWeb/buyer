@@ -98,14 +98,6 @@ const getProfessionalAuctionImageUrl = (auction: ProfessionalAuction) => {
       appBaseURL: app.baseURL,
       imageType: typeof imageUrl,
       imageLength: imageUrl.length
-=======
-  if (auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url) {
-    const imageUrl = auction.thumbs[0].url;
-    console.log('🔍 Professional Auction Image URL Debug:', {
-      originalUrl: imageUrl,
-      appRoute: app.route,
-      constructedUrl: `${app.route}${imageUrl}`
->>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
     });
     
     // Handle different URL formats
@@ -714,20 +706,9 @@ const ProfessionalAuctions: React.FC = () => {
                           overflow: 'hidden',
                         }}>
                           <img
-<<<<<<< HEAD
-                            src={(() => {
-                              const imageUrl = getProfessionalAuctionImageUrl(auction);
-                              console.log('🖼️ PROFESSIONAL AUCTION IMAGE RENDERING:', {
-                                auctionId: auction._id,
-                                auctionTitle: auction.title,
-                                finalImageSrc: imageUrl,
-                                timestamp: new Date().toISOString()
-                              });
-                              return imageUrl;
-                            })()}
-=======
+ 
                             src={getProfessionalAuctionImageUrl(auction)}
->>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
+ 
                             alt={auction.title}
                             style={{
                               width: '100%',
@@ -746,20 +727,6 @@ const ProfessionalAuctions: React.FC = () => {
                               console.log('✅ ===== END PROFESSIONAL AUCTION IMAGE LOAD SUCCESS =====');
                             }}
                             onError={(e) => {
-<<<<<<< HEAD
-                              const failedUrl = getProfessionalAuctionImageUrl(auction);
-                              console.error('❌ ===== PROFESSIONAL AUCTION IMAGE LOAD ERROR =====');
-                              console.error('🚨 Failed URL:', failedUrl);
-                              console.error('📋 Auction Info:', {
-                                id: auction._id,
-                                title: auction.title,
-                                thumbs: auction.thumbs
-                              });
-                              console.error('🔄 Switching to fallback:', DEFAULT_AUCTION_IMAGE);
-                              console.error('❌ ===== END PROFESSIONAL AUCTION IMAGE LOAD ERROR =====');
-=======
-                              console.error('❌ Professional Auction Image Load Error:', getProfessionalAuctionImageUrl(auction));
->>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
                               (e.target as HTMLImageElement).src = DEFAULT_AUCTION_IMAGE;
                             }}
                           />

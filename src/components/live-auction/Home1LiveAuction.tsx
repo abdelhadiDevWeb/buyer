@@ -102,14 +102,6 @@ const getAuctionImageUrl = (auction: Auction) => {
       appBaseURL: app.baseURL,
       imageType: typeof imageUrl,
       imageLength: imageUrl.length
-=======
-  if (auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url) {
-    const imageUrl = auction.thumbs[0].url;
-    console.log('🔍 Auction Image URL Debug:', {
-      originalUrl: imageUrl,
-      appRoute: app.route,
-      constructedUrl: `${app.route}${imageUrl}`
->>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
     });
     
     // Handle different URL formats
@@ -711,10 +703,10 @@ const Home1LiveAuction = () => {
 
           {/* Auctions Content */}
           {liveAuctions.length > 0 ? (
-<<<<<<< HEAD
+ 
             <>
               {!showSlider ? (
-                <div className="auction-grid" style={{
+            <div className="auction-grid" style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                   gap: '20px',
@@ -839,36 +831,7 @@ const Home1LiveAuction = () => {
                         maxWidth: '100%',
                       }}
                     >
-=======
-            <div className="auction-carousel-container" style={{ 
-              position: 'relative',
-              display: 'flex',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              width: '100%',
-              padding: '0 20px 0 75px',
-              margin: '0 auto',
-            }}>
-              <div style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                padding: '0',
-                margin: '0 auto',
-                maxWidth: '100%',
-              }}>
-                <Swiper
-                  {...settings}
-                  className="swiper auction-slider"
-                  style={{
-                    padding: '20px 0 50px',
-                    overflow: 'visible',
-                    width: '100%',
-                    maxWidth: '100%',
-                  }}
-                >
->>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
+ 
                 {liveAuctions.map((auction, idx) => {
                   const timer = timers[auction._id] || { days: "00", hours: "00", minutes: "00", seconds: "00", hasEnded: false };
                   const isAnimated = animatedCards.includes(idx);
@@ -914,20 +877,7 @@ const Home1LiveAuction = () => {
                           borderRadius: 'clamp(16px, 3vw, 20px) 16px 0 0',
                         }}>
                           <img
-<<<<<<< HEAD
-                            src={(() => {
-                              const imageUrl = getAuctionImageUrl(auction);
-                              console.log('🖼️ IMAGE RENDERING:', {
-                                auctionId: auction._id,
-                                auctionTitle: auction.title || auction.name,
-                                finalImageSrc: imageUrl,
-                                timestamp: new Date().toISOString()
-                              });
-                              return imageUrl;
-                            })()}
-=======
                             src={getAuctionImageUrl(auction)}
->>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
                             alt={auction.title || auction.name || 'Auction'}
                             style={{
                               width: '100%',
@@ -941,31 +891,7 @@ const Home1LiveAuction = () => {
                             onMouseLeave={(e) => {
                               e.currentTarget.style.transform = 'scale(1)';
                             }}
-                            onLoad={() => {
-                              const imageUrl = getAuctionImageUrl(auction);
-                              console.log('✅ ===== AUCTION IMAGE LOAD SUCCESS =====');
-                              console.log('🎉 Successfully loaded:', imageUrl);
-                              console.log('📋 Auction Info:', {
-                                id: auction._id,
-                                title: auction.title || auction.name
-                              });
-                              console.log('✅ ===== END IMAGE LOAD SUCCESS =====');
-                            }}
                             onError={(e) => {
-<<<<<<< HEAD
-                              const failedUrl = getAuctionImageUrl(auction);
-                              console.error('❌ ===== AUCTION IMAGE LOAD ERROR =====');
-                              console.error('🚨 Failed URL:', failedUrl);
-                              console.error('📋 Auction Info:', {
-                                id: auction._id,
-                                title: auction.title || auction.name,
-                                thumbs: auction.thumbs
-                              });
-                              console.error('🔄 Switching to fallback:', DEFAULT_AUCTION_IMAGE);
-                              console.error('❌ ===== END IMAGE LOAD ERROR =====');
-=======
-                              console.error('❌ Auction Image Load Error:', getAuctionImageUrl(auction));
->>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
                               (e.target as HTMLImageElement).src = DEFAULT_AUCTION_IMAGE;
                             }}
                           />
@@ -1481,11 +1407,11 @@ const Home1LiveAuction = () => {
           )}
 
 
-<<<<<<< HEAD
+ 
           {/* Toggle Button and View All */}
-=======
+ 
           {/* View All Button - Always visible on mobile */}
->>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
+ 
           <div 
             className="view-all-button-container"
             style={{
@@ -1495,7 +1421,7 @@ const Home1LiveAuction = () => {
               transform: 'translateY(30px)',
               animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
             }}>
-<<<<<<< HEAD
+ 
             {liveAuctions.length > 3 && (
               <button
                 onClick={() => setShowSlider(!showSlider)}
@@ -1517,8 +1443,8 @@ const Home1LiveAuction = () => {
                 {showSlider ? 'Show less' : 'See more'}
               </button>
             )}
-=======
->>>>>>> 10760a7d54d6c193253fdc1ea0d2ac71bddcac4f
+ 
+ 
             <Link
               href="/auction-sidebar"
               style={{
