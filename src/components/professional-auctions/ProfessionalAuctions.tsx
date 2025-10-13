@@ -82,24 +82,63 @@ export function calculateTimeRemaining(endDate: string): Timer {
 
 // Helper function to get the correct professional auction image URL
 const getProfessionalAuctionImageUrl = (auction: ProfessionalAuction) => {
+  console.log('🎯 ===== PROFESSIONAL AUCTION IMAGE URL PROCESSING =====');
+  console.log('📋 Professional Auction Info:', {
+    id: auction._id,
+    title: auction.title || auction.name,
+    hasThumbs: !!auction.thumbs,
+    thumbsLength: auction.thumbs?.length || 0
+  });
+  
   if (auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url) {
     const imageUrl = auction.thumbs[0].url;
-    console.log('🔍 Professional Auction Image URL Debug:', {
+    console.log('🔍 Original Image Data:', {
       originalUrl: imageUrl,
       appRoute: app.route,
-      constructedUrl: `${app.route}${imageUrl}`
+      appBaseURL: app.baseURL,
+      imageType: typeof imageUrl,
+      imageLength: imageUrl.length
     });
     
     // Handle different URL formats
     if (imageUrl.startsWith('http')) {
+      console.log('✅ CASE: Full URL detected');
+      console.log('🔗 Final URL:', imageUrl);
+      console.log('📝 Action: Using full URL as-is');
       return imageUrl; // Already a full URL
     } else if (imageUrl.startsWith('/')) {
-      return `${app.route}${imageUrl}`; // Starts with slash
+      if (imageUrl.startsWith('/static/')) {
+        console.log('✅ CASE: Static path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      } else {
+        console.log('✅ CASE: Root path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      }
     } else {
-      return `${app.route}/${imageUrl}`; // No slash, add one
+      console.log('✅ CASE: Relative path detected');
+      const finalUrl = `${app.baseURL}${imageUrl}`;
+      console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl}`);
+      console.log('🔗 Final URL:', finalUrl);
+      console.log('📝 Action: Combined with baseURL');
+      return finalUrl;
     }
+  } else {
+    console.log('❌ CASE: No image data found');
+    console.log('🔍 Thumbs data:', auction.thumbs);
+    console.log('🔗 Fallback URL:', DEFAULT_AUCTION_IMAGE);
+    console.log('📝 Action: Using default image');
+    return DEFAULT_AUCTION_IMAGE;
   }
-  return DEFAULT_AUCTION_IMAGE;
+  
+  console.log('🎯 ===== END PROFESSIONAL AUCTION IMAGE URL PROCESSING =====\n');
 };
 
 const ProfessionalAuctions: React.FC = () => {
@@ -667,7 +706,16 @@ const ProfessionalAuctions: React.FC = () => {
                           overflow: 'hidden',
                         }}>
                           <img
-                            src={getProfessionalAuctionImageUrl(auction)}
+                            src={(() => {
+                              const imageUrl = getProfessionalAuctionImageUrl(auction);
+                              console.log('🖼️ PROFESSIONAL AUCTION IMAGE RENDERING:', {
+                                auctionId: auction._id,
+                                auctionTitle: auction.title,
+                                finalImageSrc: imageUrl,
+                                timestamp: new Date().toISOString()
+                              });
+                              return imageUrl;
+                            })()}
                             alt={auction.title}
                             style={{
                               width: '100%',
@@ -675,8 +723,27 @@ const ProfessionalAuctions: React.FC = () => {
                               objectFit: 'cover',
                               transition: 'transform 0.3s ease',
                             }}
+                            onLoad={() => {
+                              const imageUrl = getProfessionalAuctionImageUrl(auction);
+                              console.log('✅ ===== PROFESSIONAL AUCTION IMAGE LOAD SUCCESS =====');
+                              console.log('🎉 Successfully loaded:', imageUrl);
+                              console.log('📋 Auction Info:', {
+                                id: auction._id,
+                                title: auction.title
+                              });
+                              console.log('✅ ===== END PROFESSIONAL AUCTION IMAGE LOAD SUCCESS =====');
+                            }}
                             onError={(e) => {
-                              console.error('❌ Professional Auction Image Load Error:', getProfessionalAuctionImageUrl(auction));
+                              const failedUrl = getProfessionalAuctionImageUrl(auction);
+                              console.error('❌ ===== PROFESSIONAL AUCTION IMAGE LOAD ERROR =====');
+                              console.error('🚨 Failed URL:', failedUrl);
+                              console.error('📋 Auction Info:', {
+                                id: auction._id,
+                                title: auction.title,
+                                thumbs: auction.thumbs
+                              });
+                              console.error('🔄 Switching to fallback:', DEFAULT_AUCTION_IMAGE);
+                              console.error('❌ ===== END PROFESSIONAL AUCTION IMAGE LOAD ERROR =====');
                               (e.target as HTMLImageElement).src = DEFAULT_AUCTION_IMAGE;
                             }}
                           />
@@ -1025,3 +1092,5 @@ const ProfessionalAuctions: React.FC = () => {
 };
 
 export default ProfessionalAuctions;
+
+

@@ -15,7 +15,7 @@ import { AuctionsAPI } from "@/app/api/auctions";
 import { OfferAPI } from "@/app/api/offer";
 import { AutoBidAPI } from "@/app/api/auto-bid";
 import useAuth from "@/hooks/useAuth";
-import app from "@/config"; // Import the app config
+import app, { getSellerUrl } from "@/config"; // Import the app config
 import { calculateTimeRemaining } from "../live-auction/Home1LiveAuction";
 import { ReviewAPI } from "@/app/api/review"; // Import Review API
 import { CommentAPI } from "@/app/api/comment";
@@ -481,7 +481,7 @@ const handleBidSubmit = async (e) => {
     // Check if user is logged in
     if (!isLogged || !auth.tokens) {
       toast.error("Veuillez vous connecter pour placer une enchère");
-      router.push("/auth/login");
+      router.push(`${getSellerUrl()}login`);
       return;
     }
 
@@ -685,7 +685,7 @@ const handleBidSubmit = async (e) => {
       // Check if user is logged in
       if (!isLogged || !auth.tokens) {
         toast.error("Veuillez vous connecter pour placer une enchère");
-        router.push("/auth/login");
+      router.push(`${getSellerUrl()}login`);
         return;
       }
 
@@ -822,7 +822,7 @@ const handleBidSubmit = async (e) => {
 
     if (!isLogged || !auth.tokens) {
       toast.error("Veuillez vous connecter pour soumettre un avis");
-      router.push("/auth/login");
+      router.push(`${getSellerUrl()}login`);
       return;
     }
 
@@ -1112,7 +1112,21 @@ const handleBidSubmit = async (e) => {
                   <div className="main-image-container" style={{ position: 'relative' }}>
                     {showVideo && safeVideos.length > 0 ? (
                       <video
-                        src={`${app.route}${safeVideos[selectedVideoIndex]?.url}`}
+                        src={(() => {
+                          const videoUrl = safeVideos[selectedVideoIndex]?.url;
+                          if (videoUrl) {
+                            if (videoUrl.startsWith('http')) {
+                              return videoUrl;
+                            } else if (videoUrl.startsWith('/static/')) {
+                              return `${app.baseURL}${videoUrl.substring(1)}`;
+                            } else if (videoUrl.startsWith('/')) {
+                              return `${app.baseURL}${videoUrl.substring(1)}`;
+                            } else {
+                              return `${app.baseURL}${videoUrl}`;
+                            }
+                          }
+                          return '';
+                        })()}
                         controls
                         className="main-video"
                         crossOrigin="use-credentials"
@@ -1131,11 +1145,42 @@ const handleBidSubmit = async (e) => {
                       </video>
                     ) : (
                     <img
-                      src={
-                        safeThumbs.length > 0
-                          ? `${app.route}${safeThumbs[selectedImageIndex]?.url}`
-                          : DEFAULT_AUCTION_IMAGE
-                      }
+                      src={(() => {
+                        if (safeThumbs.length > 0) {
+                          const imageUrl = safeThumbs[selectedImageIndex]?.url;
+                          if (imageUrl) {
+                            // Handle different URL formats
+                            if (imageUrl.startsWith('http')) {
+                              return imageUrl; // Already a full URL
+                            } else if (imageUrl.startsWith('/static/')) {
+                              const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                              console.log('🎯 AUCTION DETAILS MAIN IMAGE:', {
+                                originalUrl: imageUrl,
+                                finalUrl: finalUrl,
+                                index: selectedImageIndex
+                              });
+                              return finalUrl;
+                            } else if (imageUrl.startsWith('/')) {
+                              const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                              console.log('🎯 AUCTION DETAILS MAIN IMAGE:', {
+                                originalUrl: imageUrl,
+                                finalUrl: finalUrl,
+                                index: selectedImageIndex
+                              });
+                              return finalUrl;
+                            } else {
+                              const finalUrl = `${app.baseURL}${imageUrl}`;
+                              console.log('🎯 AUCTION DETAILS MAIN IMAGE:', {
+                                originalUrl: imageUrl,
+                                finalUrl: finalUrl,
+                                index: selectedImageIndex
+                              });
+                              return finalUrl;
+                            }
+                          }
+                        }
+                        return DEFAULT_AUCTION_IMAGE;
+                      })()}
                       alt={safeTitle}
                       className="main-image"
                       onError={(e) => {
@@ -1210,7 +1255,39 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                             >
                               <img
-                                src={`${app.route}${thumb.url}`}
+                                src={(() => {
+                                  const imageUrl = thumb.url;
+                                  if (imageUrl) {
+                                    if (imageUrl.startsWith('http')) {
+                                      return imageUrl;
+                                    } else if (imageUrl.startsWith('/static/')) {
+                                      const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                      console.log('🎯 AUCTION DETAILS THUMBNAIL:', {
+                                        originalUrl: imageUrl,
+                                        finalUrl: finalUrl,
+                                        index: index
+                                      });
+                                      return finalUrl;
+                                    } else if (imageUrl.startsWith('/')) {
+                                      const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                      console.log('🎯 AUCTION DETAILS THUMBNAIL:', {
+                                        originalUrl: imageUrl,
+                                        finalUrl: finalUrl,
+                                        index: index
+                                      });
+                                      return finalUrl;
+                                    } else {
+                                      const finalUrl = `${app.baseURL}${imageUrl}`;
+                                      console.log('🎯 AUCTION DETAILS THUMBNAIL:', {
+                                        originalUrl: imageUrl,
+                                        finalUrl: finalUrl,
+                                        index: index
+                                      });
+                                      return finalUrl;
+                                    }
+                                  }
+                                  return DEFAULT_AUCTION_IMAGE;
+                                })()}
                               alt={`${safeTitle} - Image ${index + 1}`}
                                 onError={(e) => {
                                   e.target.onerror = null;
@@ -1250,7 +1327,21 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                           >
                             <video
-                              src={`${app.route}${video.url}`}
+                              src={(() => {
+                                const videoUrl = video.url;
+                                if (videoUrl) {
+                                  if (videoUrl.startsWith('http')) {
+                                    return videoUrl;
+                                  } else if (videoUrl.startsWith('/static/')) {
+                                    return `${app.baseURL}${videoUrl.substring(1)}`;
+                                  } else if (videoUrl.startsWith('/')) {
+                                    return `${app.baseURL}${videoUrl.substring(1)}`;
+                                  } else {
+                                    return `${app.baseURL}${videoUrl}`;
+                                  }
+                                }
+                                return '';
+                              })()}
                               style={{
                                 width: '100%',
                                 height: '80px',
@@ -2565,11 +2656,39 @@ const handleBidSubmit = async (e) => {
                                   }}
                                 >
                                   <img
-                                    src={
-                                      offer.user?.avatar?.url
-                                        ? `${app.route}${offer.user.avatar.url}`
-                                        : DEFAULT_USER_AVATAR
-                                    }
+                                    src={(() => {
+                                      if (offer.user?.avatar?.url) {
+                                        const imageUrl = offer.user.avatar.url;
+                                        if (imageUrl.startsWith('http')) {
+                                          return imageUrl;
+                                        } else if (imageUrl.startsWith('/static/')) {
+                                          const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                          console.log('🎯 USER AVATAR IMAGE:', {
+                                            originalUrl: imageUrl,
+                                            finalUrl: finalUrl,
+                                            userId: offer.user._id
+                                          });
+                                          return finalUrl;
+                                        } else if (imageUrl.startsWith('/')) {
+                                          const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                          console.log('🎯 USER AVATAR IMAGE:', {
+                                            originalUrl: imageUrl,
+                                            finalUrl: finalUrl,
+                                            userId: offer.user._id
+                                          });
+                                          return finalUrl;
+                                        } else {
+                                          const finalUrl = `${app.baseURL}${imageUrl}`;
+                                          console.log('🎯 USER AVATAR IMAGE:', {
+                                            originalUrl: imageUrl,
+                                            finalUrl: finalUrl,
+                                            userId: offer.user._id
+                                          });
+                                          return finalUrl;
+                                        }
+                                      }
+                                      return DEFAULT_USER_AVATAR;
+                                    })()}
                                     alt={offer.user?.firstName || "User"}
                                     style={{
                                       width: "45px",
@@ -2786,11 +2905,41 @@ const handleBidSubmit = async (e) => {
                                       overflow: "hidden",
                                     }}>
                                       <img
-                                        src={
-                                          auction.thumbs && auction.thumbs.length > 0
-                                            ? `${app.route}${auction.thumbs[0].url}`
-                                            : DEFAULT_AUCTION_IMAGE
-                                        }
+                                        src={(() => {
+                                          if (auction.thumbs && auction.thumbs.length > 0) {
+                                            const imageUrl = auction.thumbs[0].url;
+                                            if (imageUrl) {
+                                              if (imageUrl.startsWith('http')) {
+                                                return imageUrl;
+                                              } else if (imageUrl.startsWith('/static/')) {
+                                                const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                console.log('🎯 SIMILAR AUCTION IMAGE:', {
+                                                  originalUrl: imageUrl,
+                                                  finalUrl: finalUrl,
+                                                  auctionId: auction._id
+                                                });
+                                                return finalUrl;
+                                              } else if (imageUrl.startsWith('/')) {
+                                                const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                console.log('🎯 SIMILAR AUCTION IMAGE:', {
+                                                  originalUrl: imageUrl,
+                                                  finalUrl: finalUrl,
+                                                  auctionId: auction._id
+                                                });
+                                                return finalUrl;
+                                              } else {
+                                                const finalUrl = `${app.baseURL}${imageUrl}`;
+                                                console.log('🎯 SIMILAR AUCTION IMAGE:', {
+                                                  originalUrl: imageUrl,
+                                                  finalUrl: finalUrl,
+                                                  auctionId: auction._id
+                                                });
+                                                return finalUrl;
+                                              }
+                                            }
+                                          }
+                                          return DEFAULT_AUCTION_IMAGE;
+                                        })()}
                                         alt={auction.title || auction.name || "Auction"}
                                         style={{
                                           width: "100%",

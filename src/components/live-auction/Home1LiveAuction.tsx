@@ -86,24 +86,63 @@ export function calculateTimeRemaining(endDate: string): Timer {
 
 // Helper function to get the correct image URL
 const getAuctionImageUrl = (auction: Auction) => {
+  console.log('🎯 ===== AUCTION IMAGE URL PROCESSING =====');
+  console.log('📋 Auction Info:', {
+    id: auction._id,
+    title: auction.title || auction.name,
+    hasThumbs: !!auction.thumbs,
+    thumbsLength: auction.thumbs?.length || 0
+  });
+  
   if (auction.thumbs && auction.thumbs.length > 0 && auction.thumbs[0].url) {
     const imageUrl = auction.thumbs[0].url;
-    console.log('🔍 Auction Image URL Debug:', {
+    console.log('🔍 Original Image Data:', {
       originalUrl: imageUrl,
       appRoute: app.route,
-      constructedUrl: `${app.route}${imageUrl}`
+      appBaseURL: app.baseURL,
+      imageType: typeof imageUrl,
+      imageLength: imageUrl.length
     });
     
     // Handle different URL formats
     if (imageUrl.startsWith('http')) {
+      console.log('✅ CASE: Full URL detected');
+      console.log('🔗 Final URL:', imageUrl);
+      console.log('📝 Action: Using full URL as-is');
       return imageUrl; // Already a full URL
     } else if (imageUrl.startsWith('/')) {
-      return `${app.route}${imageUrl}`; // Starts with slash
+      if (imageUrl.startsWith('/static/')) {
+        console.log('✅ CASE: Static path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      } else {
+        console.log('✅ CASE: Root path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      }
     } else {
-      return `${app.route}/${imageUrl}`; // No slash, add one
+      console.log('✅ CASE: Relative path detected');
+      const finalUrl = `${app.baseURL}${imageUrl}`;
+      console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl}`);
+      console.log('🔗 Final URL:', finalUrl);
+      console.log('📝 Action: Combined with baseURL');
+      return finalUrl;
     }
+  } else {
+    console.log('❌ CASE: No image data found');
+    console.log('🔍 Thumbs data:', auction.thumbs);
+    console.log('🔗 Fallback URL:', DEFAULT_AUCTION_IMAGE);
+    console.log('📝 Action: Using default image');
+    return DEFAULT_AUCTION_IMAGE;
   }
-  return DEFAULT_AUCTION_IMAGE;
+  
+  console.log('🎯 ===== END IMAGE URL PROCESSING =====\n');
 };
 
 const Home1LiveAuction = () => {
@@ -113,6 +152,7 @@ const Home1LiveAuction = () => {
   const [error, setError] = useState<string | null>(null);
   const [timers, setTimers] = useState<{ [key: string]: Timer }>({});
   const [animatedCards, setAnimatedCards] = useState<number[]>([]);
+  const [showSlider, setShowSlider] = useState(false);
 
 
   // Fetch auctions
@@ -663,34 +703,133 @@ const Home1LiveAuction = () => {
 
           {/* Auctions Content */}
           {liveAuctions.length > 0 ? (
-            <div className="auction-carousel-container" style={{ 
-              position: 'relative',
-              display: 'flex',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              width: '100%',
-              padding: '0 20px 0 75px',
-              margin: '0 auto',
-            }}>
-              <div style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                padding: '0',
-                margin: '0 auto',
-                maxWidth: '100%',
-              }}>
-                <Swiper
-                  {...settings}
-                  className="swiper auction-slider"
-                  style={{
-                    padding: '20px 0 50px',
-                    overflow: 'visible',
+            <>
+              {!showSlider ? (
+                <div className="auction-grid" style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                  gap: '20px',
+                  width: '100%',
+                  padding: '0 16px',
+                }}>
+                  {liveAuctions.slice(0, 3).map((auction, idx) => {
+                    const timer = timers[auction._id] || { days: "00", hours: "00", minutes: "00", seconds: "00", hasEnded: false };
+                    const isUrgent = parseInt(timer.hours) < 1 && parseInt(timer.minutes) < 30;
+                    const displayName = getSellerDisplayName(auction);
+
+                    return (
+                      <div key={auction._id}
+                        className={`auction-card-animate auction-card-hover animated`}
+                        style={{
+                          background: 'white',
+                          borderRadius: 'clamp(16px, 3vw, 20px)',
+                          overflow: 'hidden',
+                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                          border: '1px solid rgba(0, 0, 0, 0.08)',
+                          position: 'relative',
+                          minHeight: 'clamp(380px, 60vw, 420px)'
+                        }}
+                      >
+                        <div style={{
+                          position: 'relative',
+                          height: 'clamp(180px, 30vw, 220px)',
+                          overflow: 'hidden',
+                          borderRadius: 'clamp(16px, 3vw, 20px) 16px 0 0',
+                        }}>
+                          <img
+                            src={getAuctionImageUrl(auction)}
+                            alt={auction.title || auction.name || 'Auction'}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AUCTION_IMAGE; }}
+                          />
+                          <div style={{
+                            position: 'absolute', top: '10px', right: '10px',
+                            background: isUrgent ? 'linear-gradient(45deg, #ff4444, #ff6666)' : 'linear-gradient(45deg, #0063b1, #00a3e0)',
+                            color: 'white', padding: '8px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600'
+                          }}>
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                              <span className={`timer-digit ${isUrgent ? 'urgent' : ''}`}>{timer.hours}</span>
+                              <span>:</span>
+                              <span className={`timer-digit ${isUrgent ? 'urgent' : ''}`}>{timer.minutes}</span>
+                              <span>:</span>
+                              <span className={`timer-digit ${isUrgent ? 'urgent' : ''}`}>{timer.seconds}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ padding: 'clamp(20px, 4vw, 28px)' }}>
+                          <h3 style={{
+                            fontSize: 'clamp(16px, 4vw, 20px)', fontWeight: '700', color: '#1a1a1a',
+                            marginBottom: 'clamp(12px, 3vw, 16px)', lineHeight: '1.4', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                          }}>{auction.title || auction.name || 'Auction Title'}</h3>
+
+                          <div style={{
+                            background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)', borderRadius: '12px', padding: '12px', marginBottom: '18px', border: '1px solid #e9ecef'
+                          }}>
+                            <div style={{ textAlign: 'center', marginTop: '8px' }}>
+                              <p style={{
+                                fontSize: '22px', fontWeight: '800', margin: 0, color: '#0063b1',
+                                background: 'linear-gradient(90deg, #0063b1, #00a3e0)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                              }}>
+                                {Number(auction.currentPrice || auction.startingPrice || 0).toLocaleString()} DA
+                              </p>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                            <img
+                              src={auction.seller?.photoURL || auction.owner?.photoURL || DEFAULT_PROFILE_IMAGE}
+                              alt={displayName}
+                              style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PROFILE_IMAGE; }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#666', fontWeight: '500' }}>{displayName}</span>
+                          </div>
+
+                          <Link
+                            href={`/auction-details/${auction._id}`}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '12px 20px',
+                              background: 'linear-gradient(90deg, #0063b1, #00a3e0)', color: 'white', textDecoration: 'none', borderRadius: '25px', fontWeight: '600'
+                            }}
+                          >
+                            Voir les détails
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L10 18L16 12L10 6L8.59 7.41L13.17 12Z"/></svg>
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="auction-carousel-container" style={{ 
+                  position: 'relative',
+                  display: 'flex',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  width: '100%',
+                  padding: '0 20px 0 75px',
+                  margin: '0 auto',
+                }}>
+                  <div style={{
                     width: '100%',
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    padding: '0',
+                    margin: '0 auto',
                     maxWidth: '100%',
-                  }}
-                >
+                  }}>
+                    <Swiper
+                      {...settings}
+                      className="swiper auction-slider"
+                      style={{
+                        padding: '20px 0 50px',
+                        overflow: 'visible',
+                        width: '100%',
+                        maxWidth: '100%',
+                      }}
+                    >
                 {liveAuctions.map((auction, idx) => {
                   const timer = timers[auction._id] || { days: "00", hours: "00", minutes: "00", seconds: "00", hasEnded: false };
                   const isAnimated = animatedCards.includes(idx);
@@ -736,7 +875,16 @@ const Home1LiveAuction = () => {
                           borderRadius: 'clamp(16px, 3vw, 20px) 16px 0 0',
                         }}>
                           <img
-                            src={getAuctionImageUrl(auction)}
+                            src={(() => {
+                              const imageUrl = getAuctionImageUrl(auction);
+                              console.log('🖼️ IMAGE RENDERING:', {
+                                auctionId: auction._id,
+                                auctionTitle: auction.title || auction.name,
+                                finalImageSrc: imageUrl,
+                                timestamp: new Date().toISOString()
+                              });
+                              return imageUrl;
+                            })()}
                             alt={auction.title || auction.name || 'Auction'}
                             style={{
                               width: '100%',
@@ -750,8 +898,27 @@ const Home1LiveAuction = () => {
                             onMouseLeave={(e) => {
                               e.currentTarget.style.transform = 'scale(1)';
                             }}
+                            onLoad={() => {
+                              const imageUrl = getAuctionImageUrl(auction);
+                              console.log('✅ ===== AUCTION IMAGE LOAD SUCCESS =====');
+                              console.log('🎉 Successfully loaded:', imageUrl);
+                              console.log('📋 Auction Info:', {
+                                id: auction._id,
+                                title: auction.title || auction.name
+                              });
+                              console.log('✅ ===== END IMAGE LOAD SUCCESS =====');
+                            }}
                             onError={(e) => {
-                              console.error('❌ Auction Image Load Error:', getAuctionImageUrl(auction));
+                              const failedUrl = getAuctionImageUrl(auction);
+                              console.error('❌ ===== AUCTION IMAGE LOAD ERROR =====');
+                              console.error('🚨 Failed URL:', failedUrl);
+                              console.error('📋 Auction Info:', {
+                                id: auction._id,
+                                title: auction.title || auction.name,
+                                thumbs: auction.thumbs
+                              });
+                              console.error('🔄 Switching to fallback:', DEFAULT_AUCTION_IMAGE);
+                              console.error('❌ ===== END IMAGE LOAD ERROR =====');
                               (e.target as HTMLImageElement).src = DEFAULT_AUCTION_IMAGE;
                             }}
                           />
@@ -1194,6 +1361,8 @@ const Home1LiveAuction = () => {
                 marginTop: '30px',
               }}></div>
             </div>
+              )}
+            </>
           ) : (
             <div 
               className="empty-state-container"
@@ -1265,7 +1434,7 @@ const Home1LiveAuction = () => {
           )}
 
 
-          {/* View All Button - Always visible on mobile */}
+          {/* Toggle Button and View All */}
           <div 
             className="view-all-button-container"
             style={{
@@ -1275,6 +1444,27 @@ const Home1LiveAuction = () => {
               transform: 'translateY(30px)',
               animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
             }}>
+            {liveAuctions.length > 3 && (
+              <button
+                onClick={() => setShowSlider(!showSlider)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '12px 24px',
+                  background: 'linear-gradient(90deg, #0ea5e9, #2563eb)',
+                  color: 'white',
+                  borderRadius: '50px',
+                  fontWeight: '600',
+                  border: 'none',
+                  cursor: 'pointer',
+                  marginRight: '12px',
+                  boxShadow: '0 8px 25px rgba(37, 99, 235, 0.3)'
+                }}
+              >
+                {showSlider ? 'Show less' : 'See more'}
+              </button>
+            )}
             <Link
               href="/auction-sidebar"
               style={{
@@ -1315,3 +1505,4 @@ const Home1LiveAuction = () => {
 };
 
 export default Home1LiveAuction;
+

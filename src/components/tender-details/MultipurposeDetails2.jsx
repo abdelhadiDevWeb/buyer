@@ -15,7 +15,7 @@ import { TendersAPI } from "@/app/api/tenders";
 import { OfferAPI } from "@/app/api/offer";
 import { AutoBidAPI } from "@/app/api/auto-bid";
 import useAuth from "@/hooks/useAuth";
-import app from "@/config"; // Import the app config
+import app, { getSellerUrl } from "@/config"; // Import the app config
 import { calculateTimeRemaining } from "../live-auction/Home1LiveAuction";
 import { ReviewAPI } from "@/app/api/review"; // Import Review API
 import { CommentAPI } from "@/app/api/comment";
@@ -674,7 +674,7 @@ const MultipurposeDetails2 = () => {
       // Check if user is logged in
       if (!isLogged || !auth.tokens) {
         toast.error("Veuillez vous connecter pour soumettre une offre");
-        router.push("/auth/login");
+        router.push(`${getSellerUrl()}login`);
         return;
       }
 
@@ -880,7 +880,7 @@ const MultipurposeDetails2 = () => {
       // Check if user is logged in
       if (!isLogged || !auth.tokens) {
         toast.error("Veuillez vous connecter pour soumettre une offre");
-        router.push("/auth/login");
+        router.push(`${getSellerUrl()}login`);
         return;
       }
 
@@ -1038,7 +1038,7 @@ const MultipurposeDetails2 = () => {
 
     if (!isLogged || !auth.tokens) {
       toast.error("Veuillez vous connecter pour soumettre un avis");
-      router.push("/auth/login");
+      router.push(`${getSellerUrl()}login`);
       return;
     }
 

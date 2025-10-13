@@ -244,7 +244,42 @@ const MultipurposeTenderSidebar = () => {
 
                         {/* Category Image - Clickable for filter selection */}
                         <img
-                            src={category.thumb ? `${app.route}/static${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+                            src={(() => {
+                              if (category.thumb && category.thumb.url) {
+                                const imageUrl = category.thumb.url;
+                                if (imageUrl.startsWith('http')) {
+                                  return imageUrl;
+                                } else if (imageUrl.startsWith('/static/')) {
+                                  const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                  console.log('🎯 TENDERS PAGE CATEGORY IMAGE:', {
+                                    originalUrl: imageUrl,
+                                    finalUrl: finalUrl,
+                                    categoryId: category._id,
+                                    categoryName: category.name
+                                  });
+                                  return finalUrl;
+                                } else if (imageUrl.startsWith('/')) {
+                                  const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                  console.log('🎯 TENDERS PAGE CATEGORY IMAGE:', {
+                                    originalUrl: imageUrl,
+                                    finalUrl: finalUrl,
+                                    categoryId: category._id,
+                                    categoryName: category.name
+                                  });
+                                  return finalUrl;
+                                } else {
+                                  const finalUrl = `${app.baseURL}${imageUrl}`;
+                                  console.log('🎯 TENDERS PAGE CATEGORY IMAGE:', {
+                                    originalUrl: imageUrl,
+                                    finalUrl: finalUrl,
+                                    categoryId: category._id,
+                                    categoryName: category.name
+                                  });
+                                  return finalUrl;
+                                }
+                              }
+                              return DEFAULT_CATEGORY_IMAGE;
+                            })()}
                             alt={category.name}
                             style={{
                                 width: level === 0 ? '40px' : '32px',
@@ -1554,19 +1589,57 @@ const MultipurposeTenderSidebar = () => {
                                                         justifyContent: 'center',
                                                     }}>
                                                             <img
-                                                                src={
-                                                                    tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url
-                                                                    ? `${app.route}${tender.attachments[0].url}`
-                                                                        : tender.attachments && tender.attachments.length > 0 && tender.attachments[0].path
-                                                                    ? `${app.route}${tender.attachments[0].path}`
-                                                                        : tender.thumbs && tender.thumbs.length > 0
-                                                                    ? `${app.route}${tender.thumbs[0].url}`
-                                                                        : tender.images && tender.images.length > 0
-                                                                    ? `${app.route}${tender.images[0].url}`
-                                                                        : tender.image
-                                                                    ? `${app.route}${tender.image}`
-                                                                        : DEFAULT_TENDER_IMAGE
-                                                                }
+                                                                src={(() => {
+                                                                    let imageUrl = null;
+                                                                    
+                                                                    // Try different image sources in priority order
+                                                                    if (tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url) {
+                                                                        imageUrl = tender.attachments[0].url;
+                                                                    } else if (tender.attachments && tender.attachments.length > 0 && tender.attachments[0].path) {
+                                                                        imageUrl = tender.attachments[0].path;
+                                                                    } else if (tender.thumbs && tender.thumbs.length > 0 && tender.thumbs[0].url) {
+                                                                        imageUrl = tender.thumbs[0].url;
+                                                                    } else if (tender.images && tender.images.length > 0 && tender.images[0].url) {
+                                                                        imageUrl = tender.images[0].url;
+                                                                    } else if (tender.image) {
+                                                                        imageUrl = tender.image;
+                                                                    }
+                                                                    
+                                                                    if (imageUrl) {
+                                                                        if (imageUrl.startsWith('http')) {
+                                                                            return imageUrl;
+                                                                        } else if (imageUrl.startsWith('/static/')) {
+                                                                            const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                                            console.log('🎯 TENDERS PAGE TENDER IMAGE:', {
+                                                                                originalUrl: imageUrl,
+                                                                                finalUrl: finalUrl,
+                                                                                tenderId: tender._id,
+                                                                                tenderTitle: tender.title
+                                                                            });
+                                                                            return finalUrl;
+                                                                        } else if (imageUrl.startsWith('/')) {
+                                                                            const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                                            console.log('🎯 TENDERS PAGE TENDER IMAGE:', {
+                                                                                originalUrl: imageUrl,
+                                                                                finalUrl: finalUrl,
+                                                                                tenderId: tender._id,
+                                                                                tenderTitle: tender.title
+                                                                            });
+                                                                            return finalUrl;
+                                                                        } else {
+                                                                            const finalUrl = `${app.baseURL}${imageUrl}`;
+                                                                            console.log('🎯 TENDERS PAGE TENDER IMAGE:', {
+                                                                                originalUrl: imageUrl,
+                                                                                finalUrl: finalUrl,
+                                                                                tenderId: tender._id,
+                                                                                tenderTitle: tender.title
+                                                                            });
+                                                                            return finalUrl;
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    return DEFAULT_TENDER_IMAGE;
+                                                                })()}
                                                                 alt={tender.title || "Tender Item"}
                                                                 style={{
                                                                     width: '100%',

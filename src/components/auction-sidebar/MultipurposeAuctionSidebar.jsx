@@ -186,7 +186,42 @@ const MultipurposeAuctionSidebar = () => {
 
                         {/* Category Image - Clickable for filter selection */}
                         <img
-                            src={category.thumb ? `${app.route}${category.thumb.url}` : DEFAULT_CATEGORY_IMAGE}
+                            src={(() => {
+                              if (category.thumb && category.thumb.url) {
+                                const imageUrl = category.thumb.url;
+                                if (imageUrl.startsWith('http')) {
+                                  return imageUrl;
+                                } else if (imageUrl.startsWith('/static/')) {
+                                  const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                  console.log('🎯 AUCTION SIDEBAR CATEGORY IMAGE:', {
+                                    originalUrl: imageUrl,
+                                    finalUrl: finalUrl,
+                                    categoryId: category._id,
+                                    categoryName: category.name
+                                  });
+                                  return finalUrl;
+                                } else if (imageUrl.startsWith('/')) {
+                                  const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                  console.log('🎯 AUCTION SIDEBAR CATEGORY IMAGE:', {
+                                    originalUrl: imageUrl,
+                                    finalUrl: finalUrl,
+                                    categoryId: category._id,
+                                    categoryName: category.name
+                                  });
+                                  return finalUrl;
+                                } else {
+                                  const finalUrl = `${app.baseURL}${imageUrl}`;
+                                  console.log('🎯 AUCTION SIDEBAR CATEGORY IMAGE:', {
+                                    originalUrl: imageUrl,
+                                    finalUrl: finalUrl,
+                                    categoryId: category._id,
+                                    categoryName: category.name
+                                  });
+                                  return finalUrl;
+                                }
+                              }
+                              return DEFAULT_CATEGORY_IMAGE;
+                            })()}
                             alt={category.name}
                             style={{
                                 width: level === 0 ? '40px' : '32px',
@@ -1281,11 +1316,42 @@ const MultipurposeAuctionSidebar = () => {
                                                     >
                                                         <Link href={hasAuctionEnded ? "#" : `/auction-details/${auction._id}`} style={{ display: 'block', height: '100%', cursor: hasAuctionEnded ? 'not-allowed' : 'pointer' }} onClick={(e) => e.stopPropagation()}>
                                                             <img
-                                                                src={
-                                                                    auction.thumbs && auction.thumbs.length > 0
-                                                                        ? `${app.route}${auction.thumbs[0].url}`
-                                                                        : DEFAULT_AUCTION_IMAGE
-                                                                }
+                                                                src={(() => {
+                                                                    if (auction.thumbs && auction.thumbs.length > 0) {
+                                                                        const imageUrl = auction.thumbs[0].url;
+                                                                        if (imageUrl.startsWith('http')) {
+                                                                            return imageUrl;
+                                                                        } else if (imageUrl.startsWith('/static/')) {
+                                                                            const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                                            console.log('🎯 AUCTION SIDEBAR AUCTION IMAGE:', {
+                                                                                originalUrl: imageUrl,
+                                                                                finalUrl: finalUrl,
+                                                                                auctionId: auction._id,
+                                                                                auctionTitle: auction.title
+                                                                            });
+                                                                            return finalUrl;
+                                                                        } else if (imageUrl.startsWith('/')) {
+                                                                            const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                                            console.log('🎯 AUCTION SIDEBAR AUCTION IMAGE:', {
+                                                                                originalUrl: imageUrl,
+                                                                                finalUrl: finalUrl,
+                                                                                auctionId: auction._id,
+                                                                                auctionTitle: auction.title
+                                                                            });
+                                                                            return finalUrl;
+                                                                        } else {
+                                                                            const finalUrl = `${app.baseURL}${imageUrl}`;
+                                                                            console.log('🎯 AUCTION SIDEBAR AUCTION IMAGE:', {
+                                                                                originalUrl: imageUrl,
+                                                                                finalUrl: finalUrl,
+                                                                                auctionId: auction._id,
+                                                                                auctionTitle: auction.title
+                                                                            });
+                                                                            return finalUrl;
+                                                                        }
+                                                                    }
+                                                                    return DEFAULT_AUCTION_IMAGE;
+                                                                })()}
                                                                 alt={auction.title || "Auction Item"}
                                                                 style={{
                                                                     width: '100%',
@@ -1627,7 +1693,42 @@ const MultipurposeAuctionSidebar = () => {
                                                             marginBottom: '16px',
                                                                 }}>
                                                                     <img
-                                                                src={auction.owner?.avatar?.url ? `${app.route}${auction.owner.avatar.url}` : DEFAULT_PROFILE_IMAGE}
+                                                                src={(() => {
+                                                                    if (auction.owner?.avatar?.url) {
+                                                                        const imageUrl = auction.owner.avatar.url;
+                                                                        if (imageUrl.startsWith('http')) {
+                                                                            return imageUrl;
+                                                                        } else if (imageUrl.startsWith('/static/')) {
+                                                                            const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                                            console.log('🎯 AUCTION SIDEBAR USER AVATAR:', {
+                                                                                originalUrl: imageUrl,
+                                                                                finalUrl: finalUrl,
+                                                                                auctionId: auction._id,
+                                                                                ownerName: auction.owner?.firstName || auction.owner?.name
+                                                                            });
+                                                                            return finalUrl;
+                                                                        } else if (imageUrl.startsWith('/')) {
+                                                                            const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                                            console.log('🎯 AUCTION SIDEBAR USER AVATAR:', {
+                                                                                originalUrl: imageUrl,
+                                                                                finalUrl: finalUrl,
+                                                                                auctionId: auction._id,
+                                                                                ownerName: auction.owner?.firstName || auction.owner?.name
+                                                                            });
+                                                                            return finalUrl;
+                                                                        } else {
+                                                                            const finalUrl = `${app.baseURL}${imageUrl}`;
+                                                                            console.log('🎯 AUCTION SIDEBAR USER AVATAR:', {
+                                                                                originalUrl: imageUrl,
+                                                                                finalUrl: finalUrl,
+                                                                                auctionId: auction._id,
+                                                                                ownerName: auction.owner?.firstName || auction.owner?.name
+                                                                            });
+                                                                            return finalUrl;
+                                                                        }
+                                                                    }
+                                                                    return DEFAULT_PROFILE_IMAGE;
+                                                                })()}
                                                                         alt="Owner"
                                                                         style={{
                                                                     width: '32px',
