@@ -123,7 +123,122 @@ const Home1LiveTenders = () => {
   const [error, setError] = useState<string | null>(null);
   const [timers, setTimers] = useState<{ [key: string]: Timer }>({});
   const [animatedCards, setAnimatedCards] = useState<number[]>([]);
+  const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({});
+  const [workingImageUrls, setWorkingImageUrls] = useState<{ [key: string]: string }>({});
 
+  // Test image URL accessibility
+  const testImageUrl = async (url: string) => {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      const isAccessible = response.ok;
+      console.log(`🔍 Tender image URL test for ${url}:`, {
+        status: response.status,
+        ok: isAccessible,
+        contentType: response.headers.get('content-type')
+      });
+      return isAccessible;
+    } catch (error) {
+      console.log(`❌ Tender image URL test failed for ${url}:`, error);
+      return false;
+    }
+  };
+
+  // Test multiple URLs and return the first working one
+  const findWorkingImageUrl = async (urls: string[]) => {
+    for (const url of urls) {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        if (response.ok) {
+          console.log(`✅ Found working tender image URL: ${url}`);
+          return url;
+        }
+      } catch (error) {
+        console.log(`❌ Tender URL failed: ${url}`);
+        continue;
+      }
+    }
+    console.log('❌ No working tender image URLs found');
+    return null;
+  };
+
+  // Generate all possible backend image URLs for a given image path
+  const generateBackendImageUrls = (imagePath: string) => {
+    if (!imagePath) return [];
+    
+    const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+    const baseURL = app.baseURL;
+    
+    return [
+      // Direct path with baseURL
+      `${baseURL}${cleanPath}`,
+      
+      // Common backend image paths
+      `${baseURL}uploads/${cleanPath}`,
+      `${baseURL}static/${cleanPath}`,
+      `${baseURL}public/${cleanPath}`,
+      `${baseURL}images/${cleanPath}`,
+      `${baseURL}assets/${cleanPath}`,
+      `${baseURL}media/${cleanPath}`,
+      `${baseURL}files/${cleanPath}`,
+      
+      // With original leading slash
+      `${baseURL}${imagePath}`,
+      
+      // Using route configuration if different from baseURL
+      app.route ? `${app.route}${cleanPath}` : null,
+      app.route ? `${app.route}${imagePath}` : null,
+    ].filter(Boolean); // Remove null values
+  };
+
+  // Handle image load errors
+  const handleImageError = async (tenderId: string, tender: Tender) => {
+    console.log('❌ Tender image load error for:', tenderId, tender);
+    
+    // Get all possible image URLs for this tender
+    const possibleImageSources = [
+      tender.attachments?.[0]?.url,
+      tender.attachments?.[0]?.fullUrl,
+      tender.image,
+      tender.thumbnail,
+      tender.photo,
+      tender.picture,
+      tender.icon,
+      tender.logo,
+      tender.coverImage,
+      tender.mainImage
+    ].filter(Boolean);
+    
+    // Generate all possible backend URLs for each image source
+    const allPossibleUrls = possibleImageSources.flatMap(imagePath => 
+      generateBackendImageUrls(imagePath as string)
+    );
+    
+    console.log('🔍 All possible tender backend URLs to try:', allPossibleUrls);
+    
+    // Find the first working URL
+    const workingUrl = await findWorkingImageUrl(allPossibleUrls);
+    
+    if (workingUrl) {
+      console.log('🎉 Found working URL for tender:', tenderId, workingUrl);
+      // Cache the working URL
+      setWorkingImageUrls(prev => ({
+        ...prev,
+        [tenderId]: workingUrl
+      }));
+      // Clear the error state
+      setImageErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[tenderId];
+        return newErrors;
+      });
+    } else {
+      console.log('❌ No working URL found for tender:', tenderId);
+      setImageErrors(prev => ({
+        ...prev,
+        [tenderId]: true
+      }));
+    }
+  };
 
   // Fetch tenders
   useEffect(() => {
@@ -541,7 +656,18 @@ const Home1LiveTenders = () => {
                         }}>
                           {tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url ? (
                             <img
-                              src={getTenderImageUrl(tender)}
+                              src={(() => {
+                                // Check if we have a working cached URL first
+                                if (workingImageUrls[tender._id]) {
+                                  console.log(`🎯 Using cached working URL for tender ${tender.title}:`, workingImageUrls[tender._id]);
+                                  return workingImageUrls[tender._id];
+                                }
+                                
+                                const imageUrl = imageErrors[tender._id] ? DEFAULT_TENDER_IMAGE : getTenderImageUrl(tender);
+                                console.log(`🎯 Final tender image src for ${tender.title}:`, imageUrl);
+                                console.log(`🎯 Is this a backend image?`, imageUrl.includes(app.baseURL));
+                                return imageUrl;
+                              })()}
                               alt={tender.title || 'Tender'}
                               style={{
                                 width: '100%',
@@ -549,20 +675,35 @@ const Home1LiveTenders = () => {
                                 objectFit: 'cover',
                                 transition: 'transform 0.4s ease',
                               }}
-                              onLoad={() => {
+                              onLoad={(e) => {
                                 const imageUrl = getTenderImageUrl(tender);
                                 console.log('✅ ===== TENDER IMAGE LOAD SUCCESS =====');
-                                console.log('🎉 Successfully loaded:', imageUrl);
+                                console.log('🎉 Successfully loaded tender image:', imageUrl);
+                                console.log('🎉 Image element src:', e.target.src);
+                                console.log('🎉 Image dimensions:', e.target.naturalWidth, 'x', e.target.naturalHeight);
                                 console.log('📋 Tender Info:', {
                                   id: tender._id,
                                   title: tender.title
                                 });
+                                console.log('🎯 Is this a backend image?', imageUrl.includes(app.baseURL));
                                 console.log('✅ ===== END TENDER IMAGE LOAD SUCCESS =====');
                               }}
                               onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = DEFAULT_TENDER_IMAGE;
+                                console.log('❌ ===== TENDER IMAGE LOAD ERROR =====');
+                                console.log('❌ Tender image failed to load:', tender.title);
+                                console.log('❌ Failed URL:', e.target.src);
+                                console.log('❌ Tender ID:', tender._id);
+                                
+                                if (e.target.src !== DEFAULT_TENDER_IMAGE) {
+                                  console.log('🔄 Switching to fallback image...');
+                                  e.target.src = DEFAULT_TENDER_IMAGE;
+                                } else {
+                                  console.log('❌ Fallback image also failed');
+                                  handleImageError(tender._id, tender);
+                                }
+                                console.log('❌ ===== END TENDER IMAGE LOAD ERROR =====');
                               }}
+                              loading="lazy"
                             />
                           ) : (
                             <div style={{

@@ -16,18 +16,27 @@ const Home1Category = () => {
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [imageErrors, setImageErrors] = useState({});
+  const [workingImageUrls, setWorkingImageUrls] = useState({}); // Cache for working image URLs
   const DEFAULT_CATEGORY_IMAGE = "/assets/images/logo-white.png";
   const FALLBACK_CATEGORY_IMAGE = "/assets/images/cat.avif";
   const PLACEHOLDER_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI0MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNTUlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Ob3QgRm91bmQ8L3RleHQ+PC9zdmc+";
 
   // Helper function to get the correct image URL
   const getCategoryImageUrl = (category) => {
+    const categoryId = category._id || category.id;
+    
     console.log('🔍 Category Image Debug - Full Category Object:', category);
     console.log('🔧 Config Debug:', {
       appRoute: app.route,
       appBaseURL: app.baseURL,
       configType: typeof app
     });
+    
+    // Check if we already found a working URL for this category
+    if (workingImageUrls[categoryId]) {
+      console.log('✅ Using cached working URL for category:', categoryId, workingImageUrls[categoryId]);
+      return workingImageUrls[categoryId];
+    }
     
     // Check all possible image properties in order of preference
     const possibleImageSources = [
@@ -54,18 +63,13 @@ const Home1Category = () => {
         return imageUrl; // Already a full URL
       } 
       
-      // Handle relative URLs - use the correct base URL construction
+      // Handle relative URLs - construct proper backend URL
       let finalUrl;
       if (imageUrl.startsWith('/')) {
-        // For URLs starting with /static/, use baseURL directly (don't add /static/ again)
-        if (imageUrl.startsWith('/static/')) {
-          finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
-          console.log('🔍 URL starts with /static/, using baseURL + path (no double static):', finalUrl);
-        } else {
-          // For other URLs with leading slash, use baseURL + path
-          finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
-          console.log('🔍 URL with leading slash, using baseURL + path:', finalUrl);
-        }
+        // Remove leading slash and construct URL with baseURL
+        const cleanPath = imageUrl.substring(1);
+        finalUrl = `${app.baseURL}${cleanPath}`;
+        console.log('🔍 URL with leading slash, using baseURL + clean path:', finalUrl);
       } else {
         // For URLs without leading slash, use baseURL + path
         finalUrl = `${app.baseURL}${imageUrl}`;
@@ -74,12 +78,32 @@ const Home1Category = () => {
       
       console.log('✅ Final constructed URL:', finalUrl);
       
-      // Test if the URL is accessible
+      // Test if the URL is accessible and cache it if it works
       testImageUrl(finalUrl).then(isAccessible => {
         if (isAccessible) {
           console.log('🎉 Image is accessible:', finalUrl);
+          // Cache the working URL
+          setWorkingImageUrls(prev => ({
+            ...prev,
+            [categoryId]: finalUrl
+          }));
         } else {
           console.log('❌ Image is NOT accessible:', finalUrl);
+          // Try alternative URL construction
+          console.log('🔄 Trying alternative URL construction...');
+          const alternativeUrl = `${app.route}${imageUrl.substring(1)}`;
+          console.log('🔄 Alternative URL:', alternativeUrl);
+          testImageUrl(alternativeUrl).then(isAltAccessible => {
+            if (isAltAccessible) {
+              console.log('🎉 Alternative URL is accessible:', alternativeUrl);
+              setWorkingImageUrls(prev => ({
+                ...prev,
+                [categoryId]: alternativeUrl
+              }));
+            } else {
+              console.log('❌ Alternative URL also not accessible:', alternativeUrl);
+            }
+          });
         }
       });
       
@@ -87,7 +111,7 @@ const Home1Category = () => {
     }
     
     console.log('⚠️ No image found in any property, using fallback');
-    return PLACEHOLDER_IMAGE;
+    return DEFAULT_CATEGORY_IMAGE;
   };
 
   // Test image URL accessibility
@@ -112,25 +136,101 @@ const Home1Category = () => {
     }
   };
 
+  // Test multiple URLs and return the first working one
+  const findWorkingImageUrl = async (urls) => {
+    for (const url of urls) {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        if (response.ok) {
+          console.log(`✅ Found working image URL: ${url}`);
+          return url;
+        }
+      } catch (error) {
+        console.log(`❌ URL failed: ${url}`);
+        continue;
+      }
+    }
+    console.log('❌ No working image URLs found');
+    return null;
+  };
+
+  // Generate all possible backend image URLs for a given image path
+  const generateBackendImageUrls = (imagePath) => {
+    if (!imagePath) return [];
+    
+    const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+    const baseURL = app.baseURL;
+    
+    return [
+      // Direct path with baseURL
+      `${baseURL}${cleanPath}`,
+      
+      // Common backend image paths
+      `${baseURL}uploads/${cleanPath}`,
+      `${baseURL}static/${cleanPath}`,
+      `${baseURL}public/${cleanPath}`,
+      `${baseURL}images/${cleanPath}`,
+      `${baseURL}assets/${cleanPath}`,
+      `${baseURL}media/${cleanPath}`,
+      `${baseURL}files/${cleanPath}`,
+      
+      // With original leading slash
+      `${baseURL}${imagePath}`,
+      
+      // Using route configuration if different from baseURL
+      app.route ? `${app.route}${cleanPath}` : null,
+      app.route ? `${app.route}${imagePath}` : null,
+    ].filter(Boolean); // Remove null values
+  };
+
   // Handle image load errors
-  const handleImageError = (categoryId, category) => {
+  const handleImageError = async (categoryId, category) => {
     console.log('❌ Image load error for category:', categoryId, category);
+    console.log('❌ Category thumb data:', category.thumb);
+    console.log('❌ All category properties:', Object.keys(category));
     
-    // Test the URL that failed
-    const failedUrl = getCategoryImageUrl(category);
-    testImageUrl(failedUrl);
+    // Get all possible image URLs for this category
+    const possibleImageSources = [
+      category.thumb?.url,
+      category.thumb?.fullUrl,
+      category.image,
+      category.thumbnail,
+      category.photo,
+      category.picture,
+      category.icon,
+      category.logo
+    ].filter(Boolean);
     
-    // Try alternative URLs if the main one failed
-    const alternativeUrls = generateAlternativeUrls(category);
-    console.log('🔍 Trying alternative URLs:', alternativeUrls);
+    // Generate all possible backend URLs for each image source
+    const allPossibleUrls = possibleImageSources.flatMap(imagePath => 
+      generateBackendImageUrls(imagePath)
+    );
     
-    // Test each alternative URL
-    alternativeUrls.forEach(url => testImageUrl(url));
+    console.log('🔍 All possible backend URLs to try:', allPossibleUrls);
     
-    setImageErrors(prev => ({
-      ...prev,
-      [categoryId]: true
-    }));
+    // Find the first working URL
+    const workingUrl = await findWorkingImageUrl(allPossibleUrls);
+    
+    if (workingUrl) {
+      console.log('🎉 Found working URL for category:', categoryId, workingUrl);
+      // Cache the working URL
+      setWorkingImageUrls(prev => ({
+        ...prev,
+        [categoryId]: workingUrl
+      }));
+      // Clear the error state
+      setImageErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[categoryId];
+        return newErrors;
+      });
+    } else {
+      console.log('❌ No working URL found for category:', categoryId);
+      setImageErrors(prev => ({
+        ...prev,
+        [categoryId]: true
+      }));
+    }
   };
 
   // Generate alternative URLs for a category
@@ -198,31 +298,98 @@ const Home1Category = () => {
       configObject: app
     });
     
-    // Test server connectivity and possible image paths
-    const testServerPaths = async () => {
-      const testPaths = [
-        app.baseURL,
-        `${app.baseURL}static/`,
-        `${app.baseURL}uploads/`,
-        `${app.baseURL}images/`,
-        `${app.baseURL}public/`,
-        `${app.baseURL}assets/`,
-      ];
-      
-      console.log('🔍 Testing server paths:');
-      for (const path of testPaths) {
-        try {
-          const response = await fetch(path, { method: 'HEAD' });
-          console.log(`✅ ${path} - Status: ${response.status}`);
-        } catch (error) {
-          console.log(`❌ ${path} - Error: ${error.message}`);
-        }
-      }
-    };
+        // Test server connectivity and possible image paths
+        const testServerPaths = async () => {
+          const testPaths = [
+            app.baseURL,
+            `${app.baseURL}static/`,
+            `${app.baseURL}uploads/`,
+            `${app.baseURL}images/`,
+            `${app.baseURL}public/`,
+            `${app.baseURL}assets/`,
+            `${app.baseURL}media/`,
+            `${app.baseURL}files/`,
+          ];
+          
+          console.log('🔍 Testing server paths:');
+          for (const path of testPaths) {
+            try {
+              const response = await fetch(path, { method: 'HEAD' });
+              console.log(`✅ ${path} - Status: ${response.status}`);
+            } catch (error) {
+              console.log(`❌ ${path} - Error: ${error.message}`);
+            }
+          }
+          
+          // Test category API endpoint specifically
+          try {
+            const categoryResponse = await fetch(`${app.baseURL}category/tree`, { method: 'HEAD' });
+            console.log(`✅ Category API endpoint - Status: ${categoryResponse.status}`);
+          } catch (error) {
+            console.log(`❌ Category API endpoint - Error: ${error.message}`);
+          }
+          
+          // Test a sample image URL from the logs
+          const sampleImageUrl = 'https://mazadclick-server.onrender.com/static/1760435323858-20246619.jpg';
+          try {
+            console.log('🧪 Testing sample image URL:', sampleImageUrl);
+            const imageResponse = await fetch(sampleImageUrl, { method: 'HEAD' });
+            console.log(`🧪 Sample image test - Status: ${imageResponse.status}, OK: ${imageResponse.ok}`);
+            if (imageResponse.ok) {
+              console.log('🎉 Sample image is accessible!');
+            } else {
+              console.log('❌ Sample image is NOT accessible');
+            }
+          } catch (error) {
+            console.log(`❌ Sample image test failed: ${error.message}`);
+          }
+        };
     
-    testServerPaths();
-    
-    const fetchCategories = async () => {
+        testServerPaths();
+        
+        // Direct image accessibility test
+        const testDirectImageAccess = async () => {
+          console.log('🧪 ===== DIRECT IMAGE ACCESS TEST =====');
+          const testUrl = 'https://mazadclick-server.onrender.com/static/1760437753581-5334461.jpg';
+          
+          try {
+            console.log('🧪 Testing direct access to:', testUrl);
+            
+            // Try fetch first
+            const fetchResponse = await fetch(testUrl, { method: 'HEAD' });
+            console.log('🧪 Fetch test result:', {
+              status: fetchResponse.status,
+              ok: fetchResponse.ok,
+              headers: Object.fromEntries(fetchResponse.headers.entries())
+            });
+            
+            // Try creating an image element
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            img.onload = () => {
+              console.log('🎉 Image element loaded successfully!');
+              console.log('🎉 Image dimensions:', img.naturalWidth, 'x', img.naturalHeight);
+              console.log('🎉 Image src:', img.src);
+            };
+            
+            img.onerror = (error) => {
+              console.log('❌ Image element failed to load:', error);
+              console.log('❌ This indicates CORS or server issues');
+            };
+            
+            img.src = testUrl;
+            
+          } catch (error) {
+            console.log('❌ Direct image access test failed:', error);
+          }
+          
+          console.log('🧪 ===== END DIRECT IMAGE ACCESS TEST =====');
+        };
+        
+        testDirectImageAccess();
+        
+        const fetchCategories = async () => {
       try {
         setLoading(true);
         console.log('🔄 Fetching categories from API...');
@@ -238,6 +405,38 @@ const Home1Category = () => {
           dataLength: Array.isArray(response?.data) ? response.data.length : 'N/A',
           firstItem: Array.isArray(response?.data) && response.data.length > 0 ? response.data[0] : 'N/A'
         });
+        
+        // Deep log the first category to see the actual structure
+        if (Array.isArray(response?.data) && response.data.length > 0) {
+          console.log('🔍 DETAILED FIRST CATEGORY ANALYSIS:');
+          const firstCategory = response.data[0];
+          console.log('Raw first category:', JSON.stringify(firstCategory, null, 2));
+          console.log('First category thumb object:', firstCategory.thumb);
+          console.log('First category thumb url:', firstCategory.thumb?.url);
+          console.log('All properties of first category:', Object.keys(firstCategory));
+          
+          // Test the actual image URL construction
+          if (firstCategory.thumb?.url) {
+            const testUrl = `${app.baseURL}${firstCategory.thumb.url.startsWith('/') ? firstCategory.thumb.url.substring(1) : firstCategory.thumb.url}`;
+            console.log('🧪 Testing constructed image URL:', testUrl);
+            
+            // Actually test if this URL is accessible
+            fetch(testUrl, { method: 'HEAD' })
+              .then(response => {
+                console.log(`🧪 Image URL test result: ${response.status} - ${response.ok ? 'SUCCESS' : 'FAILED'}`);
+                if (response.ok) {
+                  console.log('🎉 BACKEND IMAGE IS ACCESSIBLE!');
+                } else {
+                  console.log('❌ BACKEND IMAGE NOT ACCESSIBLE');
+                }
+              })
+              .catch(error => {
+                console.log('❌ BACKEND IMAGE TEST FAILED:', error);
+              });
+          } else {
+            console.log('❌ NO IMAGE URL FOUND IN CATEGORY THUMB');
+          }
+        }
         
         // Handle different response structures
         let categoryDataResponse = null;
@@ -263,6 +462,8 @@ const Home1Category = () => {
           console.log('🔍 ALL CATEGORIES IMAGE DEBUG:');
           categoryDataResponse.forEach((category, index) => {
             console.log(`Category ${index + 1} (${category.name}):`, {
+              id: category._id || category.id,
+              name: category.name,
               thumb: category.thumb,
               image: category.image,
               thumbnail: category.thumbnail,
@@ -270,19 +471,59 @@ const Home1Category = () => {
               picture: category.picture,
               icon: category.icon,
               logo: category.logo,
-              allKeys: Object.keys(category)
+              allKeys: Object.keys(category),
+              hasChildren: category.children && category.children.length > 0
             });
+            
+            // Also debug children if they exist
+            if (category.children && category.children.length > 0) {
+              console.log(`  └─ Children (${category.children.length}):`);
+              category.children.forEach((child, childIndex) => {
+                console.log(`    ${childIndex + 1}. ${child.name}:`, {
+                  id: child._id || child.id,
+                  thumb: child.thumb,
+                  image: child.image,
+                  allKeys: Object.keys(child)
+                });
+              });
+            }
           });
           
-          // Test the first few category image URLs
-          const testPromises = categoryDataResponse.slice(0, 3).map(async (category, index) => {
-            const url = getCategoryImageUrl(category);
-            const isAccessible = await testImageUrl(url);
-            console.log(`🔍 Category ${index + 1} (${category.name}) image accessibility:`, { url, isAccessible });
+          // Pre-test all category image URLs and cache working ones
+          const preloadPromises = categoryDataResponse.map(async (category, index) => {
+            const categoryId = category._id || category.id;
+            const possibleImageSources = [
+              category.thumb?.url,
+              category.thumb?.fullUrl,
+              category.image,
+              category.thumbnail,
+              category.photo,
+              category.picture,
+              category.icon,
+              category.logo
+            ].filter(Boolean);
+            
+            if (possibleImageSources.length > 0) {
+              const allPossibleUrls = possibleImageSources.flatMap(imagePath => 
+                generateBackendImageUrls(imagePath)
+              );
+              
+              const workingUrl = await findWorkingImageUrl(allPossibleUrls);
+              
+              if (workingUrl) {
+                console.log(`✅ Pre-loaded working URL for category ${index + 1} (${category.name}):`, workingUrl);
+                setWorkingImageUrls(prev => ({
+                  ...prev,
+                  [categoryId]: workingUrl
+                }));
+              } else {
+                console.log(`❌ No working URL found for category ${index + 1} (${category.name})`);
+              }
+            }
           });
           
           // Don't await - let it run in background
-          Promise.all(testPromises).catch(console.error);
+          Promise.all(preloadPromises).catch(console.error);
           
           setCategories(categoryDataResponse);
           setError(false);
@@ -412,7 +653,7 @@ const Home1Category = () => {
               transition: 'all 0.3s ease',
             }}>
               <img
-                src={imageErrors[subcategory._id || subcategory.id] ? PLACEHOLDER_IMAGE : getCategoryImageUrl(subcategory)}
+                src={imageErrors[subcategory._id || subcategory.id] ? FALLBACK_CATEGORY_IMAGE : getCategoryImageUrl(subcategory)}
                 alt={subcategory.name}
                 style={{
                   width: '100%',
@@ -420,14 +661,23 @@ const Home1Category = () => {
                   borderRadius: level === 0 ? '10px' : '6px',
                   objectFit: 'cover',
                 }}
-                onError={() => handleImageError(subcategory._id || subcategory.id, subcategory)}
+                onError={(e) => {
+                  console.log('❌ Subcategory image failed to load, trying fallback...');
+                  if (e.target.src !== FALLBACK_CATEGORY_IMAGE) {
+                    e.target.src = FALLBACK_CATEGORY_IMAGE;
+                  } else {
+                    console.log('❌ Subcategory fallback image also failed');
+                    handleImageError(subcategory._id || subcategory.id, subcategory);
+                  }
+                }}
                 onLoad={() => {
                   const imageUrl = getCategoryImageUrl(subcategory);
                   console.log('✅ ===== SUBCATEGORY IMAGE LOAD SUCCESS =====');
                   console.log('🎉 Successfully loaded:', imageUrl);
                   console.log('📋 Subcategory Info:', {
                     id: subcategory._id || subcategory.id,
-                    name: subcategory.name
+                    name: subcategory.name,
+                    thumb: subcategory.thumb
                   });
                   console.log('✅ ===== END SUBCATEGORY IMAGE LOAD SUCCESS =====');
                 }}
@@ -592,9 +842,27 @@ const Home1Category = () => {
               }}>
                 <img
                   src={(() => {
-                    const imageUrl = imageErrors[id] ? PLACEHOLDER_IMAGE : getCategoryImageUrl(category);
-                    console.log(`🎯 Final image src for ${name}:`, imageUrl);
-                    return imageUrl;
+                    // Check if we have a working cached URL first
+                    if (workingImageUrls[id]) {
+                      console.log(`🎯 Using cached working URL for ${name}:`, workingImageUrls[id]);
+                      return workingImageUrls[id];
+                    }
+                    
+                    // For now, let's try the backend URL but have a quick fallback
+                    const backendUrl = getCategoryImageUrl(category);
+                    console.log(`🎯 Backend URL for ${name}:`, backendUrl);
+                    
+                    // If we have an error for this category, use fallback immediately
+                    if (imageErrors[id]) {
+                      console.log(`🎯 Using fallback for ${name} due to previous error`);
+                      return FALLBACK_CATEGORY_IMAGE;
+                    }
+                    
+                    
+                    console.log(`🎯 Final image src for ${name}:`, backendUrl);
+                    console.log(`🎯 Category thumb data:`, category.thumb);
+                    console.log(`🎯 Is this a backend image?`, backendUrl.includes(app.baseURL));
+                    return backendUrl;
                   })()}
                   alt={name}
                   style={{
@@ -604,16 +872,41 @@ const Home1Category = () => {
                     borderRadius: '14px',
                     transition: 'all 0.4s ease',
                     transform: isHovered ? 'scale(1.1)' : 'scale(1)',
+                    minHeight: '60px', // Ensure minimum height
+                    minWidth: '60px', // Ensure minimum width
                   }}
-                  onError={() => handleImageError(id, category)}
-                  onLoad={() => {
+                  onError={(e) => {
+                    console.log('❌ ===== IMAGE LOAD ERROR =====');
+                    console.log('❌ Image failed to load for category:', name);
+                    console.log('❌ Failed URL:', e.target.src);
+                    console.log('❌ Error event:', e);
+                    console.log('❌ Image element:', e.target);
+                    console.log('❌ Category ID:', id);
+                    console.log('❌ Category thumb:', category.thumb);
+                    
+                    if (e.target.src !== FALLBACK_CATEGORY_IMAGE) {
+                      console.log('🔄 Switching to fallback image...');
+                      e.target.src = FALLBACK_CATEGORY_IMAGE;
+                    } else {
+                      console.log('❌ Fallback image also failed');
+                      handleImageError(id, category);
+                    }
+                    console.log('❌ ===== END IMAGE LOAD ERROR =====');
+                  }}
+                  onLoad={(e) => {
                     const imageUrl = getCategoryImageUrl(category);
                     console.log('✅ ===== CATEGORY IMAGE LOAD SUCCESS =====');
                     console.log('🎉 Successfully loaded:', imageUrl);
+                    console.log('🎉 Image element src:', e.target.src);
+                    console.log('🎉 Image element complete:', e.target.complete);
+                    console.log('🎉 Image element naturalWidth:', e.target.naturalWidth);
+                    console.log('🎉 Image element naturalHeight:', e.target.naturalHeight);
                     console.log('📋 Category Info:', {
                       id: id,
-                      name: name
+                      name: name,
+                      thumb: category.thumb
                     });
+                    console.log('🎯 Is this a backend image?', imageUrl.includes(app.baseURL));
                     console.log('✅ ===== END CATEGORY IMAGE LOAD SUCCESS =====');
                   }}
                   loading="lazy"
