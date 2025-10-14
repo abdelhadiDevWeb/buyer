@@ -18,7 +18,7 @@ interface Auction {
   _id: string;
   title: string;
   name?: string;
-  thumbs?: Array<{ _id: string; url: string; filename?: string }>;
+  thumbs?: Array<{ _id: string; url: string; filename?: string; fullUrl?: string }>;
   endingAt?: string;
   currentPrice?: number;
   startingPrice?: number;
@@ -44,6 +44,16 @@ interface Auction {
   wilaya?: string;
   description?: string;
   biddersCount?: number;
+  // --- Image properties for enhanced image loading ---
+  images?: string[];
+  image?: string;
+  thumbnail?: string;
+  photo?: string;
+  picture?: string;
+  icon?: string;
+  logo?: string;
+  coverImage?: string;
+  mainImage?: string;
 }
 
 // Timer interface
@@ -115,7 +125,13 @@ const getAuctionImageUrl = (auction: Auction) => {
   console.log('🔍 Possible image sources:', possibleImageSources);
   
   if (possibleImageSources.length > 0) {
-    const imageUrl = possibleImageSources[0];
+    const imageUrl = possibleImageSources[0] as string;
+    
+    if (!imageUrl) {
+      console.log('⚠️ No valid image URL found');
+      return DEFAULT_AUCTION_IMAGE;
+    }
+    
     console.log('🔍 Using image source:', imageUrl);
     console.log('🔍 Original Image Data:', {
       originalUrl: imageUrl,
@@ -265,7 +281,7 @@ const Home1LiveAuction = () => {
     // Generate all possible backend URLs for each image source
     const allPossibleUrls = possibleImageSources.flatMap(imagePath => 
       generateBackendImageUrls(imagePath as string)
-    );
+    ).filter(Boolean) as string[];
     
     console.log('🔍 All possible auction backend URLs to try:', allPossibleUrls);
     
@@ -903,12 +919,12 @@ const Home1LiveAuction = () => {
                           <img
                             src={(() => {
                               // Check if we have a working cached URL first
-                              if (workingImageUrls[auction._id || auction.id]) {
-                                console.log(`🎯 Using cached working URL for auction ${auction.title}:`, workingImageUrls[auction._id || auction.id]);
-                                return workingImageUrls[auction._id || auction.id];
+                              if (workingImageUrls[auction._id]) {
+                                console.log(`🎯 Using cached working URL for auction ${auction.title}:`, workingImageUrls[auction._id]);
+                                return workingImageUrls[auction._id];
                               }
                               
-                              const imageUrl = imageErrors[auction._id || auction.id] ? DEFAULT_AUCTION_IMAGE : getAuctionImageUrl(auction);
+                              const imageUrl = imageErrors[auction._id] ? DEFAULT_AUCTION_IMAGE : getAuctionImageUrl(auction);
                               console.log(`🎯 Final auction image src for ${auction.title}:`, imageUrl);
                               console.log(`🎯 Is this a backend image?`, imageUrl.includes(app.baseURL));
                               return imageUrl;
@@ -922,15 +938,15 @@ const Home1LiveAuction = () => {
                             onError={(e) => {
                               console.log('❌ ===== AUCTION IMAGE LOAD ERROR =====');
                               console.log('❌ Auction image failed to load:', auction.title);
-                              console.log('❌ Failed URL:', e.target.src);
-                              console.log('❌ Auction ID:', auction._id || auction.id);
+                              console.log('❌ Failed URL:', (e.target as HTMLImageElement).src);
+                              console.log('❌ Auction ID:', auction._id);
                               
-                              if (e.target.src !== DEFAULT_AUCTION_IMAGE) {
+                              if ((e.target as HTMLImageElement).src !== DEFAULT_AUCTION_IMAGE) {
                                 console.log('🔄 Switching to fallback image...');
-                                e.target.src = DEFAULT_AUCTION_IMAGE;
+                                (e.target as HTMLImageElement).src = DEFAULT_AUCTION_IMAGE;
                               } else {
                                 console.log('❌ Fallback image also failed');
-                                handleImageError(auction._id || auction.id, auction);
+                                handleImageError(auction._id, auction);
                               }
                               console.log('❌ ===== END AUCTION IMAGE LOAD ERROR =====');
                             }}
@@ -938,8 +954,8 @@ const Home1LiveAuction = () => {
                               const imageUrl = getAuctionImageUrl(auction);
                               console.log('✅ ===== AUCTION IMAGE LOAD SUCCESS =====');
                               console.log('🎉 Successfully loaded auction image:', imageUrl);
-                              console.log('🎉 Image element src:', e.target.src);
-                              console.log('🎉 Image dimensions:', e.target.naturalWidth, 'x', e.target.naturalHeight);
+                              console.log('🎉 Image element src:', (e.target as HTMLImageElement).src);
+                              console.log('🎉 Image dimensions:', (e.target as HTMLImageElement).naturalWidth, 'x', (e.target as HTMLImageElement).naturalHeight);
                               console.log('🎯 Is this a backend image?', imageUrl.includes(app.baseURL));
                               console.log('✅ ===== END AUCTION IMAGE LOAD SUCCESS =====');
                             }}
@@ -1081,12 +1097,12 @@ const Home1LiveAuction = () => {
                           <img
                             src={(() => {
                               // Check if we have a working cached URL first
-                              if (workingImageUrls[auction._id || auction.id]) {
-                                console.log(`🎯 Using cached working URL for auction ${auction.title}:`, workingImageUrls[auction._id || auction.id]);
-                                return workingImageUrls[auction._id || auction.id];
+                              if (workingImageUrls[auction._id]) {
+                                console.log(`🎯 Using cached working URL for auction ${auction.title}:`, workingImageUrls[auction._id]);
+                                return workingImageUrls[auction._id];
                               }
                               
-                              const imageUrl = imageErrors[auction._id || auction.id] ? DEFAULT_AUCTION_IMAGE : getAuctionImageUrl(auction);
+                              const imageUrl = imageErrors[auction._id] ? DEFAULT_AUCTION_IMAGE : getAuctionImageUrl(auction);
                               console.log(`🎯 Final auction image src for ${auction.title}:`, imageUrl);
                               console.log(`🎯 Is this a backend image?`, imageUrl.includes(app.baseURL));
                               return imageUrl;
@@ -1107,15 +1123,15 @@ const Home1LiveAuction = () => {
                             onError={(e) => {
                               console.log('❌ ===== AUCTION SLIDER IMAGE LOAD ERROR =====');
                               console.log('❌ Auction slider image failed to load:', auction.title);
-                              console.log('❌ Failed URL:', e.target.src);
-                              console.log('❌ Auction ID:', auction._id || auction.id);
+                              console.log('❌ Failed URL:', (e.target as HTMLImageElement).src);
+                              console.log('❌ Auction ID:', auction._id);
                               
-                              if (e.target.src !== DEFAULT_AUCTION_IMAGE) {
+                              if ((e.target as HTMLImageElement).src !== DEFAULT_AUCTION_IMAGE) {
                                 console.log('🔄 Switching to fallback image...');
-                                e.target.src = DEFAULT_AUCTION_IMAGE;
+                                (e.target as HTMLImageElement).src = DEFAULT_AUCTION_IMAGE;
                               } else {
                                 console.log('❌ Fallback image also failed');
-                                handleImageError(auction._id || auction.id, auction);
+                                handleImageError(auction._id, auction);
                               }
                               console.log('❌ ===== END AUCTION SLIDER IMAGE LOAD ERROR =====');
                             }}
@@ -1123,8 +1139,8 @@ const Home1LiveAuction = () => {
                               const imageUrl = getAuctionImageUrl(auction);
                               console.log('✅ ===== AUCTION SLIDER IMAGE LOAD SUCCESS =====');
                               console.log('🎉 Successfully loaded auction slider image:', imageUrl);
-                              console.log('🎉 Image element src:', e.target.src);
-                              console.log('🎉 Image dimensions:', e.target.naturalWidth, 'x', e.target.naturalHeight);
+                              console.log('🎉 Image element src:', (e.target as HTMLImageElement).src);
+                              console.log('🎉 Image dimensions:', (e.target as HTMLImageElement).naturalWidth, 'x', (e.target as HTMLImageElement).naturalHeight);
                               console.log('🎯 Is this a backend image?', imageUrl.includes(app.baseURL));
                               console.log('✅ ===== END AUCTION SLIDER IMAGE LOAD SUCCESS =====');
                             }}

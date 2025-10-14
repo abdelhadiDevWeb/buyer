@@ -18,7 +18,7 @@ interface Auction {
   _id: string;
   title: string;
   name?: string;
-  thumbs?: Array<{ _id: string; url: string; filename?: string }>;
+  thumbs?: Array<{ _id: string; url: string; filename?: string; fullUrl?: string }>;
   endingAt?: string;
   currentPrice?: number;
   startingPrice?: number;
@@ -43,6 +43,16 @@ interface Auction {
   wilaya?: string;
   description?: string;
   biddersCount?: number;
+  // --- Image properties for enhanced image loading ---
+  images?: string[];
+  image?: string;
+  thumbnail?: string;
+  photo?: string;
+  picture?: string;
+  icon?: string;
+  logo?: string;
+  coverImage?: string;
+  mainImage?: string;
 }
 
 // Timer interface
@@ -122,15 +132,15 @@ const MobileLiveAuctions = () => {
         const data = await AuctionsAPI.getAuctions();
 
         // Process data based on response structure
-        let auctionsData = [];
+        let auctionsData: Auction[] = [];
         
         if (data) {
           if (Array.isArray(data)) {
-            auctionsData = data;
+            auctionsData = data as unknown as Auction[];
           } else if (data.data && Array.isArray(data.data)) {
-            auctionsData = data.data;
+            auctionsData = data.data as unknown as Auction[];
           } else if (data.success && data.data && Array.isArray(data.data)) {
-            auctionsData = data.data;
+            auctionsData = data.data as unknown as Auction[];
           } else {
             auctionsData = [];
           }

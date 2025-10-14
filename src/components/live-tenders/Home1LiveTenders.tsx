@@ -211,7 +211,7 @@ const Home1LiveTenders = () => {
     // Generate all possible backend URLs for each image source
     const allPossibleUrls = possibleImageSources.flatMap(imagePath => 
       generateBackendImageUrls(imagePath as string)
-    );
+    ).filter(Boolean) as string[];
     
     console.log('🔍 All possible tender backend URLs to try:', allPossibleUrls);
     
@@ -679,8 +679,8 @@ const Home1LiveTenders = () => {
                                 const imageUrl = getTenderImageUrl(tender);
                                 console.log('✅ ===== TENDER IMAGE LOAD SUCCESS =====');
                                 console.log('🎉 Successfully loaded tender image:', imageUrl);
-                                console.log('🎉 Image element src:', e.target.src);
-                                console.log('🎉 Image dimensions:', e.target.naturalWidth, 'x', e.target.naturalHeight);
+                                console.log('🎉 Image element src:', (e.target as HTMLImageElement).src);
+                                console.log('🎉 Image dimensions:', (e.target as HTMLImageElement).naturalWidth, 'x', (e.target as HTMLImageElement).naturalHeight);
                                 console.log('📋 Tender Info:', {
                                   id: tender._id,
                                   title: tender.title
@@ -691,12 +691,12 @@ const Home1LiveTenders = () => {
                               onError={(e) => {
                                 console.log('❌ ===== TENDER IMAGE LOAD ERROR =====');
                                 console.log('❌ Tender image failed to load:', tender.title);
-                                console.log('❌ Failed URL:', e.target.src);
+                                console.log('❌ Failed URL:', (e.target as HTMLImageElement).src);
                                 console.log('❌ Tender ID:', tender._id);
                                 
-                                if (e.target.src !== DEFAULT_TENDER_IMAGE) {
+                                if ((e.target as HTMLImageElement).src !== DEFAULT_TENDER_IMAGE) {
                                   console.log('🔄 Switching to fallback image...');
-                                  e.target.src = DEFAULT_TENDER_IMAGE;
+                                  (e.target as HTMLImageElement).src = DEFAULT_TENDER_IMAGE;
                                 } else {
                                   console.log('❌ Fallback image also failed');
                                   handleImageError(tender._id, tender);
