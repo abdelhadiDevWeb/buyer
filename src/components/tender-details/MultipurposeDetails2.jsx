@@ -22,6 +22,67 @@ import { CommentAPI } from "@/app/api/comment";
 import { useTranslation } from 'react-i18next';
 import { motion } from "framer-motion";
 
+// Helper function to get the correct tender image URL
+const getTenderImageUrl = (tender) => {
+  console.log('🎯 ===== TENDER DETAILS IMAGE URL PROCESSING =====');
+  console.log('📋 Tender Info:', {
+    id: tender?._id,
+    title: tender?.title,
+    hasAttachments: !!tender?.attachments,
+    attachmentsLength: tender?.attachments?.length || 0
+  });
+  
+  if (tender?.attachments && tender.attachments.length > 0 && tender.attachments[0].url) {
+    const imageUrl = tender.attachments[0].url;
+    console.log('🔍 Original Image Data:', {
+      originalUrl: imageUrl,
+      appRoute: app.route,
+      appBaseURL: app.baseURL,
+      imageType: typeof imageUrl,
+      imageLength: imageUrl.length
+    });
+    
+    // Handle different URL formats
+    if (imageUrl.startsWith('http')) {
+      console.log('✅ CASE: Full URL detected');
+      console.log('🔗 Final URL:', imageUrl);
+      console.log('📝 Action: Using full URL as-is');
+      return imageUrl; // Already a full URL
+    } else if (imageUrl.startsWith('/')) {
+      if (imageUrl.startsWith('/static/')) {
+        console.log('✅ CASE: Static path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      } else {
+        console.log('✅ CASE: Root path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      }
+    } else {
+      console.log('✅ CASE: Relative path detected');
+      const finalUrl = `${app.baseURL}${imageUrl}`;
+      console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl}`);
+      console.log('🔗 Final URL:', finalUrl);
+      console.log('📝 Action: Combined with baseURL');
+      return finalUrl;
+    }
+  } else {
+    console.log('❌ CASE: No image data found');
+    console.log('🔍 Attachments data:', tender?.attachments);
+    console.log('🔗 Fallback URL:', DEFAULT_TENDER_IMAGE);
+    console.log('📝 Action: Using default image');
+    return DEFAULT_TENDER_IMAGE;
+  }
+  
+  console.log('🎯 ===== END TENDER DETAILS IMAGE URL PROCESSING =====\n');
+};
+
 // Helper function to calculate time remaining and format with leading zeros
 function getTimeRemaining(endDate) {
   if (!endDate) {
@@ -88,12 +149,14 @@ const MultipurposeDetails2 = () => {
   const [deletingAutoBid, setDeletingAutoBid] = useState(false); // State for deleting auto bid
   const [showCongrats, setShowCongrats] = useState(false); // Winner banner visibility
   const [showAcceptedModal, setShowAcceptedModal] = useState(false); // Owner accepted offer modal
+  const [showBidConfirmation, setShowBidConfirmation] = useState(false); // State for bid confirmation modal
 
   // Get tender ID from URL params or search params
   const routeId = params?.id;
   const queryId = searchParams.get("id");
   const tenderId = routeId || queryId;
   const DEFAULT_AUCTION_IMAGE = "/assets/images/logo-dark.png";
+  const DEFAULT_TENDER_IMAGE = "/assets/images/logo-white.png";
   const DEFAULT_USER_AVATAR = "/assets/images/avatar.jpg";
   const DEFAULT_PROFILE_IMAGE = "/assets/images/avatar.jpg";
 
@@ -657,9 +720,25 @@ const MultipurposeDetails2 = () => {
     safeOwner &&
     auth.user._id === (safeOwner._id || safeOwner);
 
-  // Handle bid submission for tender (lowest price bidding)
-  const handleBidSubmit = async (e) => {
+  // Function to show bid confirmation modal
+  const handleBidClick = (e) => {
     e.preventDefault();
+    setShowBidConfirmation(true);
+  };
+
+  // Function to handle confirmed bid submission
+  const handleConfirmedBidSubmit = async () => {
+    setShowBidConfirmation(false);
+    await submitBid();
+  };
+
+  // Function to cancel bid submission
+  const handleCancelBidSubmit = () => {
+    setShowBidConfirmation(false);
+  };
+
+  // Actual bid submission logic (extracted from handleBidSubmit)
+  const submitBid = async () => {
 
     console.log(
       "[MultipurposeDetails2] handleBidSubmit - isLogged:",
@@ -706,7 +785,13 @@ const MultipurposeDetails2 = () => {
       const numericBidAmount = parseFloat(cleanBidAmount);
       
       if (isNaN(numericBidAmount) || numericBidAmount <= 0) {
-        toast.error("Veuillez entrer un nombre valide pour le montant de l'offre");
+        toast.error("Veuillez entrer un montant valide pour votre offre");
+        return;
+      }
+      
+      // Check minimum bid amount
+      if (numericBidAmount < 1) {
+        toast.error("Le montant minimum pour une offre est de 1 DA");
         return;
       }
 
@@ -1494,15 +1579,28 @@ const MultipurposeDetails2 = () => {
                     ) : (
                     <img
                       src={
-                        safeAttachments.length > 0
-                          ? `${app.route}${safeAttachments[selectedImageIndex]?.url}`
-                          : DEFAULT_AUCTION_IMAGE
+                        safeAttachments.length > 0 && safeAttachments[selectedImageIndex]?.url
+                          ? (() => {
+                              const imageUrl = safeAttachments[selectedImageIndex].url;
+                              if (imageUrl.startsWith('http')) {
+                                return imageUrl;
+                              } else if (imageUrl.startsWith('/')) {
+                                return `${app.baseURL}${imageUrl.substring(1)}`;
+                              } else {
+                                return `${app.baseURL}${imageUrl}`;
+                              }
+                            })()
+                          : DEFAULT_TENDER_IMAGE
                       }
                       alt={safeTitle}
                       className="main-image"
                       onError={(e) => {
+                        console.log('❌ Tender details main image failed to load:', e.target.src);
                         e.target.onerror = null;
-                        e.target.src = DEFAULT_AUCTION_IMAGE;
+                        e.target.src = DEFAULT_TENDER_IMAGE;
+                      }}
+                      onLoad={(e) => {
+                        console.log('✅ Tender details main image loaded successfully:', e.target.src);
                       }}
                       crossOrigin="use-credentials"
                     />
@@ -1572,11 +1670,24 @@ const MultipurposeDetails2 = () => {
                             style={{ position: 'relative' }}
                             >
                               <img
-                                src={`${app.route}${attachment.url}`}
+                                src={(() => {
+                                  const imageUrl = attachment.url;
+                                  if (imageUrl.startsWith('http')) {
+                                    return imageUrl;
+                                  } else if (imageUrl.startsWith('/')) {
+                                    return `${app.baseURL}${imageUrl.substring(1)}`;
+                                  } else {
+                                    return `${app.baseURL}${imageUrl}`;
+                                  }
+                                })()}
                               alt={`${safeTitle} - Image ${index + 1}`}
                                 onError={(e) => {
+                                  console.log('❌ Tender details thumbnail failed to load:', e.target.src);
                                   e.target.onerror = null;
-                                  e.target.src = DEFAULT_AUCTION_IMAGE;
+                                  e.target.src = DEFAULT_TENDER_IMAGE;
+                                }}
+                                onLoad={(e) => {
+                                  console.log('✅ Tender details thumbnail loaded successfully:', e.target.src);
                                 }}
                                 crossOrigin="use-credentials"
                                 onClick={() => handleThumbnailClick(index)}
@@ -1674,8 +1785,8 @@ const MultipurposeDetails2 = () => {
                         <SwiperSlide className="swiper-slide">
                           <div className="thumbnail active">
                             <img
-                              src={DEFAULT_AUCTION_IMAGE}
-                              alt="Default Auction Item"
+                              src={DEFAULT_TENDER_IMAGE}
+                              alt="Default Tender Item"
                               crossOrigin="use-credentials"
                             />
                           </div>
@@ -1862,9 +1973,31 @@ const MultipurposeDetails2 = () => {
                         </table>
                       </div>
 
-                      <div className="bid-section">
-                        <p className="bid-label">Votre offre</p>
-                        {isOwner && (
+                        <div className="bid-section">
+                          <p className="bid-label">Votre offre DA</p>
+                          
+                          {/* Decimal Input Instruction */}
+                          <div style={{
+                            backgroundColor: "#e3f2fd",
+                            border: "1px solid #bbdefb",
+                            borderRadius: "8px",
+                            padding: "8px 12px",
+                            marginBottom: "12px",
+                            fontSize: "12px",
+                            color: "#1565c0",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                            </svg>
+                            <span>
+                              <strong>Note:</strong> Utilisez le point (.) pour les décimales, pas la virgule (,)
+                            </span>
+                          </div>
+                          
+                          {isOwner && (
                           <div
                             style={{
                               backgroundColor: "#fff3cd",
@@ -1939,7 +2072,7 @@ const MultipurposeDetails2 = () => {
                           />
                           <button
                             className="bid-btn-modern"
-                            onClick={isOwner ? undefined : handleBidSubmit}
+                            onClick={isOwner ? undefined : handleBidClick} // Changed to show modal
                             disabled={isOwner}
                             style={{
                               opacity: isOwner ? 0.5 : 1,
@@ -3351,8 +3484,17 @@ const MultipurposeDetails2 = () => {
                                           src={
                                             tender.attachments &&
                                             tender.attachments.length > 0
-                                              ? `${app.route}${tender.attachments[0].url}`
-                                              : DEFAULT_AUCTION_IMAGE
+                                              ? (() => {
+                                                  const imageUrl = tender.attachments[0].url;
+                                                  if (imageUrl.startsWith('http')) {
+                                                    return imageUrl;
+                                                  } else if (imageUrl.startsWith('/')) {
+                                                    return `${app.baseURL}${imageUrl.substring(1)}`;
+                                                  } else {
+                                                    return `${app.baseURL}${imageUrl}`;
+                                                  }
+                                                })()
+                                              : DEFAULT_TENDER_IMAGE
                                           }
                                           alt={tender.title || "Appel d'offres"}
                                           style={{
@@ -3365,9 +3507,11 @@ const MultipurposeDetails2 = () => {
                                               : "none",
                                           }}
                                           onError={(e) => {
-                                            e.currentTarget.onerror = null;
-                                            e.currentTarget.src =
-                                              DEFAULT_AUCTION_IMAGE;
+                                            console.log('❌ Similar tender image failed to load:', e.target.src);
+                                            e.target.src = DEFAULT_TENDER_IMAGE;
+                                          }}
+                                          onLoad={(e) => {
+                                            console.log('✅ Similar tender image loaded successfully:', e.target.src);
                                           }}
                                           crossOrigin="use-credentials"
                                         />
@@ -3924,6 +4068,251 @@ const MultipurposeDetails2 = () => {
           </div>
         </>
       )}
+
+      {/* Bid Confirmation Modal */}
+      {showBidConfirmation && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(5px)',
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '40px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+            animation: 'modalSlideIn 0.3s ease-out',
+            position: 'relative',
+          }}>
+            {/* Close button */}
+            <button
+              onClick={handleCancelBidSubmit}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                color: '#999',
+                cursor: 'pointer',
+                padding: '5px',
+                borderRadius: '50%',
+                width: '35px',
+                height: '35px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#f5f5f5';
+                e.target.style.color = '#666';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'none';
+                e.target.style.color = '#999';
+              }}
+            >
+              ×
+            </button>
+
+            {/* Modal Icon */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '20px',
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px',
+                animation: 'pulse 2s infinite',
+              }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '30px',
+            }}>
+              <h3 style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                color: '#333',
+                marginBottom: '15px',
+                lineHeight: '1.3',
+              }}>
+                Confirmer votre offre
+              </h3>
+
+              <p style={{
+                fontSize: '16px',
+                color: '#666',
+                lineHeight: '1.6',
+                marginBottom: '20px',
+              }}>
+                Êtes-vous sûr de vouloir soumettre cette offre ?
+              </p>
+
+              {/* Bid Amount Display */}
+              <div style={{
+                background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '20px',
+                border: '1px solid #e9ecef',
+              }}>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#666',
+                  margin: '0 0 8px 0',
+                  fontWeight: '600',
+                }}>
+                  Montant de votre offre
+                </p>
+                <div style={{
+                  fontSize: '28px',
+                  fontWeight: '700',
+                  color: '#0063b1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}>
+                  <span id="modal-bid-amount">
+                    {(() => {
+                      const bidInput = document.querySelector(".quantity__input");
+                      return bidInput ? bidInput.value : '0';
+                    })()}
+                  </span>
+                  <span style={{ fontSize: '16px', color: '#666' }}>DA</span>
+                </div>
+              </div>
+
+              <p style={{
+                fontSize: '14px',
+                color: '#999',
+                lineHeight: '1.5',
+                fontStyle: 'italic',
+              }}>
+                Une fois confirmée, votre offre sera soumise et ne pourra plus être annulée.
+              </p>
+            </div>
+
+            {/* Modal Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '15px',
+              justifyContent: 'center',
+            }}>
+              <button
+                onClick={handleCancelBidSubmit}
+                style={{
+                  padding: '14px 28px',
+                  borderRadius: '12px',
+                  border: '2px solid #ddd',
+                  background: 'white',
+                  color: '#666',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  minWidth: '120px',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.borderColor = '#999';
+                  e.target.style.color = '#333';
+                  e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.borderColor = '#ddd';
+                  e.target.style.color = '#666';
+                  e.target.style.transform = 'translateY(0)';
+                }}
+              >
+                Annuler
+              </button>
+
+              <button
+                onClick={handleConfirmedBidSubmit}
+                style={{
+                  padding: '14px 28px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(90deg, #0063b1, #00a3e0)',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  minWidth: '120px',
+                  boxShadow: '0 4px 12px rgba(0, 99, 177, 0.3)',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'linear-gradient(90deg, #00a3e0, #0063b1)';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 16px rgba(0, 99, 177, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'linear-gradient(90deg, #0063b1, #00a3e0)';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(0, 99, 177, 0.3)';
+                }}
+              >
+                Oui, Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Animation Styles */}
+      <style jsx>{`
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        @keyframes pulse {
+          0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(0, 99, 177, 0.7);
+          }
+          70% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 10px rgba(0, 99, 177, 0);
+          }
+          100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(0, 99, 177, 0);
+          }
+        }
+      `}</style>
     </>
   );
 };

@@ -802,14 +802,31 @@ const Home1LiveTenders = () => {
                             gap: '12px',
                             marginBottom: '16px',
                           }}>
-                            <div>
+                            <div style={{
+                              background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                              borderRadius: '12px',
+                              padding: '12px',
+                              border: '1px solid #e9ecef',
+                              borderLeft: '4px solid #27F5CC',
+                              position: 'relative',
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                right: 0,
+                                width: '30px',
+                                height: '30px',
+                                background: 'linear-gradient(45deg, rgba(39, 245, 204, 0.1), rgba(0, 212, 170, 0.1))',
+                                borderRadius: '0 12px 0 100%',
+                              }}></div>
                               <p style={{
                                 fontSize: '12px',
                                 color: '#666',
                                 margin: '0 0 4px 0',
                                 fontWeight: '600',
                               }}>
-                                Localisation
+                                📍 Localisation
                               </p>
                               <p style={{
                                 fontSize: '14px',
@@ -824,24 +841,41 @@ const Home1LiveTenders = () => {
                               </p>
                             </div>
 
-                              <div>
-                                <p style={{
-                                  fontSize: '12px',
-                                  color: '#666',
-                                  margin: '0 0 4px 0',
+                            <div style={{
+                              background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                              borderRadius: '12px',
+                              padding: '12px',
+                              border: '1px solid #e9ecef',
+                              borderLeft: '4px solid #27F5CC',
+                              position: 'relative',
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                right: 0,
+                                width: '30px',
+                                height: '30px',
+                                background: 'linear-gradient(45deg, rgba(39, 245, 204, 0.1), rgba(0, 212, 170, 0.1))',
+                                borderRadius: '0 12px 0 100%',
+                              }}></div>
+                              <p style={{
+                                fontSize: '12px',
+                                color: '#666',
+                                margin: '0 0 4px 0',
                                 fontWeight: '600',
-                                }}>
-                                Quantité
-                                </p>
-                                <p style={{
+                              }}>
+                                📦 Quantité
+                              </p>
+                              <p style={{
                                 fontSize: '14px',
                                 color: '#333',
-                                  margin: 0,
+                                margin: 0,
                                 fontWeight: '500',
-                                }}>
+                              }}>
                                 {tender.quantity || 'Non spécifiée'}
-                                </p>
-                              </div>
+                              </p>
+                            </div>
                           </div>
 
                           {/* Description */}
