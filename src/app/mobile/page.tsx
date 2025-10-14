@@ -3,10 +3,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import { getSellerUrl } from '@/config';
+import { getSellerUrl, getFrontendUrl } from '@/config';
 import { CategoryAPI } from '@/app/api/category';
-import Home1LiveAuction from "@/components/live-auction/Home1LiveAuction";
+import MobileLiveAuctions from "@/components/live-auction/MobileLiveAuctions";
 import Home1LiveTenders from "@/components/live-tenders/Home1LiveTenders";
+import Header from "@/components/header/Header";
 import useAuth from '@/hooks/useAuth';
 import { SnackbarProvider } from 'notistack';
 import { AxiosInterceptor } from '@/app/api/AxiosInterceptor';
@@ -121,11 +122,13 @@ export default function MobilePage() {
   }, [showSearchResults]);
 
   const handleBuyButton = () => {
-    router.push('/auction-sidebar');
+    // Redirect to seller URL for buying/auctioning in the same page
+    window.location.href = getSellerUrl();
   };
 
   const handleSellButton = () => {
-    window.open(getSellerUrl(), '_blank');
+    // Redirect to frontend URL for selling/creating in the same page
+    window.location.href = getFrontendUrl();
   };
 
   return (
@@ -327,6 +330,7 @@ export default function MobilePage() {
       >
         <RequestProvider>
           <AxiosInterceptor>
+            <Header />
             <main style={{ 
               minHeight: '100vh', 
               background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
@@ -575,17 +579,31 @@ export default function MobilePage() {
                 zIndex: 2,
               }}>
                 <div className="container-mobile">
-                  <h2 className="mobile-section-title">
+                  <h2 className="mobile-section-title" style={{
+                    color: '#2563eb',
+                    fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
+                    fontWeight: '800',
+                    marginBottom: '16px',
+                  }}>
                     🏆 Enchères en Direct
                   </h2>
+                  <p style={{
+                    fontSize: '1rem',
+                    color: '#666',
+                    textAlign: 'center',
+                    marginBottom: '32px',
+                    lineHeight: '1.6',
+                  }}>
+                    Découvrez et participez aux enchères en cours
+                  </p>
                   <div style={{
                     borderRadius: '20px',
                     overflow: 'hidden',
                     boxShadow: 'var(--shadow-lg)',
                     background: 'white',
-                    padding: '16px',
+                    padding: '20px',
                   }}>
-                    <Home1LiveAuction />
+                    <MobileLiveAuctions />
                   </div>
                 </div>
               </section>
