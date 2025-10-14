@@ -339,8 +339,14 @@ const Home1LiveAuction = () => {
           auctionsData = [];
         }
         
+        // Transform data to ensure id field is properly mapped
+        const transformedAuctions = auctionsData.map((auction: any) => ({
+          ...auction,
+          id: auction.id || auction._id, // Use id if available, fallback to _id
+        }));
+        
         // Filter out ended auctions and exclude professional auctions
-        const activeAuctions = auctionsData.filter((auction: Auction) => {
+        const activeAuctions = transformedAuctions.filter((auction: Auction) => {
           if (!auction.endingAt) return false;
           const endTime = new Date(auction.endingAt);
           const isActive = endTime > new Date();
