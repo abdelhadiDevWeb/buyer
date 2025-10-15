@@ -330,7 +330,7 @@ const Home1Category = () => {
           }
           
           // Test a sample image URL from the logs
-          const sampleImageUrl = 'https://mazadclick-server.onrender.com/static/1760435323858-20246619.jpg';
+          const sampleImageUrl = 'https://api.mazad.click/static/1760435323858-20246619.jpg';
           try {
             console.log('🧪 Testing sample image URL:', sampleImageUrl);
             const imageResponse = await fetch(sampleImageUrl, { method: 'HEAD' });
@@ -350,7 +350,7 @@ const Home1Category = () => {
         // Direct image accessibility test
         const testDirectImageAccess = async () => {
           console.log('🧪 ===== DIRECT IMAGE ACCESS TEST =====');
-          const testUrl = 'https://mazadclick-server.onrender.com/static/1760437753581-5334461.jpg';
+          const testUrl = 'https://api.mazad.click/static/1760437753581-5334461.jpg';
           
           try {
             console.log('🧪 Testing direct access to:', testUrl);

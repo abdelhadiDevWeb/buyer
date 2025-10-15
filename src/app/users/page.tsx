@@ -629,7 +629,7 @@ export default function UsersPage() {
 
   const handleLoginClick = () => {
     // Redirect to login page using the seller URL from config
-    window.location.href = `${process.env.NEXT_PUBLIC_SELLER_URL || 'https://mazad-click-seller.vercel.app/'}login`;
+    window.location.href = `${process.env.NEXT_PUBLIC_SELLER_URL || 'https://dashbord.seller.mazad.click/'}login`;
   };
 
   // Show login prompt if user is not authenticated
@@ -1217,7 +1217,7 @@ export default function UsersPage() {
                                 position: 'relative'
                               }}>
                                 <img
-                                  src={user.photoURL || user.avatar || "/assets/images/avatar.jpg"}
+                                  src={(user.photoURL || user.avatar || "/assets/images/avatar.jpg").replace('http://localhost:3000', 'https://api.mazad.click')}
                                   alt={getUserFullName(user)}
                                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                   onError={(e) => {

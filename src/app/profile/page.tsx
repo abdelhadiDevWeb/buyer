@@ -49,8 +49,10 @@ interface AvatarData {
 import app, { getSellerUrl } from '@/config';
 
 const API_BASE_URL = app.baseURL;
+const STATIC_URL = app.route;
 
 function ProfilePage() {
+    console.log('🚀 ProfilePage component is rendering...');
     const { t } = useTranslation();
     const { auth, isLogged, isReady, initializeAuth, set, fetchFreshUserData } = useAuth();
     const { enqueueSnackbar } = useSnackbar();
@@ -93,18 +95,42 @@ function ProfilePage() {
     }, [auth.user]);
 
     const getAvatarUrl = (avatar: AvatarData | string): string => {
+        console.log('🔧 getAvatarUrl called with:', avatar);
+        
         if (typeof avatar === 'string') {
-            return avatar.startsWith('http') ? avatar : `${API_BASE_URL}/${avatar}`;
+            // Handle string avatar (direct URL or path)
+            if (avatar.startsWith('http')) {
+                // Full URL - replace localhost with production
+                const fixedUrl = avatar.replace('http://localhost:3000', 'https://api.mazad.click');
+                console.log('🔧 String avatar (http):', { original: avatar, fixed: fixedUrl });
+                return fixedUrl;
+            } else {
+                // Relative path - prepend static URL
+                const fullUrl = `${STATIC_URL}${avatar}`;
+                console.log('🔧 String avatar (relative):', { original: avatar, fullUrl });
+                return fullUrl;
+            }
         }
 
         if (avatar?.fullUrl) {
-            return avatar.fullUrl;
+            const fixedUrl = avatar.fullUrl.replace('http://localhost:3000', 'https://api.mazad.click');
+            console.log('🔧 Avatar fullUrl:', { original: avatar.fullUrl, fixed: fixedUrl });
+            return fixedUrl;
         }
 
         if (avatar?.url) {
-            return avatar.url.startsWith('http') ? avatar.url : `${API_BASE_URL}/${avatar.url}`;
+            if (avatar.url.startsWith('http')) {
+                const fixedUrl = avatar.url.replace('http://localhost:3000', 'https://api.mazad.click');
+                console.log('🔧 Avatar url (http):', { original: avatar.url, fixed: fixedUrl });
+                return fixedUrl;
+            } else {
+                const fullUrl = `${STATIC_URL}${avatar.url}`;
+                console.log('🔧 Avatar url (relative):', { original: avatar.url, fullUrl });
+                return fullUrl;
+            }
         }
 
+        console.log('🔧 No avatar data, using fallback');
         return '/assets/images/avatar.jpg';
     };
 
@@ -345,11 +371,42 @@ function ProfilePage() {
         router.push("/become-reseller");
     };
 
-    const avatarSrc = auth.user && auth.user.avatar
-        ? `${getAvatarUrl(auth.user.avatar)}?v=${avatarKey}`
-        : auth.user && auth.user.photoURL && auth.user.photoURL.trim() !== ""
-            ? `${getAvatarUrl({ url: auth.user.photoURL })}?v=${avatarKey}`
-            : "/assets/images/avatar.jpg";
+    // Construct avatar source with multiple fallback options
+    const getAvatarSrc = () => {
+        if (!auth.user) return "/assets/images/avatar.jpg";
+        
+        // Priority 1: photoURL (direct from backend)
+        if (auth.user.photoURL && auth.user.photoURL.trim() !== "") {
+            const cleanUrl = auth.user.photoURL.replace('http://localhost:3000', 'https://api.mazad.click');
+            console.log('🖼️ Using photoURL:', { original: auth.user.photoURL, clean: cleanUrl });
+            return `${cleanUrl}?v=${avatarKey}`;
+        }
+        
+        // Priority 2: avatar object
+        if (auth.user.avatar) {
+            const avatarUrl = getAvatarUrl(auth.user.avatar);
+            console.log('🖼️ Using avatar object:', { avatar: auth.user.avatar, url: avatarUrl });
+            return `${avatarUrl}?v=${avatarKey}`;
+        }
+        
+        // Priority 3: fallback
+        console.log('🖼️ No avatar data found, using fallback');
+        return "/assets/images/avatar.jpg";
+    };
+    
+    const avatarSrc = getAvatarSrc();
+
+    // Final avatar debug log
+    console.log('🖼️ Avatar Summary:', {
+        finalUrl: avatarSrc,
+        hasUser: !!auth.user,
+        hasPhotoURL: !!auth.user?.photoURL,
+        hasAvatar: !!auth.user?.avatar,
+        usingFallback: avatarSrc === "/assets/images/avatar.jpg"
+    });
+
+    // Debug auth status
+    console.log('🔐 Auth Status:', { isReady, isLogged, hasUser: !!auth.user });
 
     // Show login prompt if not logged in
     if (isReady && !isLogged) {
@@ -438,10 +495,50 @@ function ProfilePage() {
                                                 key={avatarKey}
                                                 src={avatarSrc}
                                                 alt="Profile"
+                                                style={{ 
+                                                    width: '100%', 
+                                                    height: '100%', 
+                                                    objectFit: 'cover',
+                                                    borderRadius: '50%'
+                                                }}
                                                 onError={(e) => {
-                                                    console.log('❌ Avatar image failed to load, using fallback');
-                                                    e.currentTarget.onerror = null;
-                                                    e.currentTarget.src = "/assets/images/avatar.jpg";
+                                                    const target = e.currentTarget;
+                                                    const attemptedUrl = target.src;
+                                                    
+                                                    console.log('❌ Avatar failed to load:', {
+                                                        attemptedUrl,
+                                                        userPhotoURL: auth.user?.photoURL
+                                                    });
+                                                    
+                                                    // Try alternative URL constructions
+                                                    if (attemptedUrl.includes('api.mazad.click') && auth.user?.photoURL) {
+                                                        // Try without the cache buster
+                                                        const baseUrl = attemptedUrl.split('?')[0];
+                                                        console.log('🔄 Trying without cache buster:', baseUrl);
+                                                        target.src = baseUrl;
+                                                        return;
+                                                    }
+                                                    
+                                                    // Try static route if current attempt failed
+                                                    if (auth.user?.photoURL && !attemptedUrl.includes('static')) {
+                                                        const staticUrl = `https://api.mazad.click/static/${auth.user.photoURL.split('/').pop()}`;
+                                                        console.log('🔄 Trying static route:', staticUrl);
+                                                        target.src = staticUrl;
+                                                        return;
+                                                    }
+                                                    
+                                                    // Final fallback
+                                                    console.log('🔄 Using final fallback');
+                                                    target.onerror = null;
+                                                    target.src = "/assets/images/avatar.jpg";
+                                                }}
+                                                onLoad={(e) => {
+                                                    console.log('✅ Avatar image loaded successfully:', avatarSrc);
+                                                    console.log('✅ Image element:', e.currentTarget);
+                                                    console.log('✅ Image dimensions:', {
+                                                        width: e.currentTarget.naturalWidth,
+                                                        height: e.currentTarget.naturalHeight
+                                                    });
                                                 }}
                                                 whileHover={{ scale: 1.1 }}
                                                 transition={{ duration: 0.3 }}
@@ -480,6 +577,35 @@ function ProfilePage() {
                                             ) : (
                                                 <i className="bi bi-camera-fill"></i>
                                             )}
+                                        </motion.button>
+                                        
+                                        {/* Debug button - remove after testing */}
+                                        <motion.button
+                                            onClick={() => {
+                                                console.log('🧪 Manual avatar test:', {
+                                                    avatarSrc,
+                                                    userPhotoURL: auth.user?.photoURL,
+                                                    userAvatar: auth.user?.avatar,
+                                                    testUrl: 'https://api.mazad.click/static/1760504187414-758835585.png'
+                                                });
+                                                setAvatarKey(Date.now()); // Force refresh
+                                            }}
+                                            style={{
+                                                position: 'absolute',
+                                                bottom: '-10px',
+                                                right: '-10px',
+                                                background: 'red',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '50%',
+                                                width: '30px',
+                                                height: '30px',
+                                                fontSize: '12px',
+                                                cursor: 'pointer'
+                                            }}
+                                            title="Debug avatar"
+                                        >
+                                            🧪
                                         </motion.button>
                                     </motion.div>
 
