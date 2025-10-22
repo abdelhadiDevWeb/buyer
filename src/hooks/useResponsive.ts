@@ -25,6 +25,9 @@ export interface ResponsiveState {
   isLg: boolean;
   isXl: boolean;
   is2xl: boolean;
+  isIPhone: boolean;
+  isSamsung: boolean;
+  isSmallMobile: boolean;
   orientation: 'portrait' | 'landscape';
 }
 
@@ -73,6 +76,11 @@ export const useResponsive = (): ResponsiveState => {
     isLg: width >= BREAKPOINTS.md && width < BREAKPOINTS.lg, // 768px - 1024px
     isXl: width >= BREAKPOINTS.lg && width < BREAKPOINTS.xl, // 1024px - 1280px
     is2xl: width >= BREAKPOINTS.xl, // >= 1280px
+    
+    // Device-specific detection
+    isIPhone: width >= 375 && width <= 428,
+    isSamsung: width >= 360 && width <= 412,
+    isSmallMobile: width <= 375,
     
     // Orientation
     orientation: width > height ? 'landscape' : 'portrait'

@@ -8,26 +8,38 @@ function quantityReducer(state, action) {
       return { quantity: state.quantity + action.payload };
     case "DECREMENT":
       return {
-        quantity: Math.max(1, state.quantity - action.payload), // Ensure minimum value of 1
+        quantity: Math.max(0, state.quantity - action.payload), // Allow 0 for display purposes
       };
     case "SET":
-      return { quantity: action.payload >= 1 ? action.payload : 1 };
+      return { quantity: action.payload >= 0 ? action.payload : 0 }; // Allow 0 for display purposes
     default:
       return state;
   }
 }
 
-// Function to format price with currency symbol - using Math.floor for whole numbers
+// Function to format price with currency symbol - supports both integers and decimals
 const formatPrice = (price) => {
-  return `${Math.floor(Number(price)).toLocaleString()},00 `;
+  const num = Number(price);
+  if (isNaN(num)) return '0';
+  
+  // If it's a whole number, format without decimals
+  if (num % 1 === 0) {
+    return num.toLocaleString();
+  } else {
+    // If it has decimals, show up to 2 decimal places
+    return num.toLocaleString('en-US', { 
+      minimumFractionDigits: 0, 
+      maximumFractionDigits: 2 
+    });
+  }
 };
 
-// Function to parse formatted price back to number - using Math.floor for whole numbers
+// Function to parse formatted price back to number - supports both integers and decimals
 const parseFormattedPrice = (formattedPrice) => {
-  // Remove ",00 " and commas, then parse as number
-  const cleanValue = formattedPrice.replace(/,00\s*$/, '').replace(/,/g, '');
+  // Remove commas and parse as number
+  const cleanValue = formattedPrice.replace(/,/g, '');
   const parsed = parseFloat(cleanValue);
-  return isNaN(parsed) ? 0 : Math.floor(parsed);
+  return isNaN(parsed) ? 0 : parsed;
 };
 
 function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" }) {
@@ -41,8 +53,25 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
 
   const initialNumericValue = parseInitialValue(initialValue);
 
-  // Fixed increment/decrement value of 100
-  const incrementValue = 100;
+  // Dynamic increment/decrement based on starting price
+  const getIncrementValue = () => {
+    const startPrice = Number(startingPrice) || 0;
+    let increment;
+    
+    if (startPrice > 500000) {
+      // If starting price > 500,000 DA, use 0.5% (half of 1%) of starting price
+      increment = Math.floor(startPrice * 0.005);
+    } else if (startPrice > 0) {
+      // If starting price ≤ 500,000 DA, use 1% of starting price
+      increment = Math.floor(startPrice * 0.01);
+    } else {
+      // If no starting price, use default increment
+      increment = 100;
+    }
+    
+    // Ensure minimum increment of 1 to make buttons functional
+    return Math.max(1, increment);
+  };
 
   // Initialize state with the parsed numeric value
   const [state1, dispatch1] = useReducer(quantityReducer, {
@@ -57,41 +86,97 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
     setDisplayValue(formatPrice(state1.quantity));
   }, [state1.quantity]);
 
+  // Debug log to show increment value
+  useEffect(() => {
+    console.log('🔧 HandleQuantity initialized:', {
+      initialValue: initialValue,
+      initialNumericValue: initialNumericValue,
+      startingPrice: startingPrice,
+      incrementValue: getIncrementValue()
+    });
+  }, []);
+
   const increment1 = () => {
-    // Add 100 to current value
-    dispatch1({ type: "INCREMENT", payload: incrementValue });
+    // Add dynamic increment based on starting price
+    const incrementAmount = getIncrementValue();
+    console.log('🔼 Increment clicked:', {
+      currentValue: state1.quantity,
+      incrementAmount: incrementAmount,
+      newValue: state1.quantity + incrementAmount
+    });
+    dispatch1({ type: "INCREMENT", payload: incrementAmount });
   };
 
   const decrement1 = () => {
-    // Subtract 100 from current value, but don't go below 1
-    dispatch1({ type: "DECREMENT", payload: incrementValue });
+    // Subtract dynamic increment from current value, but don't go below 0
+    const incrementAmount = getIncrementValue();
+    const newValue = Math.max(0, state1.quantity - incrementAmount);
+    console.log('🔽 Decrement clicked:', {
+      currentValue: state1.quantity,
+      incrementAmount: incrementAmount,
+      newValue: newValue,
+      canDecrement: state1.quantity > 0
+    });
+    dispatch1({ type: "DECREMENT", payload: incrementAmount });
   };
 
   const handleInputChange1 = (e) => {
     const inputValue = e.target.value;
-    setDisplayValue(inputValue);
     
-    // Parse the formatted value back to a number
-    const numericValue = parseFormattedPrice(inputValue);
+    // Allow digits, dots, and commas (for thousands separator)
+    // Remove everything except digits, dots, and commas
+    const cleanValue = inputValue.replace(/[^\d.,]/g, '');
     
-    if (!isNaN(numericValue) && numericValue >= 0) {
-      dispatch1({ type: "SET", payload: numericValue });
+    // Handle multiple dots - only allow one dot
+    const dotCount = (cleanValue.match(/\./g) || []).length;
+    const processedValue = dotCount > 1 
+      ? cleanValue.replace(/\./g, '').replace(/(\d+)(\d{3})/, '$1.$2')
+      : cleanValue;
+    
+    // If the input is empty, allow it and set state to 0
+    if (processedValue === '') {
+      setDisplayValue('');
+      dispatch1({ type: "SET", payload: 0 });
+      return;
     }
+    
+    // Parse the value - support both integers and decimals
+    const numericValue = parseFormattedPrice(processedValue);
+    
+    // Update display with the processed value (preserve user's typing)
+    setDisplayValue(processedValue);
+    
+    // Update state with numeric value
+    dispatch1({ type: "SET", payload: numericValue });
   };
 
   const handleInputBlur = () => {
-    // Ensure the display value is properly formatted when user leaves the input
-    setDisplayValue(formatPrice(state1.quantity));
+    // If the input is empty or 0, keep it empty for better UX
+    if (state1.quantity === 0) {
+      setDisplayValue('');
+    } else {
+      // Ensure the display value is properly formatted when user leaves the input
+      setDisplayValue(formatPrice(state1.quantity));
+    }
+  };
+
+  const handleInputKeyDown = (e) => {
+    // No special handling needed since we removed ",00" protection
+    // Users can now freely edit the input
   };
 
   return (
     <div className="quantity-counter">
       <a
         className="quantity__minus"
-        style={{ cursor: "pointer" }}
-        onClick={decrement1}
+        style={{ cursor: "pointer", position: "relative" }}
+        onClick={(e) => {
+          e.preventDefault();
+          console.log('🔽 Minus button clicked!');
+          decrement1();
+        }}
         aria-label="Decrease quantity"
-        title={`Diminuer de ${formatPrice(incrementValue)}`}
+        title={`Diminuer de ${formatPrice(getIncrementValue())}`}
       >
         <svg 
           width="14" 
@@ -106,18 +191,24 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
       <input
         name="quantity"
         type="text"
+        inputMode="decimal"
         value={displayValue}
         onChange={handleInputChange1}
         onBlur={handleInputBlur}
+        onKeyDown={handleInputKeyDown}
         className="quantity__input"
         placeholder={placeholder || formatPrice(initialNumericValue)}
       />
       <a
         className="quantity__plus"
-        style={{ cursor: "pointer" }}
-        onClick={increment1}
+        style={{ cursor: "pointer", position: "relative" }}
+        onClick={(e) => {
+          e.preventDefault();
+          console.log('🔼 Plus button clicked!');
+          increment1();
+        }}
         aria-label="Increase quantity"
-        title={`Augmenter de ${formatPrice(incrementValue)}`}
+        title={`Augmenter de ${formatPrice(getIncrementValue())}`}
       >
         <svg 
           width="14" 

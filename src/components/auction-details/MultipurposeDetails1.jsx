@@ -15,7 +15,7 @@ import { AuctionsAPI } from "@/app/api/auctions";
 import { OfferAPI } from "@/app/api/offer";
 import { AutoBidAPI } from "@/app/api/auto-bid";
 import useAuth from "@/hooks/useAuth";
-import app from "@/config"; // Import the app config
+import app, { getSellerUrl } from "@/config"; // Import the app config
 import { calculateTimeRemaining } from "../live-auction/Home1LiveAuction";
 import { ReviewAPI } from "@/app/api/review"; // Import Review API
 import { CommentAPI } from "@/app/api/comment";
@@ -84,6 +84,7 @@ const MultipurposeDetails1 = () => {
   const [loadingAutoBid, setLoadingAutoBid] = useState(false); // State for loading auto bid
   const [hasExistingAutoBid, setHasExistingAutoBid] = useState(false); // State to track if user has existing auto-bid
   const [deletingAutoBid, setDeletingAutoBid] = useState(false); // State for deleting auto bid
+  const [showBidConfirmation, setShowBidConfirmation] = useState(false); // State for bid confirmation modal
 
   // Get auction ID from URL params or search params
   const routeId = params?.id;
@@ -463,14 +464,28 @@ const MultipurposeDetails1 = () => {
     safeOwner &&
     auth.user._id === (safeOwner._id || safeOwner);
 
-  // Handle bid submission
-  // Fixed handleBidSubmit function for MultipurposeDetails1.jsx
-const handleBidSubmit = async (e) => {
-  e.preventDefault();
+  // Function to show bid confirmation modal
+  const handleBidClick = (e) => {
+    e.preventDefault();
+    setShowBidConfirmation(true);
+  };
 
-  console.log(
-    "[MultipurposeDetails1] handleBidSubmit - isLogged:",
-    isLogged,
+  // Function to handle confirmed bid submission
+  const handleConfirmedBidSubmit = async () => {
+    setShowBidConfirmation(false);
+    await submitBid();
+  };
+
+  // Function to cancel bid submission
+  const handleCancelBidSubmit = () => {
+    setShowBidConfirmation(false);
+  };
+
+  // Actual bid submission logic (extracted from handleBidSubmit)
+  const submitBid = async () => {
+    console.log(
+      "[MultipurposeDetails1] submitBid - isLogged:",
+      isLogged,
     "auth.tokens:",
     auth.tokens,
     "auth.user:",
@@ -481,7 +496,7 @@ const handleBidSubmit = async (e) => {
     // Check if user is logged in
     if (!isLogged || !auth.tokens) {
       toast.error("Veuillez vous connecter pour placer une enchère");
-      router.push("/auth/login");
+      router.push(`${getSellerUrl()}login`);
       return;
     }
 
@@ -513,7 +528,13 @@ const handleBidSubmit = async (e) => {
     const numericBidAmount = parseFloat(cleanBidAmount);
     
     if (isNaN(numericBidAmount) || numericBidAmount <= 0) {
-      toast.error("Veuillez entrer un nombre valide pour le montant de l'enchère");
+      toast.error("Veuillez entrer un montant valide pour votre enchère");
+      return;
+    }
+    
+    // Check minimum bid amount
+    if (numericBidAmount < 1) {
+      toast.error("Le montant minimum pour une enchère est de 1 DA");
       return;
     }
 
@@ -685,7 +706,7 @@ const handleBidSubmit = async (e) => {
       // Check if user is logged in
       if (!isLogged || !auth.tokens) {
         toast.error("Veuillez vous connecter pour placer une enchère");
-        router.push("/auth/login");
+      router.push(`${getSellerUrl()}login`);
         return;
       }
 
@@ -822,7 +843,7 @@ const handleBidSubmit = async (e) => {
 
     if (!isLogged || !auth.tokens) {
       toast.error("Veuillez vous connecter pour soumettre un avis");
-      router.push("/auth/login");
+      router.push(`${getSellerUrl()}login`);
       return;
     }
 
@@ -863,7 +884,7 @@ const handleBidSubmit = async (e) => {
 
   // Function to format price with currency symbol - using Math.floor to ensure whole numbers
   const formatPrice = (price) => {
-    return `${Math.floor(Number(price)).toLocaleString()},00 `;
+    return `${Math.floor(Number(price)).toLocaleString()} `;
   };
 
   // Handle auto-bid for professional users
@@ -1112,7 +1133,21 @@ const handleBidSubmit = async (e) => {
                   <div className="main-image-container" style={{ position: 'relative' }}>
                     {showVideo && safeVideos.length > 0 ? (
                       <video
-                        src={`${app.route}${safeVideos[selectedVideoIndex]?.url}`}
+                        src={(() => {
+                          const videoUrl = safeVideos[selectedVideoIndex]?.url;
+                          if (videoUrl) {
+                            if (videoUrl.startsWith('http')) {
+                              return videoUrl;
+                            } else if (videoUrl.startsWith('/static/')) {
+                              return `${app.baseURL}${videoUrl.substring(1)}`;
+                            } else if (videoUrl.startsWith('/')) {
+                              return `${app.baseURL}${videoUrl.substring(1)}`;
+                            } else {
+                              return `${app.baseURL}${videoUrl}`;
+                            }
+                          }
+                          return '';
+                        })()}
                         controls
                         className="main-video"
                         crossOrigin="use-credentials"
@@ -1131,11 +1166,42 @@ const handleBidSubmit = async (e) => {
                       </video>
                     ) : (
                     <img
-                      src={
-                        safeThumbs.length > 0
-                          ? `${app.route}${safeThumbs[selectedImageIndex]?.url}`
-                          : DEFAULT_AUCTION_IMAGE
-                      }
+                      src={(() => {
+                        if (safeThumbs.length > 0) {
+                          const imageUrl = safeThumbs[selectedImageIndex]?.url;
+                          if (imageUrl) {
+                            // Handle different URL formats
+                            if (imageUrl.startsWith('http')) {
+                              return imageUrl; // Already a full URL
+                            } else if (imageUrl.startsWith('/static/')) {
+                              const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                              console.log('🎯 AUCTION DETAILS MAIN IMAGE:', {
+                                originalUrl: imageUrl,
+                                finalUrl: finalUrl,
+                                index: selectedImageIndex
+                              });
+                              return finalUrl;
+                            } else if (imageUrl.startsWith('/')) {
+                              const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                              console.log('🎯 AUCTION DETAILS MAIN IMAGE:', {
+                                originalUrl: imageUrl,
+                                finalUrl: finalUrl,
+                                index: selectedImageIndex
+                              });
+                              return finalUrl;
+                            } else {
+                              const finalUrl = `${app.baseURL}${imageUrl}`;
+                              console.log('🎯 AUCTION DETAILS MAIN IMAGE:', {
+                                originalUrl: imageUrl,
+                                finalUrl: finalUrl,
+                                index: selectedImageIndex
+                              });
+                              return finalUrl;
+                            }
+                          }
+                        }
+                        return DEFAULT_AUCTION_IMAGE;
+                      })()}
                       alt={safeTitle}
                       className="main-image"
                       onError={(e) => {
@@ -1210,7 +1276,39 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                             >
                               <img
-                                src={`${app.route}${thumb.url}`}
+                                src={(() => {
+                                  const imageUrl = thumb.url;
+                                  if (imageUrl) {
+                                    if (imageUrl.startsWith('http')) {
+                                      return imageUrl;
+                                    } else if (imageUrl.startsWith('/static/')) {
+                                      const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                      console.log('🎯 AUCTION DETAILS THUMBNAIL:', {
+                                        originalUrl: imageUrl,
+                                        finalUrl: finalUrl,
+                                        index: index
+                                      });
+                                      return finalUrl;
+                                    } else if (imageUrl.startsWith('/')) {
+                                      const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                      console.log('🎯 AUCTION DETAILS THUMBNAIL:', {
+                                        originalUrl: imageUrl,
+                                        finalUrl: finalUrl,
+                                        index: index
+                                      });
+                                      return finalUrl;
+                                    } else {
+                                      const finalUrl = `${app.baseURL}${imageUrl}`;
+                                      console.log('🎯 AUCTION DETAILS THUMBNAIL:', {
+                                        originalUrl: imageUrl,
+                                        finalUrl: finalUrl,
+                                        index: index
+                                      });
+                                      return finalUrl;
+                                    }
+                                  }
+                                  return DEFAULT_AUCTION_IMAGE;
+                                })()}
                               alt={`${safeTitle} - Image ${index + 1}`}
                                 onError={(e) => {
                                   e.target.onerror = null;
@@ -1250,7 +1348,21 @@ const handleBidSubmit = async (e) => {
                             style={{ position: 'relative' }}
                           >
                             <video
-                              src={`${app.route}${video.url}`}
+                              src={(() => {
+                                const videoUrl = video.url;
+                                if (videoUrl) {
+                                  if (videoUrl.startsWith('http')) {
+                                    return videoUrl;
+                                  } else if (videoUrl.startsWith('/static/')) {
+                                    return `${app.baseURL}${videoUrl.substring(1)}`;
+                                  } else if (videoUrl.startsWith('/')) {
+                                    return `${app.baseURL}${videoUrl.substring(1)}`;
+                                  } else {
+                                    return `${app.baseURL}${videoUrl}`;
+                                  }
+                                }
+                                return '';
+                              })()}
                               style={{
                                 width: '100%',
                                 height: '80px',
@@ -1482,6 +1594,33 @@ const handleBidSubmit = async (e) => {
                               </td>
                             </tr>
                             <tr>
+                              <td className="fw-bold">Quantité disponible</td>
+                              <td>
+                                <span style={{
+                                  color: '#0063b1',
+                                  fontWeight: '600',
+                                  fontSize: '16px'
+                                }}>
+                                  {auctionData?.quantity || "Non spécifiée"}
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="fw-bold">Prix total (Prix actuel × Quantité)</td>
+                              <td>
+                                <span style={{
+                                  color: '#28a745',
+                                  fontWeight: '700',
+                                  fontSize: '18px'
+                                }}>
+                                  {auctionData?.quantity && auctionData?.quantity !== "Non spécifiée" 
+                                    ? formatPrice(safeCurrentPrice * parseInt(auctionData.quantity))
+                                    : formatPrice(safeCurrentPrice)
+                                  }
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
                               <td className="fw-bold">Type d'enchère</td>
                               <td>{auctionData?.bidType || "PRODUCT"}</td>
                             </tr>
@@ -1498,7 +1637,29 @@ const handleBidSubmit = async (e) => {
                       </div>
 
                       <div className="bid-section">
-                        <p className="bid-label">Votre enchère</p>
+                        <p className="bid-label">Votre enchère DA </p>
+                        
+                        {/* Decimal Input Instruction */}
+                        <div style={{
+                          backgroundColor: "#e3f2fd",
+                          border: "1px solid #bbdefb",
+                          borderRadius: "8px",
+                          padding: "8px 12px",
+                          marginBottom: "12px",
+                          fontSize: "12px",
+                          color: "#1565c0",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                          </svg>
+                          <span>
+                            <strong>Note:</strong> Utilisez le point (.) pour les décimales, pas la virgule (,)
+                          </span>
+                        </div>
+                        
                         {isOwner && (
                           <div
                             style={{
@@ -1534,7 +1695,7 @@ const handleBidSubmit = async (e) => {
                           />
                           <button
                             className="bid-btn-modern"
-                            onClick={isOwner ? undefined : handleBidSubmit}
+                            onClick={isOwner ? undefined : handleBidClick}
                             disabled={isOwner}
                             style={{
                               opacity: isOwner ? 0.5 : 1,
@@ -2538,11 +2699,39 @@ const handleBidSubmit = async (e) => {
                                   }}
                                 >
                                   <img
-                                    src={
-                                      offer.user?.avatar?.url
-                                        ? `${app.route}${offer.user.avatar.url}`
-                                        : DEFAULT_USER_AVATAR
-                                    }
+                                    src={(() => {
+                                      if (offer.user?.avatar?.url) {
+                                        const imageUrl = offer.user.avatar.url;
+                                        if (imageUrl.startsWith('http')) {
+                                          return imageUrl;
+                                        } else if (imageUrl.startsWith('/static/')) {
+                                          const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                          console.log('🎯 USER AVATAR IMAGE:', {
+                                            originalUrl: imageUrl,
+                                            finalUrl: finalUrl,
+                                            userId: offer.user._id
+                                          });
+                                          return finalUrl;
+                                        } else if (imageUrl.startsWith('/')) {
+                                          const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                          console.log('🎯 USER AVATAR IMAGE:', {
+                                            originalUrl: imageUrl,
+                                            finalUrl: finalUrl,
+                                            userId: offer.user._id
+                                          });
+                                          return finalUrl;
+                                        } else {
+                                          const finalUrl = `${app.baseURL}${imageUrl}`;
+                                          console.log('🎯 USER AVATAR IMAGE:', {
+                                            originalUrl: imageUrl,
+                                            finalUrl: finalUrl,
+                                            userId: offer.user._id
+                                          });
+                                          return finalUrl;
+                                        }
+                                      }
+                                      return DEFAULT_USER_AVATAR;
+                                    })()}
                                     alt={offer.user?.firstName || "User"}
                                     style={{
                                       width: "45px",
@@ -2759,11 +2948,41 @@ const handleBidSubmit = async (e) => {
                                       overflow: "hidden",
                                     }}>
                                       <img
-                                        src={
-                                          auction.thumbs && auction.thumbs.length > 0
-                                            ? `${app.route}${auction.thumbs[0].url}`
-                                            : DEFAULT_AUCTION_IMAGE
-                                        }
+                                        src={(() => {
+                                          if (auction.thumbs && auction.thumbs.length > 0) {
+                                            const imageUrl = auction.thumbs[0].url;
+                                            if (imageUrl) {
+                                              if (imageUrl.startsWith('http')) {
+                                                return imageUrl;
+                                              } else if (imageUrl.startsWith('/static/')) {
+                                                const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                console.log('🎯 SIMILAR AUCTION IMAGE:', {
+                                                  originalUrl: imageUrl,
+                                                  finalUrl: finalUrl,
+                                                  auctionId: auction._id
+                                                });
+                                                return finalUrl;
+                                              } else if (imageUrl.startsWith('/')) {
+                                                const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+                                                console.log('🎯 SIMILAR AUCTION IMAGE:', {
+                                                  originalUrl: imageUrl,
+                                                  finalUrl: finalUrl,
+                                                  auctionId: auction._id
+                                                });
+                                                return finalUrl;
+                                              } else {
+                                                const finalUrl = `${app.baseURL}${imageUrl}`;
+                                                console.log('🎯 SIMILAR AUCTION IMAGE:', {
+                                                  originalUrl: imageUrl,
+                                                  finalUrl: finalUrl,
+                                                  auctionId: auction._id
+                                                });
+                                                return finalUrl;
+                                              }
+                                            }
+                                          }
+                                          return DEFAULT_AUCTION_IMAGE;
+                                        })()}
                                         alt={auction.title || auction.name || "Auction"}
                                         style={{
                                           width: "100%",
@@ -3007,6 +3226,105 @@ const handleBidSubmit = async (e) => {
                                         </div>
                                       </div>
 
+                                      {/* Quantity Section */}
+                                      <div style={{
+                                        background: hasAuctionEnded 
+                                          ? "#f8f8f8" 
+                                          : "linear-gradient(135deg, #e3f2fd, #f3e5f5)",
+                                        borderRadius: "12px",
+                                        padding: "12px",
+                                        marginBottom: "12px",
+                                        border: hasAuctionEnded 
+                                          ? "1px solid #e0e0e0" 
+                                          : "1px solid rgba(0, 99, 177, 0.1)",
+                                      }}>
+                                        <div style={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          gap: "8px",
+                                        }}>
+                                          <div style={{
+                                            width: "8px",
+                                            height: "8px",
+                                            borderRadius: "50%",
+                                            background: hasAuctionEnded ? "#888" : "#0063b1",
+                                            animation: hasAuctionEnded ? "none" : "pulse 2s infinite",
+                                          }}></div>
+                                          <span style={{
+                                            fontSize: "14px",
+                                            fontWeight: "600",
+                                            color: hasAuctionEnded ? "#888" : "#0063b1",
+                                          }}>
+                                            Quantité disponible
+                                          </span>
+                                        </div>
+                                        <div style={{ textAlign: "center", marginTop: "8px" }}>
+                                          <p style={{
+                                            fontSize: "18px",
+                                            fontWeight: "700",
+                                            margin: 0,
+                                            color: hasAuctionEnded ? "#888" : "#0063b1",
+                                          }}>
+                                            {auction.quantity || "Non spécifiée"}
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      {/* Total Price Section */}
+                                      <div style={{
+                                        background: hasAuctionEnded 
+                                          ? "#f8f8f8" 
+                                          : "linear-gradient(135deg, #e8f5e8, #f0f8f0)",
+                                        borderRadius: "12px",
+                                        padding: "12px",
+                                        marginBottom: "12px",
+                                        border: hasAuctionEnded 
+                                          ? "1px solid #e0e0e0" 
+                                          : "1px solid rgba(40, 167, 69, 0.2)",
+                                      }}>
+                                        <div style={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          gap: "8px",
+                                        }}>
+                                          <div style={{
+                                            width: "8px",
+                                            height: "8px",
+                                            borderRadius: "50%",
+                                            background: hasAuctionEnded ? "#888" : "#28a745",
+                                            animation: hasAuctionEnded ? "none" : "pulse 2s infinite",
+                                          }}></div>
+                                          <span style={{
+                                            fontSize: "14px",
+                                            fontWeight: "600",
+                                            color: hasAuctionEnded ? "#888" : "#28a745",
+                                          }}>
+                                            Prix total (Prix actuel × Quantité)
+                                          </span>
+                                        </div>
+                                        <div style={{ textAlign: "center", marginTop: "8px" }}>
+                                          <p style={{
+                                            fontSize: "20px",
+                                            fontWeight: "800",
+                                            margin: 0,
+                                            color: hasAuctionEnded ? "#888" : "#28a745",
+                                            background: hasAuctionEnded 
+                                              ? "#888" 
+                                              : "linear-gradient(90deg, #28a745, #20c997)",
+                                            WebkitBackgroundClip: "text",
+                                            backgroundClip: "text",
+                                            WebkitTextFillColor: hasAuctionEnded ? "#888" : "transparent",
+                                          }}>
+                                            {auction.quantity && auction.quantity !== "Non spécifiée" 
+                                              ? (Number(auction.currentPrice || auction.startingPrice || 0) * parseInt(auction.quantity)).toLocaleString() + " DA"
+                                              : Number(auction.currentPrice || auction.startingPrice || 0).toLocaleString() + " DA"
+                                            }
+                                          </p>
+                                        </div>
+                                      </div>
+
                                       {/* Separator Line after Price */}
                                       <div style={{
                                         width: "100%",
@@ -3219,6 +3537,251 @@ const handleBidSubmit = async (e) => {
           </div>
         </>
       )}
+
+      {/* Bid Confirmation Modal */}
+      {showBidConfirmation && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(5px)',
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '40px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+            animation: 'modalSlideIn 0.3s ease-out',
+            position: 'relative',
+          }}>
+            {/* Close button */}
+            <button
+              onClick={handleCancelBidSubmit}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                color: '#999',
+                cursor: 'pointer',
+                padding: '5px',
+                borderRadius: '50%',
+                width: '35px',
+                height: '35px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#f5f5f5';
+                e.target.style.color = '#666';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'none';
+                e.target.style.color = '#999';
+              }}
+            >
+              ×
+            </button>
+
+            {/* Modal Icon */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '20px',
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                background: 'linear-gradient(135deg, #0063b1, #00a3e0)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px',
+                animation: 'pulse 2s infinite',
+              }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '30px',
+            }}>
+              <h3 style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                color: '#333',
+                marginBottom: '15px',
+                lineHeight: '1.3',
+              }}>
+                Confirmer votre enchère
+              </h3>
+              
+              <p style={{
+                fontSize: '16px',
+                color: '#666',
+                lineHeight: '1.6',
+                marginBottom: '20px',
+              }}>
+                Êtes-vous sûr de vouloir placer cette enchère ?
+              </p>
+
+              {/* Bid Amount Display */}
+              <div style={{
+                background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '20px',
+                border: '1px solid #e9ecef',
+              }}>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#666',
+                  margin: '0 0 8px 0',
+                  fontWeight: '600',
+                }}>
+                  Montant de votre enchère
+                </p>
+                <div style={{
+                  fontSize: '28px',
+                  fontWeight: '700',
+                  color: '#0063b1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}>
+                  <span id="modal-bid-amount">
+                    {(() => {
+                      const bidInput = document.querySelector(".quantity__input");
+                      return bidInput ? bidInput.value : '0';
+                    })()}
+                  </span>
+                  <span style={{ fontSize: '16px', color: '#666' }}>DA</span>
+                </div>
+              </div>
+
+              <p style={{
+                fontSize: '14px',
+                color: '#999',
+                lineHeight: '1.5',
+                fontStyle: 'italic',
+              }}>
+                Une fois confirmée, votre enchère sera soumise et ne pourra plus être annulée.
+              </p>
+            </div>
+
+            {/* Modal Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '15px',
+              justifyContent: 'center',
+            }}>
+              <button
+                onClick={handleCancelBidSubmit}
+                style={{
+                  padding: '14px 28px',
+                  borderRadius: '12px',
+                  border: '2px solid #ddd',
+                  background: 'white',
+                  color: '#666',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  minWidth: '120px',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.borderColor = '#999';
+                  e.target.style.color = '#333';
+                  e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.borderColor = '#ddd';
+                  e.target.style.color = '#666';
+                  e.target.style.transform = 'translateY(0)';
+                }}
+              >
+                Annuler
+              </button>
+              
+              <button
+                onClick={handleConfirmedBidSubmit}
+                style={{
+                  padding: '14px 28px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(90deg, #0063b1, #00a3e0)',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  minWidth: '120px',
+                  boxShadow: '0 4px 12px rgba(0, 99, 177, 0.3)',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'linear-gradient(90deg, #00a3e0, #0063b1)';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 16px rgba(0, 99, 177, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'linear-gradient(90deg, #0063b1, #00a3e0)';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(0, 99, 177, 0.3)';
+                }}
+              >
+                Oui, Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Animation Styles */}
+      <style jsx>{`
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        
+        @keyframes pulse {
+          0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(0, 99, 177, 0.7);
+          }
+          70% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 10px rgba(0, 99, 177, 0);
+          }
+          100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(0, 99, 177, 0);
+          }
+        }
+      `}</style>
     </>
   );
 };

@@ -54,6 +54,67 @@ export function calculateTimeRemaining(endDate: string): Timer {
   };
 }
 
+// Helper function to get the correct tender image URL
+const getTenderImageUrl = (tender: Tender) => {
+  console.log('🎯 ===== TENDER IMAGE URL PROCESSING =====');
+  console.log('📋 Tender Info:', {
+    id: tender._id,
+    title: tender.title,
+    hasAttachments: !!tender.attachments,
+    attachmentsLength: tender.attachments?.length || 0
+  });
+  
+  if (tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url) {
+    const imageUrl = tender.attachments[0].url;
+    console.log('🔍 Original Image Data:', {
+      originalUrl: imageUrl,
+      appRoute: app.route,
+      appBaseURL: app.baseURL,
+      imageType: typeof imageUrl,
+      imageLength: imageUrl.length
+    });
+    
+    // Handle different URL formats
+    if (imageUrl.startsWith('http')) {
+      console.log('✅ CASE: Full URL detected');
+      console.log('🔗 Final URL:', imageUrl);
+      console.log('📝 Action: Using full URL as-is');
+      return imageUrl; // Already a full URL
+    } else if (imageUrl.startsWith('/')) {
+      if (imageUrl.startsWith('/static/')) {
+        console.log('✅ CASE: Static path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      } else {
+        console.log('✅ CASE: Root path detected');
+        const finalUrl = `${app.baseURL}${imageUrl.substring(1)}`;
+        console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl.substring(1)}`);
+        console.log('🔗 Final URL:', finalUrl);
+        console.log('📝 Action: Removed leading slash, combined with baseURL');
+        return finalUrl;
+      }
+    } else {
+      console.log('✅ CASE: Relative path detected');
+      const finalUrl = `${app.baseURL}${imageUrl}`;
+      console.log('🔧 Construction:', `${app.baseURL} + ${imageUrl}`);
+      console.log('🔗 Final URL:', finalUrl);
+      console.log('📝 Action: Combined with baseURL');
+      return finalUrl;
+    }
+  } else {
+    console.log('❌ CASE: No image data found');
+    console.log('🔍 Attachments data:', tender.attachments);
+    console.log('🔗 Fallback URL:', DEFAULT_TENDER_IMAGE);
+    console.log('📝 Action: Using default image');
+    return DEFAULT_TENDER_IMAGE;
+  }
+  
+  console.log('🎯 ===== END TENDER IMAGE URL PROCESSING =====\n');
+};
+
 const Home1LiveTenders = () => {
   const { t } = useTranslation();
   const { isLogged, auth } = useAuth();
@@ -62,23 +123,157 @@ const Home1LiveTenders = () => {
   const [error, setError] = useState<string | null>(null);
   const [timers, setTimers] = useState<{ [key: string]: Timer }>({});
   const [animatedCards, setAnimatedCards] = useState<number[]>([]);
+  const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({});
+  const [workingImageUrls, setWorkingImageUrls] = useState<{ [key: string]: string }>({});
+
+  // Test image URL accessibility
+  const testImageUrl = async (url: string) => {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      const isAccessible = response.ok;
+      console.log(`🔍 Tender image URL test for ${url}:`, {
+        status: response.status,
+        ok: isAccessible,
+        contentType: response.headers.get('content-type')
+      });
+      return isAccessible;
+    } catch (error) {
+      console.log(`❌ Tender image URL test failed for ${url}:`, error);
+      return false;
+    }
+  };
+
+  // Test multiple URLs and return the first working one
+  const findWorkingImageUrl = async (urls: string[]) => {
+    for (const url of urls) {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        if (response.ok) {
+          console.log(`✅ Found working tender image URL: ${url}`);
+          return url;
+        }
+      } catch (error) {
+        console.log(`❌ Tender URL failed: ${url}`);
+        continue;
+      }
+    }
+    console.log('❌ No working tender image URLs found');
+    return null;
+  };
+
+  // Generate all possible backend image URLs for a given image path
+  const generateBackendImageUrls = (imagePath: string) => {
+    if (!imagePath) return [];
+    
+    const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+    const baseURL = app.baseURL;
+    
+    return [
+      // Direct path with baseURL
+      `${baseURL}${cleanPath}`,
+      
+      // Common backend image paths
+      `${baseURL}uploads/${cleanPath}`,
+      `${baseURL}static/${cleanPath}`,
+      `${baseURL}public/${cleanPath}`,
+      `${baseURL}images/${cleanPath}`,
+      `${baseURL}assets/${cleanPath}`,
+      `${baseURL}media/${cleanPath}`,
+      `${baseURL}files/${cleanPath}`,
+      
+      // With original leading slash
+      `${baseURL}${imagePath}`,
+      
+      // Using route configuration if different from baseURL
+      app.route ? `${app.route}${cleanPath}` : null,
+      app.route ? `${app.route}${imagePath}` : null,
+    ].filter(Boolean); // Remove null values
+  };
+
+  // Handle image load errors
+  const handleImageError = async (tenderId: string, tender: Tender) => {
+    console.log('❌ Tender image load error for:', tenderId, tender);
+    
+    // Get all possible image URLs for this tender
+    const possibleImageSources = [
+      tender.attachments?.[0]?.url,
+      tender.attachments?.[0]?.fullUrl,
+      tender.image,
+      tender.thumbnail,
+      tender.photo,
+      tender.picture,
+      tender.icon,
+      tender.logo,
+      tender.coverImage,
+      tender.mainImage
+    ].filter(Boolean);
+    
+    // Generate all possible backend URLs for each image source
+    const allPossibleUrls = possibleImageSources.flatMap(imagePath => 
+      generateBackendImageUrls(imagePath as string)
+    ).filter(Boolean) as string[];
+    
+    console.log('🔍 All possible tender backend URLs to try:', allPossibleUrls);
+    
+    // Find the first working URL
+    const workingUrl = await findWorkingImageUrl(allPossibleUrls);
+    
+    if (workingUrl) {
+      console.log('🎉 Found working URL for tender:', tenderId, workingUrl);
+      // Cache the working URL
+      setWorkingImageUrls(prev => ({
+        ...prev,
+        [tenderId]: workingUrl
+      }));
+      // Clear the error state
+      setImageErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[tenderId];
+        return newErrors;
+      });
+    } else {
+      console.log('❌ No working URL found for tender:', tenderId);
+      setImageErrors(prev => ({
+        ...prev,
+        [tenderId]: true
+      }));
+    }
+  };
 
   // Fetch tenders
   useEffect(() => {
     const fetchTenders = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
         const data = await TendersAPI.getActiveTenders();
 
-        // Keep all tenders (including ended) and limit to 8 for display
-        const tendersData = (data as any).data || data;
-        const limitedTenders = (tendersData || []).slice(0, 8);
-
+        // Process data based on response structure
+        let tendersData = [];
+        
+        if (data) {
+          if (Array.isArray(data)) {
+            tendersData = data;
+          } else if (data.data && Array.isArray(data.data)) {
+            tendersData = data.data;
+          } else if (data.success && data.data && Array.isArray(data.data)) {
+            tendersData = data.data;
+          } else {
+            tendersData = [];
+          }
+        } else {
+          tendersData = [];
+        }
+        
+        // Limit to 8 for display
+        const limitedTenders = tendersData.slice(0, 8);
         setLiveTenders(limitedTenders);
         setError(null);
       } catch (err) {
         console.error("Error fetching tenders:", err);
         setError("Failed to load tenders");
+        setLiveTenders([]);
       } finally {
         setLoading(false);
       }
@@ -223,8 +418,11 @@ const Home1LiveTenders = () => {
               borderRadius: '12px',
               padding: '20px',
               color: '#856404',
+              maxWidth: '600px',
+              margin: '0 auto',
             }}>
-              <h3>{error}</h3>
+              <h3>❌ Erreur de chargement des appels d'offres</h3>
+              <p>{error}</p>
             </div>
           </div>
         </div>
@@ -243,6 +441,70 @@ const Home1LiveTenders = () => {
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        /* Mobile responsiveness fixes */
+        @media (max-width: 768px) {
+          .modern-tenders-section {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            padding: 40px 16px !important;
+            transform: none !important;
+            transition: none !important;
+            position: relative !important;
+            z-index: 10 !important;
+            min-height: 200px !important;
+          }
+          
+          .section-header {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+          }
+          
+          .tender-carousel-container {
+            padding: 0 16px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          
+          .swiper {
+            padding: 0 16px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+
+          /* Force all tender content to be visible */
+          .tender-card, .swiper-slide, .tender-item {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          
+          /* Ensure empty state is visible on mobile */
+          .empty-state-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            margin: 20px 0 !important;
+          }
+          
+          /* Ensure view all button is visible on mobile */
+          .view-all-button-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            margin: 30px 0 !important;
           }
         }
 
@@ -323,12 +585,8 @@ const Home1LiveTenders = () => {
             <h2 style={{
               fontSize: 'clamp(2rem, 4vw, 3rem)',
               fontWeight: '800',
-              color: '#222',
+              color: '#27F5CC',
               marginBottom: '16px',
-              background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
             }}>
               Appels d'Offres en Cours
             </h2>
@@ -341,9 +599,10 @@ const Home1LiveTenders = () => {
             }}>
               Soumettez vos offres et remportez des contrats intéressants
             </p>
+            
           </div>
 
-          {/* Tenders Content */}
+          {/* Tenders Content - Always show on mobile, even with no data */}
           {liveTenders.length > 0 ? (
             <div className="tender-carousel-container" style={{ position: 'relative' }}>
               <Swiper
@@ -390,14 +649,25 @@ const Home1LiveTenders = () => {
                           position: 'relative',
                           height: 'clamp(160px, 25vw, 200px)',
                           overflow: 'hidden',
-                          background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
+                          background: 'linear-gradient(135deg, #27F5CC, #00D4AA)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}>
                           {tender.attachments && tender.attachments.length > 0 && tender.attachments[0].url ? (
                             <img
-                              src={`${app.route}${tender.attachments[0].url}`}
+                              src={(() => {
+                                // Check if we have a working cached URL first
+                                if (workingImageUrls[tender._id]) {
+                                  console.log(`🎯 Using cached working URL for tender ${tender.title}:`, workingImageUrls[tender._id]);
+                                  return workingImageUrls[tender._id];
+                                }
+                                
+                                const imageUrl = imageErrors[tender._id] ? DEFAULT_TENDER_IMAGE : getTenderImageUrl(tender);
+                                console.log(`🎯 Final tender image src for ${tender.title}:`, imageUrl);
+                                console.log(`🎯 Is this a backend image?`, imageUrl.includes(app.baseURL));
+                                return imageUrl;
+                              })()}
                               alt={tender.title || 'Tender'}
                               style={{
                                 width: '100%',
@@ -405,10 +675,35 @@ const Home1LiveTenders = () => {
                                 objectFit: 'cover',
                                 transition: 'transform 0.4s ease',
                               }}
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
+                              onLoad={(e) => {
+                                const imageUrl = getTenderImageUrl(tender);
+                                console.log('✅ ===== TENDER IMAGE LOAD SUCCESS =====');
+                                console.log('🎉 Successfully loaded tender image:', imageUrl);
+                                console.log('🎉 Image element src:', (e.target as HTMLImageElement).src);
+                                console.log('🎉 Image dimensions:', (e.target as HTMLImageElement).naturalWidth, 'x', (e.target as HTMLImageElement).naturalHeight);
+                                console.log('📋 Tender Info:', {
+                                  id: tender._id,
+                                  title: tender.title
+                                });
+                                console.log('🎯 Is this a backend image?', imageUrl.includes(app.baseURL));
+                                console.log('✅ ===== END TENDER IMAGE LOAD SUCCESS =====');
                               }}
+                              onError={(e) => {
+                                console.log('❌ ===== TENDER IMAGE LOAD ERROR =====');
+                                console.log('❌ Tender image failed to load:', tender.title);
+                                console.log('❌ Failed URL:', (e.target as HTMLImageElement).src);
+                                console.log('❌ Tender ID:', tender._id);
+                                
+                                if ((e.target as HTMLImageElement).src !== DEFAULT_TENDER_IMAGE) {
+                                  console.log('🔄 Switching to fallback image...');
+                                  (e.target as HTMLImageElement).src = DEFAULT_TENDER_IMAGE;
+                                } else {
+                                  console.log('❌ Fallback image also failed');
+                                  handleImageError(tender._id, tender);
+                                }
+                                console.log('❌ ===== END TENDER IMAGE LOAD ERROR =====');
+                              }}
+                              loading="lazy"
                             />
                           ) : (
                             <div style={{
@@ -427,7 +722,7 @@ const Home1LiveTenders = () => {
                             right: '10px',
                             background: isEnded
                               ? 'rgba(0,0,0,0.55)'
-                              : (isUrgent ? 'linear-gradient(45deg, #ff4444, #ff6666)' : 'linear-gradient(45deg, #8b5cf6, #a855f7)'),
+                              : (isUrgent ? 'linear-gradient(45deg, #ff4444, #ff6666)' : 'linear-gradient(45deg, #27F5CC, #00D4AA)'),
                             color: 'white',
                             padding: '8px 12px',
                             borderRadius: '20px',
@@ -507,14 +802,31 @@ const Home1LiveTenders = () => {
                             gap: '12px',
                             marginBottom: '16px',
                           }}>
-                            <div>
+                            <div style={{
+                              background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                              borderRadius: '12px',
+                              padding: '12px',
+                              border: '1px solid #e9ecef',
+                              borderLeft: '4px solid #27F5CC',
+                              position: 'relative',
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                right: 0,
+                                width: '30px',
+                                height: '30px',
+                                background: 'linear-gradient(45deg, rgba(39, 245, 204, 0.1), rgba(0, 212, 170, 0.1))',
+                                borderRadius: '0 12px 0 100%',
+                              }}></div>
                               <p style={{
                                 fontSize: '12px',
                                 color: '#666',
                                 margin: '0 0 4px 0',
                                 fontWeight: '600',
                               }}>
-                                Localisation
+                                📍 Localisation
                               </p>
                               <p style={{
                                 fontSize: '14px',
@@ -529,24 +841,41 @@ const Home1LiveTenders = () => {
                               </p>
                             </div>
 
-                              <div>
-                                <p style={{
-                                  fontSize: '12px',
-                                  color: '#666',
-                                  margin: '0 0 4px 0',
+                            <div style={{
+                              background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                              borderRadius: '12px',
+                              padding: '12px',
+                              border: '1px solid #e9ecef',
+                              borderLeft: '4px solid #27F5CC',
+                              position: 'relative',
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                right: 0,
+                                width: '30px',
+                                height: '30px',
+                                background: 'linear-gradient(45deg, rgba(39, 245, 204, 0.1), rgba(0, 212, 170, 0.1))',
+                                borderRadius: '0 12px 0 100%',
+                              }}></div>
+                              <p style={{
+                                fontSize: '12px',
+                                color: '#666',
+                                margin: '0 0 4px 0',
                                 fontWeight: '600',
-                                }}>
-                                Quantité
-                                </p>
-                                <p style={{
+                              }}>
+                                📦 Quantité
+                              </p>
+                              <p style={{
                                 fontSize: '14px',
                                 color: '#333',
-                                  margin: 0,
+                                margin: 0,
                                 fontWeight: '500',
-                                }}>
+                              }}>
                                 {tender.quantity || 'Non spécifiée'}
-                                </p>
-                              </div>
+                              </p>
+                            </div>
                           </div>
 
                           {/* Description */}
@@ -596,13 +925,13 @@ const Home1LiveTenders = () => {
                                 width: '8px',
                                 height: '8px',
                                 borderRadius: '50%',
-                                background: '#8b5cf6',
+                                background: '#27F5CC',
                                 animation: 'pulse 2s infinite',
                               }}></div>
                               <span style={{
                                 fontSize: '14px',
                                 fontWeight: '600',
-                                color: '#8b5cf6',
+                                color: '#27F5CC',
                               }}>
                                 {((tender as any).participantsCount || 0)} participant{(((tender as any).participantsCount || 0) !== 1) ? 's' : ''}
                               </span>
@@ -656,28 +985,28 @@ const Home1LiveTenders = () => {
                               gap: '8px',
                               width: '100%',
                               padding: '12px 20px',
-                              background: isEnded ? '#c7c7c7' : 'linear-gradient(90deg, #8b5cf6, #a855f7)',
+                              background: isEnded ? '#c7c7c7' : 'linear-gradient(90deg, #27F5CC, #00D4AA)',
                               color: 'white',
                               textDecoration: 'none',
                               borderRadius: '25px',
                               fontWeight: '600',
                               fontSize: '14px',
                               transition: 'all 0.3s ease',
-                              boxShadow: isEnded ? 'none' : '0 4px 12px rgba(139, 92, 246, 0.3)',
+                              boxShadow: isEnded ? 'none' : '0 4px 12px rgba(39, 245, 204, 0.3)',
                               pointerEvents: isEnded ? 'none' : 'auto'
                             }}
                             onMouseEnter={(e) => {
                               if (!isEnded) {
-                                e.currentTarget.style.background = 'linear-gradient(90deg, #a855f7, #8b5cf6)';
+                                e.currentTarget.style.background = 'linear-gradient(90deg, #00D4AA, #27F5CC)';
                                 e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = '0 8px 20px rgba(139, 92, 246, 0.4)';
+                                e.currentTarget.style.boxShadow = '0 8px 20px rgba(39, 245, 204, 0.4)';
                               }
                             }}
                             onMouseLeave={(e) => {
                               if (!isEnded) {
-                                e.currentTarget.style.background = 'linear-gradient(90deg, #8b5cf6, #a855f7)';
+                                e.currentTarget.style.background = 'linear-gradient(90deg, #27F5CC, #00D4AA)';
                                 e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(39, 245, 204, 0.3)';
                               }
                             }}
                           >
@@ -778,16 +1107,24 @@ const Home1LiveTenders = () => {
               }}></div>
             </div>
           ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '60px 20px',
-              background: 'white',
-              borderRadius: '20px',
-              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)',
-              opacity: 0,
-              transform: 'translateY(30px)',
-              animation: 'fadeInUp 0.8s ease-out forwards',
-            }}>
+            <div 
+              className="empty-state-container"
+              style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                background: 'white',
+                borderRadius: '20px',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)',
+                opacity: 0,
+                transform: 'translateY(30px)',
+                animation: 'fadeInUp 0.8s ease-out forwards',
+                margin: '20px 0',
+                minHeight: '200px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <div style={{
                 fontSize: '48px',
                 marginBottom: '20px',
@@ -798,7 +1135,7 @@ const Home1LiveTenders = () => {
                 color: '#333',
                 marginBottom: '12px',
               }}>
-                Aucun appel d'offres actif
+                📋 Aucun appel d'offres actif
               </h3>
               <p style={{
                 fontSize: '16px',
@@ -810,14 +1147,16 @@ const Home1LiveTenders = () => {
             </div>
           )}
 
-          {/* View All Button */}
-          <div style={{
-            textAlign: 'center',
-            marginTop: '50px',
-            opacity: 0,
-            transform: 'translateY(30px)',
-            animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
-          }}>
+          {/* View All Button - Always visible on mobile */}
+          <div 
+            className="view-all-button-container"
+            style={{
+              textAlign: 'center',
+              marginTop: '50px',
+              opacity: 0,
+              transform: 'translateY(30px)',
+              animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
+            }}>
             <Link
               href="/tender-sidebar"
               style={{
@@ -825,24 +1164,24 @@ const Home1LiveTenders = () => {
                 alignItems: 'center',
                 gap: '10px',
                 padding: '16px 32px',
-                background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
+                background: 'linear-gradient(90deg, #27F5CC, #00D4AA)',
                 color: 'white',
                 textDecoration: 'none',
                 borderRadius: '50px',
                 fontWeight: '600',
                 fontSize: '16px',
-                boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)',
+                boxShadow: '0 8px 25px rgba(39, 245, 204, 0.3)',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(90deg, #a855f7, #8b5cf6)';
+                e.currentTarget.style.background = 'linear-gradient(90deg, #00D4AA, #27F5CC)';
                 e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(139, 92, 246, 0.4)';
+                e.currentTarget.style.boxShadow = '0 12px 30px rgba(39, 245, 204, 0.4)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(90deg, #8b5cf6, #a855f7)';
+                e.currentTarget.style.background = 'linear-gradient(90deg, #27F5CC, #00D4AA)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.3)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(39, 245, 204, 0.3)';
               }}
             >
               Voir tous les appels d'offres
@@ -858,3 +1197,4 @@ const Home1LiveTenders = () => {
 };
 
 export default Home1LiveTenders;
+

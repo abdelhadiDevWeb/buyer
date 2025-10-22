@@ -46,9 +46,10 @@ interface AvatarData {
     filename?: string;
 }
 
-import app from '@/config';
+import app, { getSellerUrl } from '@/config';
 
 const API_BASE_URL = app.baseURL;
+const STATIC_URL = app.route;
 
 function ProfilePage() {
     const { t } = useTranslation();
@@ -94,15 +95,26 @@ function ProfilePage() {
 
     const getAvatarUrl = (avatar: AvatarData | string): string => {
         if (typeof avatar === 'string') {
-            return avatar.startsWith('http') ? avatar : `${API_BASE_URL}/${avatar}`;
+            // Handle string avatar (direct URL or path)
+            if (avatar.startsWith('http')) {
+                // Full URL - replace localhost with production
+                return avatar.replace('http://localhost:3000', 'https://api.mazad.click');
+            } else {
+                // Relative path - prepend static URL
+                return `${STATIC_URL}${avatar}`;
+            }
         }
 
         if (avatar?.fullUrl) {
-            return avatar.fullUrl;
+            return avatar.fullUrl.replace('http://localhost:3000', 'https://api.mazad.click');
         }
 
         if (avatar?.url) {
-            return avatar.url.startsWith('http') ? avatar.url : `${API_BASE_URL}/${avatar.url}`;
+            if (avatar.url.startsWith('http')) {
+                return avatar.url.replace('http://localhost:3000', 'https://api.mazad.click');
+            } else {
+                return `${STATIC_URL}${avatar.url}`;
+            }
         }
 
         return '/assets/images/avatar.jpg';
@@ -195,7 +207,7 @@ function ProfilePage() {
             if (error.response?.status === 401) {
                 enqueueSnackbar('Session expired', { variant: 'error' });
                 set({ tokens: undefined, user: undefined });
-                router.push('/auth/login');
+                router.push(`${getSellerUrl()}login`);
             } else {
                 const errorMessage = error.response?.data?.message || error.message || 'Failed to update profile';
                 enqueueSnackbar(errorMessage, { variant: "error" });
@@ -242,7 +254,7 @@ function ProfilePage() {
             if (error.response?.status === 401) {
                 enqueueSnackbar(t("sessionExpired"), { variant: 'error' });
                 set({ tokens: undefined, user: undefined });
-                router.push('/auth/login');
+                router.push(`${getSellerUrl()}login`);
             } else {
                 const errorMessage = error.message || t("failedToUpdatePassword");
                 enqueueSnackbar(errorMessage, { variant: "error" });
@@ -345,11 +357,27 @@ function ProfilePage() {
         router.push("/become-reseller");
     };
 
-    const avatarSrc = auth.user && auth.user.avatar
-        ? `${getAvatarUrl(auth.user.avatar)}?v=${avatarKey}`
-        : auth.user && auth.user.photoURL && auth.user.photoURL.trim() !== ""
-            ? `${getAvatarUrl({ url: auth.user.photoURL })}?v=${avatarKey}`
-            : "/assets/images/avatar.jpg";
+    // Construct avatar source with multiple fallback options
+    const getAvatarSrc = () => {
+        if (!auth.user) return "/assets/images/avatar.jpg";
+        
+        // Priority 1: photoURL (direct from backend)
+        if (auth.user.photoURL && auth.user.photoURL.trim() !== "") {
+            const cleanUrl = auth.user.photoURL.replace('http://localhost:3000', 'https://api.mazad.click');
+            return `${cleanUrl}?v=${avatarKey}`;
+        }
+        
+        // Priority 2: avatar object
+        if (auth.user.avatar) {
+            const avatarUrl = getAvatarUrl(auth.user.avatar);
+            return `${avatarUrl}?v=${avatarKey}`;
+        }
+        
+        // Priority 3: fallback
+        return "/assets/images/avatar.jpg";
+    };
+    
+    const avatarSrc = getAvatarSrc();
 
     // Show login prompt if not logged in
     if (isReady && !isLogged) {
@@ -358,7 +386,7 @@ function ProfilePage() {
                 <div className="login-prompt">
                     <h2>Authentication Required</h2>
                     <p>Please log in to access your profile.</p>
-                    <button onClick={() => router.push('/auth/login')}>Go to Login</button>
+                    <button onClick={() => router.push(`${getSellerUrl()}login`)}>Go to Login</button>
                 </div>
             </div>
         );
@@ -438,10 +466,37 @@ function ProfilePage() {
                                                 key={avatarKey}
                                                 src={avatarSrc}
                                                 alt="Profile"
+                                                style={{ 
+                                                    width: '100%', 
+                                                    height: '100%', 
+                                                    objectFit: 'cover',
+                                                    borderRadius: '50%'
+                                                }}
                                                 onError={(e) => {
-                                                    console.log('❌ Avatar image failed to load, using fallback');
-                                                    e.currentTarget.onerror = null;
-                                                    e.currentTarget.src = "/assets/images/avatar.jpg";
+                                                    const target = e.currentTarget;
+                                                    const attemptedUrl = target.src;
+                                                    
+                                                    // Try alternative URL constructions
+                                                    if (attemptedUrl.includes('api.mazad.click') && auth.user?.photoURL) {
+                                                        // Try without the cache buster
+                                                        const baseUrl = attemptedUrl.split('?')[0];
+                                                        target.src = baseUrl;
+                                                        return;
+                                                    }
+                                                    
+                                                    // Try static route if current attempt failed
+                                                    if (auth.user?.photoURL && !attemptedUrl.includes('static')) {
+                                                        const staticUrl = `https://api.mazad.click/static/${auth.user.photoURL.split('/').pop()}`;
+                                                        target.src = staticUrl;
+                                                        return;
+                                                    }
+                                                    
+                                                    // Final fallback
+                                                    target.onerror = null;
+                                                    target.src = "/assets/images/avatar.jpg";
+                                                }}
+                                                onLoad={() => {
+                                                    // Avatar loaded successfully
                                                 }}
                                                 whileHover={{ scale: 1.1 }}
                                                 transition={{ duration: 0.3 }}
@@ -499,6 +554,73 @@ function ProfilePage() {
                                         >
                                             {auth.user?.email}
                                         </motion.p>
+
+                                        {/* Professional and Verified Badges */}
+                                        <motion.div
+                                            className="user-badges-container"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.5, delay: 1.3 }}
+                                            style={{
+                                                display: 'flex',
+                                                gap: '8px',
+                                                marginTop: '8px',
+                                                flexWrap: 'wrap',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            {/* Professional Badge */}
+                                            {auth.user?.type === "PROFESSIONAL" && (
+                                                <motion.div
+                                                    className="user-badge professional"
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ duration: 0.3, delay: 1.4 }}
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        padding: '4px 8px',
+                                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                        color: 'white',
+                                                        borderRadius: '12px',
+                                                        fontSize: '12px',
+                                                        fontWeight: '600',
+                                                        boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                                                        border: '1px solid rgba(255, 255, 255, 0.2)'
+                                                    }}
+                                                >
+                                                    <i className="bi bi-star-fill" style={{ fontSize: '10px' }}></i>
+                                                    <span>PRO</span>
+                                                </motion.div>
+                                            )}
+
+                                            {/* Verified Badge */}
+                                            {(auth.user as any)?.isVerified && (
+                                                <motion.div
+                                                    className="user-badge verified"
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ duration: 0.3, delay: 1.5 }}
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        padding: '4px 8px',
+                                                        background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                                                        color: 'white',
+                                                        borderRadius: '12px',
+                                                        fontSize: '12px',
+                                                        fontWeight: '600',
+                                                        boxShadow: '0 2px 8px rgba(17, 153, 142, 0.3)',
+                                                        border: '1px solid rgba(255, 255, 255, 0.2)'
+                                                    }}
+                                                >
+                                                    <i className="bi bi-check-circle-fill" style={{ fontSize: '10px' }}></i>
+                                                    <span>VERIFIED</span>
+                                                </motion.div>
+                                            )}
+                                        </motion.div>
 
                                         {/* Modern Star Rating Display */}
                                         <motion.div
@@ -743,7 +865,7 @@ function ProfilePage() {
                                         </motion.div>
 
                                         {/* User Type Badge */}
-                                        {identityStatus === "WAITING" && (
+                                        {/* {identityStatus === "WAITING" && (
                                             <motion.div
                                                 className="user-type-badge waiting"
                                                 initial={{ opacity: 0, scale: 0.8 }}
@@ -753,7 +875,7 @@ function ProfilePage() {
                                                 <i className="bi bi-clock"></i>
                                                 <span>Under review</span>
                                             </motion.div>
-                                        )}
+                                        )} */}
                                     </div>
                                 </div>
                             </motion.div>
@@ -763,14 +885,14 @@ function ProfilePage() {
                     {/* Main Content Grid */}
                     <div className="modern-content-grid">
                         {/* Reseller Status Cards Section */}
-                        <motion.div
+                        {/* <motion.div
                             className="modern-reseller-section"
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 1.0 }}
                         >
                             {/* Case 1: User is already a RESELLER */}
-                            {auth.user?.type === "RESELLER" && (
+                            {/* {auth.user?.type === "RESELLER" && (
                                 <motion.div
                                     className="modern-status-card reseller-active"
                                     whileHover={{
@@ -802,10 +924,10 @@ function ProfilePage() {
                                         </div>
                                     </div>
                                 </motion.div>
-                            )}
+                            )} */}
 
                             {/* Case 2: User has identity but is NOT RESELLER - Wait for support */}
-                            {auth.user?.type !== "RESELLER" && auth.user?.isHasIdentity && (
+                            {/* {auth.user?.type !== "RESELLER" && auth.user?.isHasIdentity && (
                                 <motion.div
                                     className="modern-status-card pending"
                                     whileHover={{
@@ -847,10 +969,10 @@ function ProfilePage() {
                                         </div>
                                     </div>
                                 </motion.div>
-                            )}
+                            )} */}
 
                             {/* Case 3: User does NOT have identity and is NOT RESELLER - Show become reseller button */}
-                            {auth.user?.type !== "RESELLER" && !auth.user?.isHasIdentity && !isLoadingIdentity && (
+                            {/* {auth.user?.type !== "RESELLER" && !auth.user?.isHasIdentity && !isLoadingIdentity && (
                                 <motion.div
                                     className="modern-status-card action-needed"
                                     whileHover={{
@@ -895,8 +1017,8 @@ function ProfilePage() {
                                         />
                                     </motion.button>
                                 </motion.div>
-                            )}
-                        </motion.div>
+                            )} */}
+                        {/* </motion.div> */}
 
                         {/* Profile Tabs Section */}
                         <motion.div

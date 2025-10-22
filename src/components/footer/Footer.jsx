@@ -93,9 +93,34 @@ const Footer = () => {
           .footer-main-grid {
             grid-template-columns: 1fr;
             gap: 30px;
+            padding: 0 16px;
           }
           .footer-logo-section {
             grid-column: span 1;
+            align-items: center;
+            text-align: center;
+          }
+          .footer-logo-section > div {
+            align-self: center !important;
+          }
+          .footer-logo-section img {
+            height: 60px !important;
+            width: 140px !important;
+          }
+          .footer-logo-section p {
+            max-width: 100% !important;
+            text-align: center;
+          }
+        }
+        
+        @media (max-width: 375px) {
+          .footer-main-grid {
+            gap: 24px;
+            padding: 0 12px;
+          }
+          .footer-logo-section img {
+            height: 50px !important;
+            width: 120px !important;
           }
         }
       `}</style>
@@ -118,21 +143,40 @@ const Footer = () => {
             alignItems: 'flex-start',
             justifyContent: 'flex-start',
             paddingTop: '0',
-            marginTop: '-40px'
+            marginTop: '0'
           }}>
-            <img 
-              src="/assets/img/logo.png" 
-              alt="Mazad.Click Logo" 
-              style={{ 
-                height: '160px', 
-                width: 'auto',
-                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.2))',
-                marginBottom: '25px',
-                marginTop: '0',
-                alignSelf: 'flex-start',
-                maxWidth: '100%'
-              }} 
-            />
+            <Link href="/" style={{ 
+              display: 'inline-block',
+              marginBottom: '25px',
+              transition: 'transform 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-3px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            >
+              <img 
+                src="/assets/img/logo.png" 
+                alt="Mazad.Click Logo" 
+                style={{ 
+                  height: '80px', 
+                  width: '190px',
+                  display: 'block',
+                  objectFit: 'contain',
+                  objectPosition: 'center center',
+                  filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1))',
+                  transition: 'filter 0.3s ease'
+                }} 
+                onMouseOver={(e) => {
+                  e.currentTarget.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15))';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.filter = 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1))';
+                }}
+              />
+            </Link>
             <p style={{ 
               color: '#666', 
               fontSize: '16px', 
@@ -366,30 +410,32 @@ const Footer = () => {
       <div className="copyright-section container" style={{ 
         padding: '20px 0',
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: '15px'
       }}>
         <div style={{ 
-          fontSize: '14px', 
+          fontSize: 'clamp(12px, 3vw, 14px)', 
           color: 'var(--text-secondary, #666)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          flexWrap: 'wrap'
+          textAlign: 'center',
+          lineHeight: '1.4',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
         }}>
           ©2024 <Link href="/" style={{ 
             color: 'var(--primary-color, #0063b1)', 
             textDecoration: 'none',
-            fontWeight: '600'
+            fontWeight: '600',
+            display: 'inline'
           }}>MazadClick</Link>
-          <span style={{ color: 'var(--text-muted, #999)' }}>• {t('footer.copyright')}</span>
-          <span style={{ color: 'var(--text-muted, #999)' }}>• {t('footer.createdBy')}</span>
+          <span style={{ color: 'var(--text-muted, #999)' }}> • Tous droits réservés • Créé par </span>
           <Link href="https://noteasy-dz.com/" target="_blank" style={{ 
             color: 'var(--primary-color, #0063b1)', 
             textDecoration: 'none',
-            fontWeight: '600'
+            fontWeight: '600',
+            display: 'inline'
           }}>NotEasy</Link>
         </div>
         <div>
@@ -431,3 +477,5 @@ const Footer = () => {
 }
 
 export default Footer
+
+

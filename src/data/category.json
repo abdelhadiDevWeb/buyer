@@ -6,7 +6,8 @@
             "name": "Automotive",
             "item": "45,533",
             "image": "/assets/img/home1/category-img1.jpg",
-            "car_type": "car"
+            "car_type": "car",
+            "description": "Discover premium vehicles, classic cars, motorcycles, and automotive accessories from verified sellers worldwide."
         }
         ,
         {
@@ -14,7 +15,8 @@
             "name": "Antiques",
             "item": "45,680",
             "image": "/assets/img/home1/category-img2.jpg",
-            "car_type": "car"
+            "car_type": "car",
+            "description": "Explore rare collectibles, vintage furniture, historical artifacts, and timeless treasures from around the globe."
         }
         ,
         {
@@ -22,7 +24,8 @@
             "name": "Digital Art",
             "item": "45,680",
             "image": "/assets/img/home1/category-img3.jpg",
-            "car_type": "car"
+            "car_type": "car",
+            "description": "Browse unique digital artworks, NFTs, creative designs, and modern digital masterpieces from talented artists."
         }
         ,
         {
@@ -30,7 +33,8 @@
             "name": "Books&Comic",
             "item": "45,680",
             "image": "/assets/img/home1/category-img4.jpg",
-            "car_type": "car"
+            "car_type": "car",
+            "description": "Find rare books, first editions, vintage comics, graphic novels, and literary treasures for collectors."
         }
         ,
         {
@@ -38,7 +42,8 @@
             "name": "Old Coin",
             "item": "45,680",
             "image": "/assets/img/home1/category-img5.jpg",
-            "car_type": "car"
+            "car_type": "car",
+            "description": "Discover rare coins, ancient currency, commemorative medals, and numismatic treasures from history."
         }
         ,
         {
@@ -46,7 +51,8 @@
             "name": "Gadget",
             "item": "45,680",
             "image": "/assets/img/home1/category-img6.jpg",
-            "car_type": "car"
+            "car_type": "car",
+            "description": "Explore cutting-edge technology, smart devices, electronic gadgets, and innovative tech solutions."
         }
         ,
         {
@@ -54,7 +60,8 @@
             "name": "Jewelry",
             "item": "45,680",
             "image": "/assets/img/home1/category-img7.jpg",
-            "car_type": "car"
+            "car_type": "car",
+            "description": "Find exquisite jewelry, precious gems, luxury watches, and fine accessories from renowned designers."
         }
         ,
         {
@@ -62,7 +69,8 @@
             "name": "Real Estate",
             "item": "45,680",
             "image": "/assets/img/home1/category-img8.jpg",
-            "car_type": "car"
+            "car_type": "car",
+            "description": "Browse premium properties, commercial real estate, luxury homes, and investment opportunities worldwide."
         }
         ,
         {
@@ -70,7 +78,8 @@
             "name": "Fashion",
             "item": "45,680",
             "image": "/assets/img/home1/category-img9.jpg",
-            "car_type": "car"
+            "car_type": "car",
+            "description": "Discover designer clothing, luxury fashion, vintage apparel, and stylish accessories from top brands."
         }
         
     ],

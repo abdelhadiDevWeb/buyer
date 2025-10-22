@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import React, { useReducer, useState, useEffect, useRef } from "react";
 import useAuth from "@/hooks/useAuth";
 import { authStore } from "@/contexts/authStore";
-import { BiSearch } from 'react-icons/bi';
 import ChatNotifications from '@/components/chat/ChatNotifications';
 import NotificationBellStable from '@/components/NotificationBellStable';
 import BellNotifications from '@/components/header/BellNotifications';
@@ -16,6 +15,8 @@ import ReviewModal from '@/components/ReviewModal';
 import { ReviewAPI } from '@/app/api/review';
 import { NotificationAPI } from '@/app/api/notification';
 import { useTranslation } from 'react-i18next';
+import { getSellerUrl } from '@/config';
+import app from '@/config';
 
 const initialState = {
   activeMenu: "",
@@ -43,8 +44,6 @@ function reducer(state, action) {
         ...state,
         isSidebarOpen: !state.isSidebarOpen,
       };
-    case "setScrollY":
-      return { ...state, scrollY: action.payload };
     default:
       return state;
   }
@@ -56,19 +55,20 @@ export const Header = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const pathName = usePathname();
   const { isLogged, isReady, initializeAuth, auth } = useAuth();
-  const [search, setSearch] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [switchAccount , setSwitchAccount] = useState(false)
   
   // Add windowWidth state
   const [windowWidth, setWindowWidth] = useState(1024);
   
-  // Responsive state
+  // Enhanced responsive state
   const isMobile = windowWidth <= 768;
   const isTablet = windowWidth > 768 && windowWidth <= 1024;
   const isDesktop = windowWidth > 1024;
+  const isIPhone = windowWidth >= 375 && windowWidth <= 428;
+  const isSamsung = windowWidth >= 360 && windowWidth <= 412;
+  const isSmallMobile = windowWidth <= 375;
   const socketContext = useCreateSocket();
   const badgeRef = useRef(null);
   const [windowVal , setWindowVal] = useState('')
@@ -107,30 +107,18 @@ export const Header = () => {
   const [currentBidWonNotification, setCurrentBidWonNotification] = useState(null);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  // Handle scroll effect
+  // Handle window resize only
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
-  
-    
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
     
-    window.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
     
     // Set initial size
     setWindowWidth(window.innerWidth);
     
     return () => {
-      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
@@ -166,7 +154,7 @@ export const Header = () => {
 
   const handleLogout = () => {
     authStore.getState().clear();
-    window.location.href = '/auth/login';
+    window.location.href = `${getSellerUrl()}login`;
   };
 
   // Navigation Items
@@ -180,16 +168,61 @@ export const Header = () => {
   ];
 
 
-  function swithAcc() {
+  async function swithAcc() {
     if(switchAccount){
       setSwitchAccount(false)
       console.log(windowRef);
-      windowRef.current.close()
+      if (windowRef.current) {
+        windowRef.current.close();
+      }
       window.localStorage.removeItem('switch')
     }else{
-       setSwitchAccount(true)
-       window.localStorage.setItem('switch' , "1")
-       windowRef.current = window.open('http://localhost:3002')
+      try {
+        setSwitchAccount(true)
+        window.localStorage.setItem('switch', "1")
+        
+        console.log('🔄 Switching to seller mode from buyer app...');
+        
+        // Call the mark-as-seller API (we need to create this endpoint)
+        const response = await fetch(`${app.baseURL.replace(/\/$/, '')}/auth/mark-as-seller`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${auth.tokens.accessToken}`,
+            'x-access-key': app.apiKey,
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        });
+
+        const data = await response.json();
+        console.log('✅ Mark as seller response:', data);
+
+        if (data.success) {
+          // Use the seller URL from config and add /dashboard/app path
+          const sellerBaseUrl = getSellerUrl();
+          const sellerAppUrl = new URL('/dashboard/app', sellerBaseUrl);
+          sellerAppUrl.searchParams.append('token', auth.tokens.accessToken);
+          sellerAppUrl.searchParams.append('refreshToken', auth.tokens.refreshToken);
+          sellerAppUrl.searchParams.append('from', 'buyer');
+          
+          console.log('🔄 Redirecting to seller dashboard:', sellerAppUrl.toString());
+          
+          // Clear buyer session before redirecting
+          authStore.getState().clear();
+          
+          // Redirect to seller app dashboard
+          window.location.href = sellerAppUrl.toString();
+        } else {
+          throw new Error(data.message || 'Failed to mark user as seller');
+        }
+      } catch (error) {
+        console.error('❌ Error switching to seller mode:', error);
+        setSwitchAccount(false);
+        window.localStorage.removeItem('switch');
+        
+        // Show error message to user
+        alert('Failed to switch to seller mode. Please try again.');
+      }
     }
   }
   useEffect(()=>{
@@ -303,38 +336,60 @@ export const Header = () => {
         width: '100%',
         position: 'sticky',
         top: 0,
-        zIndex: 1000,
+        zIndex: 9999,
         transition: 'all 0.3s ease'
       }}
     >
       <div style={{
-        background: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'white',
-        backdropFilter: scrolled ? 'blur(10px)' : 'none',
-        boxShadow: scrolled ? '0 4px 20px rgba(0, 0, 0, 0.08)' : '0 2px 10px rgba(0, 0, 0, 0.05)',
-        padding: isMobile ? '8px 0' : (scrolled ? '12px 0' : '16px 0'),
+        background: 'white',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+        padding: isMobile ? '8px 0' : '16px 0',
         transition: 'all 0.3s ease'
       }}>
         <div className="container-responsive" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: isMobile ? '60px' : isTablet ? '70px' : '80px',
-          transition: 'height 0.3s ease'
+          height: isSmallMobile ? '56px' : isMobile ? '60px' : isTablet ? '70px' : '80px',
+          transition: 'height 0.3s ease',
+          paddingLeft: isSmallMobile ? '12px' : isMobile ? '16px' : '20px',
+          paddingRight: isSmallMobile ? '12px' : isMobile ? '16px' : '20px',
+          maxWidth: '100vw'
         }}>
           {/* Logo */}
-          <div style={{ flexShrink: 0, padding: 0, margin: 0 }}>
-            <Link href="/">
-              <img
-                src="/assets/img/logo.png"
-                alt="Mazad.Click Logo"
-                className="header-logo"
-                style={{ 
-                  maxHeight: isMobile ? '50px' : isTablet ? '75px' : '100px',
-                  width: 'auto',
-                  height: 'auto',
-                  transition: 'all 0.3s ease'
-                }}
-              />
+          <div style={{ 
+            flexShrink: 0, 
+            padding: 0, 
+            margin: 5,
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <img
+                  src="/assets/img/logo.png"
+                  alt="Mazad.Click Logo"
+                  className="header-logo"
+                  style={{ 
+
+                    height: isMobile ? '50px' : isTablet ? '65px' : '65px',
+                    width: isMobile ? '120px' : isTablet ? '155px' : '165px',
+
+                    transition: 'all 0.3s ease',
+                    objectFit: 'contain',
+                    objectPosition: 'center center',
+                    borderRadius: isMobile ? '12px' : '16px',
+                    display: 'block',
+                    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                    maxWidth: '100%'
+                  }}
+                />
+              </div>
             </Link>
           </div>
 
@@ -392,70 +447,6 @@ export const Header = () => {
           }}>
             {/* Language Switcher moved to floating button at bottom-right */}
             
-            {/* Search Input - Desktop and Tablet */}
-            {isClient && !isMobile && (
-              <div style={{
-                position: 'relative',
-                borderRadius: '30px',
-                overflow: 'hidden',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                transition: 'all 0.3s ease'
-              }}>
-                <input
-                  type="text"
-                  placeholder={t('common.search')}
-                  style={{
-                    border: 'none',
-                    padding: isTablet ? '8px 16px' : '10px 20px',
-                    paddingRight: '45px',
-                    fontSize: isTablet ? '13px' : '14px',
-                    width: isTablet ? '180px' : '220px',
-                    background: '#f8f9fa',
-                    outline: 'none',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.parentElement.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)';
-                    e.currentTarget.style.background = 'white';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.parentElement.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)';
-                    e.currentTarget.style.background = '#f8f9fa';
-                  }}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <button
-                  style={{
-                    position: 'absolute',
-                    right: '5px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'transparent',
-                    border: 'none',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: '#666',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.color = '#0063b1';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.color = '#666';
-                  }}
-                >
-                  <svg width={18} height={18} viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 16C11.866 16 15 12.866 15 9C15 5.13401 11.866 2 8 2C4.13401 2 1 5.13401 1 9C1 12.866 4.13401 16 8 16Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M17 17L13 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            )}
 
           
 
@@ -540,49 +531,48 @@ export const Header = () => {
                     </svg>
                   </button>
                 ) : (
-                  <Link href="/auth/login">
-                    <button
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        background: 'linear-gradient(45deg, #0063b1, #0078d7)',
-                        border: 'none',
-                        borderRadius: '30px',
-                        padding: isMobile ? '8px 12px' : isTablet ? '9px 16px' : '10px 20px',
-                        color: 'white',
-                        fontSize: isMobile ? '13px' : isTablet ? '14px' : '15px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        boxShadow: '0 3px 10px rgba(0, 99, 177, 0.3)'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 6px 15px rgba(0, 99, 177, 0.4)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 3px 10px rgba(0, 99, 177, 0.3)';
-                      }}
-                    >
-                      <div style={{
-                        width: isMobile ? '20px' : '24px',
-                        height: isMobile ? '20px' : '24px',
-                        borderRadius: '50%',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <svg width={isMobile ? 14 : 16} height={isMobile ? 14 : 16} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8Z" fill="white" />
-                          <path d="M8 9C5.79086 9 4 10.7909 4 13C4 13.5523 4.44772 14 5 14H11C11.5523 14 12 13.5523 12 13C12 10.7909 10.2091 9 8 9Z" fill="white" />
-                        </svg>
-                      </div>
-                      {!isMobile ? t('common.login') : ""}
-                    </button>
-                  </Link>
+                  <button
+                    onClick={() => window.location.href = `${getSellerUrl()}login`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      background: 'linear-gradient(45deg, #0063b1, #0078d7)',
+                      border: 'none',
+                      borderRadius: '30px',
+                      padding: isMobile ? '8px 12px' : isTablet ? '9px 16px' : '10px 20px',
+                      color: 'white',
+                      fontSize: isMobile ? '13px' : isTablet ? '14px' : '15px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 3px 10px rgba(0, 99, 177, 0.3)'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 15px rgba(0, 99, 177, 0.4)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 3px 10px rgba(0, 99, 177, 0.3)';
+                    }}
+                  >
+                    <div style={{
+                      width: isMobile ? '20px' : '24px',
+                      height: isMobile ? '20px' : '24px',
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <svg width={isMobile ? 14 : 16} height={isMobile ? 14 : 16} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8Z" fill="white" />
+                        <path d="M8 9C5.79086 9 4 10.7909 4 13C4 13.5523 4.44772 14 5 14H11C11.5523 14 12 13.5523 12 13C12 10.7909 10.2091 9 8 9Z" fill="white" />
+                      </svg>
+                    </div>
+                    {!isMobile ? t('common.login') : ""}
+                  </button>
                 )}
 
                 {/* Account Dropdown */}
@@ -595,7 +585,7 @@ export const Header = () => {
                     borderRadius: '12px',
                     boxShadow: '0 5px 25px rgba(0,0,0,0.12)',
                     minWidth: '280px',
-                    zIndex: 10,
+                    zIndex: 9999,
                     overflow: 'hidden',
                     animation: 'fadeIn 0.25s ease-out'
                   }}>
@@ -763,7 +753,7 @@ export const Header = () => {
                   alignItems: 'center',
                   gap: '6px',
                   cursor: 'pointer',
-                  zIndex: 1010
+                  zIndex: 9999
                 }}
               >
                 <span style={{
@@ -796,10 +786,10 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Enhanced Mobile Menu */}
       {isClient && isMenuOpen && windowWidth <= 992 && (
         <div 
-          className="safe-top safe-bottom mobile-scroll"
+          className="safe-top safe-bottom"
           style={{
             position: 'fixed',
             top: 0,
@@ -807,64 +797,61 @@ export const Header = () => {
             width: '100%',
             height: '100vh',
             background: 'white',
-            zIndex: 1000,
-            overflowY: 'auto',
-            paddingTop: isMobile ? '70px' : '90px',
+            zIndex: 9999,
+            paddingTop: isSmallMobile ? '65px' : isMobile ? '70px' : '90px',
+            paddingBottom: isIPhone ? 'env(safe-area-inset-bottom)' : '0',
             animation: 'fadeIn 0.3s ease-out'
           }}
         >
-          <div className="container-responsive" style={{ 
-            padding: isMobile ? '16px' : '20px',
-            minHeight: 'calc(100vh - 70px)'
-          }}>
-            {/* Mobile Search */}
-            <div style={{
-              position: 'relative',
-              borderRadius: '30px',
-              overflow: 'hidden',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-              marginBottom: '24px'
-            }}>
-              <input
-                type="text"
-                placeholder={t('common.search')}
-                className="form-responsive"
-                style={{
-                  border: 'none',
-                  padding: isMobile ? '12px 16px' : '12px 20px',
-                  paddingRight: '45px',
-                  fontSize: '16px', // Prevents zoom on iOS
-                  width: '100%',
-                  background: '#f8f9fa',
-                  outline: 'none',
-                  borderRadius: '30px'
-                }}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+          {/* Close Button */}
+          <button
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: 'absolute',
+              top: isSmallMobile ? '20px' : isMobile ? '25px' : '30px',
+              right: isSmallMobile ? '15px' : isMobile ? '20px' : '25px',
+              background: 'transparent',
+              border: 'none',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              borderRadius: '50%',
+              transition: 'background-color 0.3s ease',
+              zIndex: 10000
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#f5f5f5';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+            }}
+            aria-label="Close menu"
+          >
+            <svg 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                d="M18 6L6 18M6 6L18 18" 
+                stroke="#333" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
               />
-              <button
-                style={{
-                  position: 'absolute',
-                  right: '5px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'transparent',
-                  border: 'none',
-                  width: '40px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#666'
-                }}
-              >
-                <svg width={18} height={18} viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 16C11.866 16 15 12.866 15 9C15 5.13401 11.866 2 8 2C4.13401 2 1 5.13401 1 9C1 12.866 4.13401 16 8 16Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M17 17L13 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
+            </svg>
+          </button>
+
+          <div className="container-responsive" style={{ 
+            padding: isSmallMobile ? '12px' : isMobile ? '16px' : '20px',
+            minHeight: isSmallMobile ? 'calc(100vh - 65px)' : isMobile ? 'calc(100vh - 70px)' : 'calc(100vh - 90px)',
+            maxWidth: '100vw'
+          }}>
 
             {/* Mobile Navigation */}
             <nav>
@@ -912,11 +899,13 @@ export const Header = () => {
       `}</style>
       <style jsx global>{`
         .header-logo {
-          max-height: 100px;
+          max-height: 75px;
+          max-width: 180px;
         }
         @media (max-width: 992px) {
           .header-logo {
-            max-height: 75px;
+            max-height: 65px;
+            max-width: 155px;
           }
           .header-container {
             padding: 0 8px;
@@ -925,6 +914,7 @@ export const Header = () => {
         @media (max-width: 768px) {
           .header-logo {
             max-height: 50px;
+            max-width: 120px;
           }
           .header-container {
             padding: 0 4px;
@@ -937,6 +927,7 @@ export const Header = () => {
         @media (max-width: 576px) {
           .header-logo {
             max-height: 50px;
+            max-width: 120px;
           }
           .header-container {
             padding: 0 2px;

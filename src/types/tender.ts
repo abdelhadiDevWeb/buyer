@@ -23,7 +23,7 @@ export interface Tender {
   requirements: string[];
   category: any;
   subCategory?: any;
-  attachments: any[];
+  attachments: Array<{ _id?: string; url: string; filename?: string; fullUrl?: string }>;
   startingAt: string;
   endingAt: string;
   tenderType: TENDER_TYPE;
@@ -40,6 +40,15 @@ export interface Tender {
   comments: string[];
   createdAt: string;
   updatedAt: string;
+  // --- Image properties for enhanced image loading ---
+  image?: string;
+  thumbnail?: string;
+  photo?: string;
+  picture?: string;
+  icon?: string;
+  logo?: string;
+  coverImage?: string;
+  mainImage?: string;
 }
 
 export enum TenderBidStatus {

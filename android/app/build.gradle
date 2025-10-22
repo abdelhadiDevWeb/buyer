@@ -61,9 +61,9 @@ android {
 
      signingConfigs {
         release {
-            storeFile file("../../my-release-key.jks")  
+           storeFile file("C:\\Users\\7490\\Desktop\\buyer\\mazad-new.keystore")
             storePassword "noteasy"
-            keyAlias "my-key-alias"
+            keyAlias "mazadAlias"
             keyPassword "noteasy"
         }
     }
@@ -84,6 +84,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -100,7 +101,7 @@ android {
 
 repositories {
     flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+        dirs 'libs'
     }
 }
 
@@ -113,7 +114,6 @@ dependencies {
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
-    implementation project(':capacitor-cordova-android-plugins')
 }
 
 apply from: 'capacitor.build.gradle'
