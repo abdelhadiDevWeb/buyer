@@ -138,4 +138,107 @@ export const ChatAPI = {
       };
     }
   },
+
+  // Get all guest chats
+  getGuestChats: async (): Promise<ApiResponse<Chat[]>> => {
+    try {
+      console.log('🔍 ChatAPI.getGuestChats called');
+      
+      const endpoint = 'chat/guest-chats';
+      const res = await requests.get(endpoint);
+      console.log(`✅ Success with GET ${endpoint}:`, res);
+      
+      if ('success' in res) {
+        return res as ApiResponse<Chat[]>;
+      }
+      
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data ?? [],
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Chat[]>;
+      
+    } catch (error: unknown) {
+      console.error('❌ ChatAPI.getGuestChats error:', error);
+      return {
+        data: [],
+        success: false,
+        message: 'Failed to fetch guest chats'
+      };
+    }
+  },
+
+  // Find guest chat by name and phone
+  findGuestChat: async (name: string, phone: string): Promise<ApiResponse<Chat | null>> => {
+    try {
+      console.log('🔍 ChatAPI.findGuestChat called with:', { name, phone });
+      
+      if (!name || !phone) {
+        return {
+          data: null,
+          success: false,
+          message: 'Name and phone are required'
+        };
+      }
+      
+      // Use direct fetch to bypass authentication for guest endpoints
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chat/find-guest-chat?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
+      console.log('🔍 Finding guest chat:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-access-key': '64d2e8b7c3a9f1e5d8b2a4c6e9f0d3a5'
+        }
+      });
+      
+      if (response.ok) {
+        // Check if response has content
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const text = await response.text();
+          if (text && text.trim()) {
+            const data = JSON.parse(text);
+            console.log('✅ Guest chat found:', data);
+            return {
+              success: true,
+              data: data,
+              message: 'Guest chat found successfully'
+            };
+          } else {
+            console.log('⚠️ Empty response body');
+            return {
+              data: null,
+              success: false,
+              message: 'Guest chat not found'
+            };
+          }
+        } else {
+          console.log('⚠️ No JSON content type');
+          return {
+            data: null,
+            success: false,
+            message: 'Guest chat not found'
+          };
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Guest chat not found:', response.status, errorText);
+        return {
+          data: null,
+          success: false,
+          message: 'Guest chat not found'
+        };
+      }
+      
+    } catch (error: unknown) {
+      console.error('❌ ChatAPI.findGuestChat error:', error);
+      return {
+        data: null,
+        success: false,
+        message: 'Failed to find guest chat'
+      };
+    }
+  },
 };

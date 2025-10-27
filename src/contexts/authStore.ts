@@ -10,6 +10,7 @@ interface IAuthStore {
   isReady: boolean;
   isLogged: boolean;
   auth: typeof initialState;
+  _lastFetchTime?: number;
   set: (auth: Partial<typeof initialState>) => void;
   clear: () => void;
   logout: () => void;
@@ -24,6 +25,7 @@ export const authStore = create<IAuthStore>((setValues) => ({
   isReady: true,
   isLogged: false,
   auth: initialState,
+  _lastFetchTime: 0,
 
   set: (auth: Partial<typeof initialState>) => {
     console.log('🔄 Setting auth data:', { hasUser: !!auth.user, hasTokens: !!auth.tokens });
@@ -238,6 +240,17 @@ export const authStore = create<IAuthStore>((setValues) => ({
         console.log('⚠️ No access token available, cannot fetch user data');
         return;
       }
+
+      // Check if we're already fetching to prevent loops
+      const now = Date.now();
+      const lastFetch = currentState._lastFetchTime || 0;
+      if (now - lastFetch < 2000) { // Prevent calls within 2 seconds
+        console.log('⚠️ Skipping fetch - too soon since last fetch');
+        return;
+      }
+
+      // Mark that we're fetching - update in a way that doesn't trigger loops
+      setValues({ _lastFetchTime: now });
 
       console.log('🌐 Making API call to get current user...');
       

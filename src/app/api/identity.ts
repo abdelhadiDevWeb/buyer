@@ -138,4 +138,31 @@ export const IdentityAPI = {
       throw error;
     }
   },
+
+  // Update identity document
+  updateDocument: async (identityId: string, field: string, file: File): Promise<ApiResponse<Identity>> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('field', field);
+
+      const res = await requests.put(`identities/${identityId}/update-document`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if ('success' in res) {
+        return res as ApiResponse<Identity>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Identity>;
+    } catch (error: unknown) {
+      console.error('Error updating identity document:', error);
+      throw error;
+    }
+  },
 };

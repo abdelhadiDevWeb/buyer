@@ -10,6 +10,7 @@ interface Attachment {
   _id?: string;
   url?: string;
   filename?: string;
+  fullUrl?: string;
 }
 
 export default interface User {

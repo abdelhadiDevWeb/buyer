@@ -51,25 +51,30 @@ const SocketProvider: React.FC<Props> = (props = {}) => {
     
     const createSocket = () => {
       const authData = window.localStorage.getItem('auth');
-      if (!authData) return;
+      let userId = 'guest'; // Default to guest for unauthenticated users
       
-      try {
-        const userData = JSON.parse(authData);
-        const userId = userData?.user?._id;
-        if (!userId) return;
+      if (authData) {
+        try {
+          const userData = JSON.parse(authData);
+          userId = userData?.user?._id || 'guest';
+        } catch (error) {
+          console.error('Error parsing auth data:', error);
+          userId = 'guest';
+        }
+      }
 
-        console.log('Creating socket connection for user:', userId);
+      console.log('Creating socket connection for user:', userId);
 
-        currentSocket = io(app.socket, {
-          query: { userId },
-          transports: ['websocket', 'polling'],
-          timeout: 20000,
-          // Limit reconnection attempts to prevent spam
-          reconnection: true,
-          reconnectionAttempts: 3,
-          reconnectionDelay: 2000,
-          reconnectionDelayMax: 10000,
-        });
+      currentSocket = io(app.socket, {
+        query: { userId },
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        // Limit reconnection attempts to prevent spam
+        reconnection: true,
+        reconnectionAttempts: 3,
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 10000,
+      });
 
         currentSocket.on('connect', () => {
           console.log('Socket connected successfully!');
@@ -140,10 +145,6 @@ const SocketProvider: React.FC<Props> = (props = {}) => {
         });
 
         setSocket(currentSocket);
-      } catch (error) {
-        console.error('Error parsing auth data:', error);
-        setSocketError('Invalid authentication data');
-      }
     };
 
     // Create socket on mount

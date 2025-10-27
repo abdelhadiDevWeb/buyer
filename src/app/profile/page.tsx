@@ -10,6 +10,7 @@ import SocketProvider from "@/contexts/socket"
 import { motion, AnimatePresence } from "framer-motion"
 import "./modern-styles.css"
 import { UserAPI } from "@/app/api/users"
+import { IdentityAPI } from "@/app/api/identity"
 import { useIdentityStatus } from "@/hooks/useIdentityStatus"
 import { useRouter } from "next/navigation"
 import HistoryPage from "./history/HistoryPage"
@@ -44,6 +45,7 @@ interface AvatarData {
     url?: string;
     _id?: string;
     filename?: string;
+    [key: string]: any; // Allow any additional properties
 }
 
 import app, { getSellerUrl } from '@/config';
@@ -80,6 +82,80 @@ function ProfilePage() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Document management state
+    const [identity, setIdentity] = useState<any>(null);
+    const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+    const [isUploadingDocument, setIsUploadingDocument] = useState<string | null>(null);
+    const [uploadingFile, setUploadingFile] = useState<File | null>(null);
+    const documentFileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+    // Document field configurations
+    const requiredDocuments = [
+        {
+            key: 'identityCard',
+            label: 'Carte d\'identité',
+            description: 'Document d\'identité officiel',
+            required: true
+        },
+        {
+            key: 'registreCommerceCarteAuto',
+            label: 'RC/ Autres',
+            description: 'Registre de commerce ou autres documents',
+            required: true
+        },
+        {
+            key: 'nifRequired',
+            label: 'NIF/N° Articles',
+            description: 'NIF ou Numéro d\'articles',
+            required: true
+        },
+        {
+            key: 'carteFellah',
+            label: 'Carte Fellah',
+            description: 'Carte Fellah pour agriculteurs',
+            required: true
+        }
+    ];
+
+    const optionalDocuments = [
+        {
+            key: 'nis',
+            label: 'NIS',
+            description: 'Numéro d\'identification sociale',
+            required: false
+        },
+        {
+            key: 'c20',
+            label: 'C20',
+            description: 'Document C20',
+            required: false
+        },
+        {
+            key: 'misesAJourCnas',
+            label: 'Mises à jour CNAS/CASNOS',
+            description: 'Mises à jour CNAS/CASNOS et CACOBAPT',
+            required: false
+        },
+        {
+            key: 'last3YearsBalanceSheet',
+            label: 'Bilan des 3 dernières années',
+            description: 'Bilan financier des 3 dernières années',
+            required: false
+        },
+        {
+            key: 'certificates',
+            label: 'Certificats',
+            description: 'Certificats professionnels ou autres',
+            required: false
+        },
+        {
+            key: 'paymentProof',
+            label: 'Preuve de paiement',
+            description: 'Justificatif de paiement de souscription',
+            required: false
+        }
+    ];
+
     // Initialize form data when auth.user changes
     useEffect(() => {
         if (auth.user) {
@@ -100,8 +176,9 @@ function ProfilePage() {
                 // Full URL - replace localhost with production
                 return avatar.replace('http://localhost:3000', 'https://api.mazad.click');
             } else {
-                // Relative path - prepend static URL
-                return `${STATIC_URL}${avatar}`;
+                // Relative path - ensure we use the correct base URL
+                const cleanPath = avatar.startsWith('/') ? avatar.substring(1) : avatar;
+                return `${API_BASE_URL}/static/${cleanPath}`;
             }
         }
 
@@ -113,8 +190,14 @@ function ProfilePage() {
             if (avatar.url.startsWith('http')) {
                 return avatar.url.replace('http://localhost:3000', 'https://api.mazad.click');
             } else {
-                return `${STATIC_URL}${avatar.url}`;
+                // Ensure proper URL construction
+                const cleanPath = avatar.url.startsWith('/') ? avatar.url.substring(1) : avatar.url;
+                return `${API_BASE_URL}/static/${cleanPath}`;
             }
+        }
+
+        if (avatar?.filename) {
+            return `${API_BASE_URL}/static/${avatar.filename}`;
         }
 
         return '/assets/images/avatar.jpg';
@@ -304,42 +387,45 @@ function ProfilePage() {
             const response = await UserAPI.uploadAvatar(formDataToUpload);
 
             console.log('✅ Avatar upload response:', response);
+            console.log('📦 Avatar attachment data:', response?.attachment);
+            console.log('📦 Avatar user data:', response?.user?.avatar);
 
-            if (response) {
-                if (response.user || response.data) {
-                    const backendUser = (response.user as any)?.user || (response.data as any)?.user || (response.user as any) || (response.data as any);
-                    const currentUser = auth.user;
-                    const updatedUser = {
-                        ...currentUser,
-                        avatar: backendUser?.avatar ?? currentUser?.avatar,
-                        photoURL: backendUser?.photoURL || backendUser?.avatar?.fullUrl || currentUser?.photoURL,
-                        firstName: currentUser?.firstName || '',
-                        lastName: currentUser?.lastName || '',
-                        email: currentUser?.email || ''
-                    };
-
-                    console.log('👤 Updated user with new avatar:', updatedUser);
-
-                    if (updatedUser.firstName && updatedUser.lastName && updatedUser.email) {
-                        set({
-                            tokens: auth.tokens,
-                            user: updatedUser as any
-                        });
-                    }
-
-                    setAvatarKey(Date.now());
-
-                    enqueueSnackbar(response.message || t("avatarUpdated"), { variant: "success" });
-                } else {
-                    console.log('📄 No user data in response, fetching fresh data...');
-                    await fetchFreshUserData();
-                    setAvatarKey(Date.now());
-                    enqueueSnackbar(response.message || t("avatarUpdated"), { variant: "success" });
-                }
-
+            if (response && response.success) {
+                // Clear the input immediately to prevent re-triggering
                 if (fileInputRef.current) {
                     fileInputRef.current.value = '';
                 }
+
+                // Force a cache-bust for the avatar
+                setAvatarKey(Date.now());
+
+                // Show success message
+                enqueueSnackbar(response.message || t("avatarUpdated"), { variant: "success" });
+
+                // Log the actual URL being returned
+                if (response.attachment?.url || response.attachment?.filename) {
+                    const actualUrl = response.attachment.url || `/static/${response.attachment.filename}`;
+                    console.log('🔗 Actual avatar URL from server:', actualUrl);
+                    
+                    // Test if the URL is accessible
+                    fetch(actualUrl.startsWith('http') ? actualUrl : `https://api.mazad.click${actualUrl}`)
+                        .then(res => {
+                            if (res.ok) {
+                                console.log('✅ Avatar URL is accessible');
+                            } else {
+                                console.warn('⚠️ Avatar URL returned status:', res.status);
+                            }
+                        })
+                        .catch(err => {
+                            console.warn('⚠️ Avatar URL test failed:', err);
+                        });
+                }
+
+                // Fetch fresh user data once, without triggering updates
+                await fetchFreshUserData();
+            } else {
+                console.error('❌ Upload response indicates failure:', response);
+                enqueueSnackbar('Avatar upload failed - no success response', { variant: "error" });
             }
         } catch (error: any) {
             console.error('❌ Error uploading avatar:', error);
@@ -347,6 +433,7 @@ function ProfilePage() {
             enqueueSnackbar(errorMessage, { variant: "error" });
         } finally {
             setIsUploadingAvatar(false);
+            // Ensure input is cleared
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
@@ -357,23 +444,306 @@ function ProfilePage() {
         router.push("/become-reseller");
     };
 
+    // Document management functions
+    const fetchIdentity = async () => {
+        try {
+            setIsLoadingDocuments(true);
+            const response = await IdentityAPI.getMyIdentity();
+            if (response.success && response.data) {
+                setIdentity(response.data);
+            } else {
+                enqueueSnackbar('Aucune identité trouvée', { variant: 'info' });
+            }
+        } catch (error) {
+            console.error('Error fetching identity:', error);
+            enqueueSnackbar('Erreur lors du chargement des documents', { variant: 'error' });
+        } finally {
+            setIsLoadingDocuments(false);
+        }
+    };
+
+    const handleFileSelect = (fieldKey: string, file: File) => {
+        if (!file) return;
+
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+        if (!allowedTypes.includes(file.type)) {
+            enqueueSnackbar('Format de fichier non supporté. Utilisez JPG, PNG ou PDF.', { variant: 'error' });
+            return;
+        }
+
+        // Validate file size (5MB max)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            enqueueSnackbar('Fichier trop volumineux. Taille maximale: 5MB', { variant: 'error' });
+            return;
+        }
+
+        setUploadingFile(file);
+        uploadDocument(fieldKey, file);
+    };
+
+    const uploadDocument = async (fieldKey: string, file: File) => {
+        try {
+            setIsUploadingDocument(fieldKey);
+            
+            const response = await IdentityAPI.updateDocument(identity._id, fieldKey, file);
+            
+            if (response.success) {
+                enqueueSnackbar('Document mis à jour avec succès', { variant: 'success' });
+                // Update local state
+                setIdentity(prev => prev ? {
+                    ...prev,
+                    [fieldKey]: response.data[fieldKey]
+                } : null);
+            } else {
+                throw new Error(response.message || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('Error uploading document:', error);
+            enqueueSnackbar('Erreur lors de la mise à jour du document', { variant: 'error' });
+        } finally {
+            setIsUploadingDocument(null);
+            setUploadingFile(null);
+        }
+    };
+
+    const getDocumentUrl = (document: any): string => {
+        if (!document) return '';
+        if (document.fullUrl) return document.fullUrl;
+        if (document.url) {
+            if (document.url.startsWith('http')) {
+                return document.url;
+            }
+            // Remove leading slash from document.url to avoid double slashes
+            const cleanUrl = document.url.startsWith('/') ? document.url.substring(1) : document.url;
+            return `${API_BASE_URL}${cleanUrl}`;
+        }
+        return '';
+    };
+
+    const getDocumentName = (document: any): string => {
+        if (!document) return '';
+        return document.filename || 'Document';
+    };
+
+    const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    // Load identity when documents tab is active
+    useEffect(() => {
+        if (activeTab === 'documents' && !identity) {
+            fetchIdentity();
+        }
+    }, [activeTab]);
+
+    // Helper function to render document cards
+    const renderDocumentCards = (documents: any[], sectionTitle: string, isRequired: boolean) => {
+        return (
+            <div className="modern-document-section">
+                <div className="modern-document-section-header">
+                    <h3 className="modern-document-section-title">
+                        <i className={`bi-${isRequired ? 'exclamation-triangle-fill' : 'plus-circle-fill'}`}></i>
+                        {sectionTitle}
+                    </h3>
+                    <div className={`modern-document-section-badge ${isRequired ? 'required' : 'optional'}`}>
+                        {isRequired ? 'Obligatoire' : 'Optionnel'}
+                    </div>
+                </div>
+                
+                {!isRequired && (
+                    <div className="modern-document-optional-note">
+                        <div className="modern-document-note-card">
+                            <i className="bi-info-circle-fill"></i>
+                            <div className="modern-document-note-content">
+                                <h4>Documents Optionnels</h4>
+                                <p>Ajoutez ces documents si vous souhaitez être vérifié en tant que professionnel. Ils ne sont pas obligatoires mais peuvent accélérer le processus de vérification.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
+                <div className="modern-document-grid">
+                    {documents.map((field, index) => {
+                        const document = identity[field.key];
+                        const isUploadingThisField = isUploadingDocument === field.key;
+                        const hasDocument = document && document.url;
+
+                        return (
+                            <motion.div
+                                key={field.key}
+                                className={`modern-document-card ${hasDocument ? 'has-document' : 'no-document'} ${isUploadingThisField ? 'uploading' : ''} ${isRequired ? 'required-card' : 'optional-card'}`}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                            >
+                                <div className="modern-document-header">
+                                    <div className="modern-document-icon">
+                                        <i className={hasDocument ? "bi-file-earmark-check-fill" : "bi-file-earmark-plus"}></i>
+                                    </div>
+                                    <div className="modern-document-info">
+                                        <h3 className="modern-document-title">
+                                            {field.label}
+                                            {field.required && <span className="required-badge">*</span>}
+                                        </h3>
+                                        <p className="modern-document-description">{field.description}</p>
+                                    </div>
+                                </div>
+
+                                {hasDocument && (
+                                    <div className="modern-document-preview">
+                                        <div className="modern-document-file">
+                                            {document.mimetype?.startsWith('image/') ? (
+                                                <div className="modern-document-image-preview">
+                                                    <img 
+                                                        src={getDocumentUrl(document)} 
+                                                        alt={getDocumentName(document)}
+                                                        className="modern-document-thumbnail"
+                                                        onClick={() => window.open(getDocumentUrl(document), '_blank')}
+                                                        onError={(e) => {
+                                                            // Fallback to icon if image fails to load
+                                                            e.currentTarget.style.display = 'none';
+                                                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                    <div className="modern-document-icon-fallback" style={{ display: 'none' }}>
+                                                        <i className="bi-file-earmark-image"></i>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="modern-document-icon">
+                                                    <i className={`bi-${document.mimetype?.includes('pdf') ? 'file-earmark-pdf' : 'file-earmark-text'}`}></i>
+                                                </div>
+                                            )}
+                                            <div className="modern-document-info-text">
+                                                <span className="modern-document-name">{getDocumentName(document)}</span>
+                                                <span className="modern-document-type">{document.mimetype || 'Document'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="modern-document-actions">
+                                            <a
+                                                href={getDocumentUrl(document)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="modern-btn modern-btn-outline modern-btn-sm"
+                                            >
+                                                <i className="bi-eye"></i>
+                                                Voir
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="modern-document-upload">
+                                    <input
+                                        ref={el => documentFileInputRefs.current[field.key] = el}
+                                        type="file"
+                                        accept=".jpg,.jpeg,.png,.pdf"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                handleFileSelect(field.key, file);
+                                            }
+                                        }}
+                                        style={{ display: 'none' }}
+                                    />
+                                    
+                                    <motion.button
+                                        className={`modern-btn ${hasDocument ? 'modern-btn-outline' : 'modern-btn-primary'} modern-btn-full`}
+                                        onClick={() => documentFileInputRefs.current[field.key]?.click()}
+                                        disabled={isUploadingThisField}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        {isUploadingThisField ? (
+                                            <>
+                                                <div className="modern-spinner-sm"></div>
+                                                Upload en cours...
+                                            </>
+                                        ) : hasDocument ? (
+                                            <>
+                                                <i className="bi-arrow-clockwise"></i>
+                                                Remplacer
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="bi-upload"></i>
+                                                Ajouter
+                                            </>
+                                        )}
+                                    </motion.button>
+                                </div>
+
+                                {isUploadingThisField && uploadingFile && (
+                                    <div className="modern-upload-progress">
+                                        <div className="modern-upload-info">
+                                            <span className="modern-upload-filename">{uploadingFile.name}</span>
+                                            <span className="modern-upload-size">{formatFileSize(uploadingFile.size)}</span>
+                                        </div>
+                                        <div className="modern-progress-bar">
+                                            <div className="modern-progress-fill"></div>
+                                        </div>
+                                    </div>
+                                )}
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
     // Construct avatar source with multiple fallback options
     const getAvatarSrc = () => {
         if (!auth.user) return "/assets/images/avatar.jpg";
         
+        console.log('🖼️ Constructing avatar URL from:', auth.user);
+        
         // Priority 1: photoURL (direct from backend)
         if (auth.user.photoURL && auth.user.photoURL.trim() !== "") {
             const cleanUrl = auth.user.photoURL.replace('http://localhost:3000', 'https://api.mazad.click');
+            console.log('📸 Using photoURL:', cleanUrl);
             return `${cleanUrl}?v=${avatarKey}`;
         }
         
-        // Priority 2: avatar object
-        if (auth.user.avatar) {
-            const avatarUrl = getAvatarUrl(auth.user.avatar);
+        // Priority 2: avatar object with fullUrl
+        if (auth.user.avatar && 'fullUrl' in auth.user.avatar && auth.user.avatar.fullUrl) {
+            const avatarUrl = (auth.user.avatar as any).fullUrl.replace('http://localhost:3000', 'https://api.mazad.click');
+            console.log('📸 Using avatar.fullUrl:', avatarUrl);
             return `${avatarUrl}?v=${avatarKey}`;
         }
         
-        // Priority 3: fallback
+        // Priority 3: avatar.url
+        if (auth.user.avatar?.url) {
+            let avatarUrl = auth.user.avatar.url;
+            if (!avatarUrl.startsWith('http')) {
+                if (avatarUrl.startsWith('/static/')) {
+                    avatarUrl = `${API_BASE_URL}${avatarUrl}`;
+                } else if (avatarUrl.startsWith('/')) {
+                    avatarUrl = `${API_BASE_URL}/static${avatarUrl}`;
+                } else {
+                    avatarUrl = `${API_BASE_URL}/static/${avatarUrl}`;
+                }
+            }
+            avatarUrl = avatarUrl.replace('http://localhost:3000', 'https://api.mazad.click');
+            console.log('📸 Using avatar.url:', avatarUrl);
+            return `${avatarUrl}?v=${avatarKey}`;
+        }
+        
+        // Priority 4: avatar.filename
+        if (auth.user.avatar?.filename) {
+            const avatarUrl = `${API_BASE_URL}/static/${auth.user.avatar.filename}`.replace('http://localhost:3000', 'https://api.mazad.click');
+            console.log('📸 Using avatar.filename:', avatarUrl);
+            return `${avatarUrl}?v=${avatarKey}`;
+        }
+        
+        // Priority 5: fallback
+        console.log('📸 Using fallback avatar');
         return "/assets/images/avatar.jpg";
     };
     
@@ -476,19 +846,44 @@ function ProfilePage() {
                                                     const target = e.currentTarget;
                                                     const attemptedUrl = target.src;
                                                     
-                                                    // Try alternative URL constructions
-                                                    if (attemptedUrl.includes('api.mazad.click') && auth.user?.photoURL) {
-                                                        // Try without the cache buster
-                                                        const baseUrl = attemptedUrl.split('?')[0];
-                                                        target.src = baseUrl;
+                                                    console.log('🖼️ Image failed to load:', attemptedUrl);
+                                                    console.log('🖼️ User avatar data:', auth.user?.avatar);
+                                                    
+                                                    // Prevent infinite loop
+                                                    if (attemptedUrl.includes('avatar.jpg')) {
                                                         return;
                                                     }
                                                     
-                                                    // Try static route if current attempt failed
-                                                    if (auth.user?.photoURL && !attemptedUrl.includes('static')) {
-                                                        const staticUrl = `https://api.mazad.click/static/${auth.user.photoURL.split('/').pop()}`;
-                                                        target.src = staticUrl;
+                                                    // Try alternative URL constructions
+                                                    if (auth.user?.avatar?.url && !attemptedUrl.includes('static')) {
+                                                        const cleanUrl = auth.user.avatar.url.startsWith('http') 
+                                                            ? auth.user.avatar.url 
+                                                            : `https://api.mazad.click${auth.user.avatar.url}`;
+                                                        console.log('🔄 Trying alternative URL:', cleanUrl);
+                                                        target.src = cleanUrl;
                                                         return;
+                                                    }
+                                                    
+                                                    // Try with filename
+                                                    if (auth.user?.avatar?.filename) {
+                                                        const filenameUrl = `https://api.mazad.click/static/${auth.user.avatar.filename}`;
+                                                        console.log('🔄 Trying filename URL:', filenameUrl);
+                                                        target.src = filenameUrl;
+                                                        return;
+                                                    }
+                                                    
+                                                    // Try localhost fallback for development
+                                                    if (attemptedUrl.includes('api.mazad.click') && !attemptedUrl.includes('localhost')) {
+                                                        const localhostUrl = attemptedUrl.replace('https://api.mazad.click', 'http://localhost:3000');
+                                                        console.log('🔄 Trying localhost fallback:', localhostUrl);
+                                                        target.src = localhostUrl;
+                                                        return;
+                                                    }
+                                                    
+                                                    // Show user-friendly message for production 404s
+                                                    if (attemptedUrl.includes('api.mazad.click')) {
+                                                        console.warn('⚠️ Avatar not available on production server. This is a deployment issue.');
+                                                        // You could show a toast notification here if needed
                                                     }
                                                     
                                                     // Final fallback
@@ -1032,6 +1427,7 @@ function ProfilePage() {
                                 {[
                                     { id: "personal-info", icon: "bi-person-circle", label: "Personal information" },
                                     { id: "security", icon: "bi-shield-lock-fill", label: "Security" },
+                                    { id: "documents", icon: "bi-file-earmark-text-fill", label: "Documents" },
                                     { id: "notifications", icon: "bi-bell-fill", label: "Notifications" },
                                     { id: "history", icon: "bi-clock-history", label: "Offer history" }
                                 ].map((tab, index) => (
@@ -1317,6 +1713,61 @@ function ProfilePage() {
                                                         </motion.button>
                                                     </motion.div>
                                                 </motion.form>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* Documents Tab */}
+                                    {activeTab === "documents" && (
+                                        <motion.div
+                                            key="documents"
+                                            className="modern-tab-content"
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -20 }}
+                                            transition={{ duration: 0.6, type: "spring" }}
+                                        >
+                                            <div className="modern-section">
+                                                <div className="modern-section-header">
+                                                    <h2 className="modern-section-title">
+                                                        <i className="bi-file-earmark-text-fill"></i>
+                                                        Gestion des Documents
+                                                    </h2>
+                                                    <p className="modern-section-description">
+                                                        Gérez vos documents d'identité. Vous pouvez remplacer les documents existants ou ajouter de nouveaux documents optionnels.
+                                                    </p>
+                                                </div>
+
+                                                {isLoadingDocuments ? (
+                                                    <div className="modern-loading">
+                                                        <div className="modern-spinner"></div>
+                                                        <p>Chargement des documents...</p>
+                                                    </div>
+                                                ) : !identity ? (
+                                                    <div className="modern-empty-state">
+                                                        <i className="bi-file-earmark-x"></i>
+                                                        <h3>Aucune identité trouvée</h3>
+                                                        <p>Vous devez d'abord soumettre une demande d'identité pour gérer vos documents.</p>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        {renderDocumentCards(requiredDocuments, "Documents Obligatoires", true)}
+                                                        {renderDocumentCards(optionalDocuments, "Documents Optionnels", false)}
+                                                        
+                                                        <div className="modern-document-footer">
+                                                            <div className="modern-document-status">
+                                                                <div className={`modern-status-badge ${identity.status.toLowerCase()}`}>
+                                                                    <i className={`bi-${identity.status === 'DONE' ? 'check-circle-fill' : identity.status === 'REJECTED' ? 'x-circle-fill' : 'clock-fill'}`}></i>
+                                                                    Statut: {identity.status === 'DONE' ? 'Approuvé' : identity.status === 'REJECTED' ? 'Rejeté' : 'En attente'}
+                                                                </div>
+                                                            </div>
+                                                            <p className="modern-document-note">
+                                                                <i className="bi-info-circle"></i>
+                                                                Les documents marqués d'un astérisque (*) sont obligatoires. Vous pouvez remplacer ou ajouter des documents à tout moment.
+                                                            </p>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                         </motion.div>
                                     )}

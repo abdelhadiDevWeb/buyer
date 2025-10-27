@@ -731,17 +731,6 @@ export default function UserDetailsPage() {
                       </div>
                     )}
 
-                    <p className="text-muted mb-2" style={{ fontSize: '16px' }}>
-                      <i className="bi bi-envelope me-2"></i>
-                      {user.email}
-                    </p>
-
-                    {user.phone && (
-                      <p className="text-muted mb-2" style={{ fontSize: '16px' }}>
-                        <i className="bi bi-telephone me-2"></i>
-                        {user.phone}
-                      </p>
-                    )}
 
                     {user.location && (
                       <p className="text-muted mb-3" style={{ fontSize: '16px' }}>
@@ -970,14 +959,6 @@ export default function UserDetailsPage() {
                           </div>
                           <div className="row mb-3">
                             <div className="col-sm-4">
-                              <strong>Email:</strong>
-                            </div>
-                            <div className="col-sm-8">
-                              {user.email}
-                            </div>
-                          </div>
-                          <div className="row mb-3">
-                            <div className="col-sm-4">
                               <strong>User Type:</strong>
                             </div>
                             <div className="col-sm-8">
@@ -996,16 +977,6 @@ export default function UserDetailsPage() {
                               })}
                             </div>
                           </div>
-                          {user.phone && (
-                            <div className="row mb-3">
-                              <div className="col-sm-4">
-                                <strong>Phone:</strong>
-                              </div>
-                              <div className="col-sm-8">
-                                {user.phone}
-                              </div>
-                            </div>
-                          )}
                           {user.location && (
                             <div className="row mb-3">
                               <div className="col-sm-4">

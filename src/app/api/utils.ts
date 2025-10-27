@@ -90,11 +90,13 @@ instance.interceptors.response.use(
       console.warn('🔒 401 Unauthorized - Token may be expired');
       originalRequest._retry = true;
       
-      // Only redirect if this is NOT a login/signup request (to avoid redirecting during login attempts)
+      // Only redirect if this is NOT a login/signup request, guest message request, or chat-related request
       const isLoginRequest = originalRequest.url?.includes('auth/signin') || originalRequest.url?.includes('auth/signup');
+      const isGuestMessageRequest = originalRequest.url?.includes('message/guest-message');
+      const isChatRequest = originalRequest.url?.includes('chat/') || originalRequest.url?.includes('message/');
       
-      if (!isLoginRequest) {
-        // Clear auth data on 401 (only for non-login requests)
+      if (!isLoginRequest && !isGuestMessageRequest && !isChatRequest) {
+        // Clear auth data on 401 (only for non-login and non-guest requests)
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth');
           
@@ -111,6 +113,8 @@ instance.interceptors.response.use(
             window.location.href = '/auth/login';
           }
         }
+      } else if (isGuestMessageRequest || isChatRequest) {
+        console.log('🔒 Guest message or chat request got 401 - this should not happen, but not redirecting');
       }
     }
     
@@ -189,7 +193,6 @@ const responseBody = (res: AxiosResponse): ApiResponse => {
 
 // Export the axios instance
 export { instance };
-
 // Enhanced requests object with better error handling and logging
 export const requests = {
   get: <T = any>(url: string, config = {}): Promise<ApiResponse<T>> => {
