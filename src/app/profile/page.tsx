@@ -387,7 +387,6 @@ function ProfilePage() {
             const response = await UserAPI.uploadAvatar(formDataToUpload);
 
             console.log('✅ Avatar upload response:', response);
-            console.log('📦 Avatar attachment data:', response?.attachment);
             console.log('📦 Avatar user data:', response?.user?.avatar);
 
             if (response && response.success) {
@@ -403,8 +402,10 @@ function ProfilePage() {
                 enqueueSnackbar(response.message || t("avatarUpdated"), { variant: "success" });
 
                 // Log the actual URL being returned
-                if (response.attachment?.url || response.attachment?.filename) {
-                    const actualUrl = response.attachment.url || `/static/${response.attachment.filename}`;
+                const user = response.user || response.data;
+                const avatar = user?.avatar;
+                if (avatar?.url || avatar?.filename) {
+                    const actualUrl = avatar.url || `/static/${avatar.filename}`;
                     console.log('🔗 Actual avatar URL from server:', actualUrl);
                     
                     // Test if the URL is accessible
@@ -492,10 +493,10 @@ function ProfilePage() {
             if (response.success) {
                 enqueueSnackbar('Document mis à jour avec succès', { variant: 'success' });
                 // Update local state
-                setIdentity(prev => prev ? {
+                setIdentity((prev: any) => prev ? {
                     ...prev,
-                    [fieldKey]: response.data[fieldKey]
-                } : null);
+                    [fieldKey]: response.data[fieldKey as keyof typeof response.data]
+                } as any : null);
             } else {
                 throw new Error(response.message || 'Upload failed');
             }
@@ -608,7 +609,9 @@ function ProfilePage() {
                                                         onError={(e) => {
                                                             // Fallback to icon if image fails to load
                                                             e.currentTarget.style.display = 'none';
-                                                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                                                            if (e.currentTarget.nextElementSibling) {
+                                                                (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                                                            }
                                                         }}
                                                     />
                                                     <div className="modern-document-icon-fallback" style={{ display: 'none' }}>
@@ -641,7 +644,7 @@ function ProfilePage() {
 
                                 <div className="modern-document-upload">
                                     <input
-                                        ref={el => documentFileInputRefs.current[field.key] = el}
+                                        ref={el => { documentFileInputRefs.current[field.key] = el; }}
                                         type="file"
                                         accept=".jpg,.jpeg,.png,.pdf"
                                         onChange={(e) => {
