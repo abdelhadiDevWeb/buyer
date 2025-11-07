@@ -7,6 +7,18 @@ import { UserAPI } from '../app/api/users';
 import useAuth from '../hooks/useAuth';
 import { useAdminMessageNotifications } from '../hooks/useAdminMessageNotifications';
 
+const DEV_BACKEND_URL = 'http://localhost:3000';
+const PROD_BACKEND_URL = 'https://mazadclick-server.onrender.com';
+// const LEGACY_BACKEND_URL = 'http://localhost:3000';
+
+const resolveBackendBaseUrl = () => process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? DEV_BACKEND_URL : PROD_BACKEND_URL);
+const resolveBackendBaseUrlWithTrailingSlash = () => `${resolveBackendBaseUrl().replace(/\/$/, '')}/`;
+const makeBackendAbsoluteUrl = (path: string) => {
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${resolveBackendBaseUrl().replace(/\/$/, '')}${normalizedPath}`;
+};
+const makeStaticAttachmentUrl = (filename: string) => `${resolveBackendBaseUrlWithTrailingSlash()}static/${filename}`;
+
 interface Message {
     _id: string;
     message: string;
@@ -170,7 +182,8 @@ const FloatingAdminChat: React.FC = () => {
                 formData.append('guestPhone', guestInfo.phone);
             }
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/message/voice-message`, {
+            const apiBaseUrl = resolveBackendBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/message/voice-message`, {
                 method: 'POST',
                 body: formData
             });
@@ -299,7 +312,8 @@ const FloatingAdminChat: React.FC = () => {
             uploadFormData.append('as', 'message-attachment');
             
             console.log('📤 Uploading file to attachments endpoint...');
-            const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/attachments/upload`, {
+            const apiBaseUrl = resolveBackendBaseUrl();
+            const uploadResponse = await fetch(`${apiBaseUrl}/attachments/upload`, {
                 method: 'POST',
                 body: uploadFormData
             });
@@ -316,7 +330,7 @@ const FloatingAdminChat: React.FC = () => {
             // Extract attachment data - handle different response structures
             const attachmentInfo = {
                 _id: uploadData._id || uploadData.id,
-                url: uploadData.fullUrl || uploadData.url || `http://localhost:3000/static/${uploadData.filename}`,
+                url: uploadData.fullUrl || uploadData.url || makeStaticAttachmentUrl(uploadData.filename),
                 name: uploadData.originalname || selectedFile.name,
                 type: uploadData.mimetype || selectedFile.type,
                 size: uploadData.size || selectedFile.size,
@@ -1019,7 +1033,7 @@ const FloatingAdminChat: React.FC = () => {
                             ...data.attachment,
                             // Ensure URL is absolute
                             url: data.attachment.url && data.attachment.url.startsWith('/static/') 
-                                ? `http://localhost:3000${data.attachment.url}`
+                                ? makeBackendAbsoluteUrl(data.attachment.url)
                                 : data.attachment.url
                         } : undefined
                     };
@@ -2092,7 +2106,7 @@ const FloatingAdminChat: React.FC = () => {
                                                                 {(msg as any).attachment.type?.startsWith('audio/') || (msg as any).attachment.name?.includes('voice') ? (
                                                                     (() => {
                                                                         const audioUrl = (msg as any).attachment.url && (msg as any).attachment.url.startsWith('/static/') 
-                                                                            ? `http://localhost:3000${(msg as any).attachment.url}`
+                                                                            ? makeBackendAbsoluteUrl((msg as any).attachment.url)
                                                                             : (msg as any).attachment.url;
                                                                         console.log('🎤 Voice message URL:', (msg as any).attachment.url);
                                                                         console.log('🎤 Voice message processed URL:', audioUrl);
@@ -2158,7 +2172,7 @@ const FloatingAdminChat: React.FC = () => {
                                                                             // Ensure we have an absolute URL for the modal
                                                                             let imageUrl = (msg as any).attachment.url;
                                                                             if (imageUrl && imageUrl.startsWith('/static/')) {
-                                                                                imageUrl = `http://localhost:3000${imageUrl}`;
+                                                                                imageUrl = makeBackendAbsoluteUrl(imageUrl);
                                                                             }
                                                                             console.log('🖼️ Opening image modal with URL:', imageUrl);
                                                                             console.log('🖼️ Full attachment data:', (msg as any).attachment);
@@ -3795,11 +3809,11 @@ const FloatingAdminChat: React.FC = () => {
                 // Try to construct absolute URL if relative
                 const img = e.target as HTMLImageElement;
                 if (selectedImage.url.startsWith('/static/')) {
-                  const absoluteUrl = `http://localhost:3000${selectedImage.url}`;
+                  const absoluteUrl = makeBackendAbsoluteUrl(selectedImage.url);
                   console.log('🔄 Trying absolute URL:', absoluteUrl);
                   img.src = absoluteUrl;
                 } else if (selectedImage.url.startsWith('static/')) {
-                  const absoluteUrl = `http://localhost:3000/${selectedImage.url}`;
+                  const absoluteUrl = makeBackendAbsoluteUrl(`/${selectedImage.url}`);
                   console.log('🔄 Trying absolute URL (no leading slash):', absoluteUrl);
                   img.src = absoluteUrl;
                 } else {

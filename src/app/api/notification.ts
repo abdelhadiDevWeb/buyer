@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { authStore } from '@/contexts/authStore';
+import app from '@/config';
 
 // Use Next.js API routes instead of direct backend access
 export const NotificationAPI = {
@@ -15,20 +16,25 @@ export const NotificationAPI = {
         return { notifications: [] };
       }
       
-      const response = await axios.get('/api/notifications/all', {
+      const response = await axios.get(`${app.baseURL}notification/general`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+          'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
+        },
+        withCredentials: false,
       });
       return response.data;
     } catch (error: unknown) {
-      console.error('Error fetching notifications:', error);
       if (axios.isAxiosError(error)) {
-        console.error('Response status:', error.response?.status);
-        console.error('Response data:', error.response?.data);
+        const status = error.response?.status;
+        // Gracefully handle missing API route or empty data
+        if (status === 404) {
+          return { notifications: [] };
+        }
       }
-      throw error;
+      // Fallback: do not break UI
+      return { notifications: [] };
     }
   },
 
@@ -45,23 +51,24 @@ export const NotificationAPI = {
       }
       
       const response = await axios.put(
-        `/api/notifications/${notificationId}/read`,
+        `${app.baseURL}notification/${notificationId}/read`,
         {},
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+            'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
+          },
+          withCredentials: false,
         }
       );
       return response.data;
     } catch (error: unknown) {
-      console.error('Error marking notification as read:', error);
-      if (axios.isAxiosError(error)) {
-        console.error('Response status:', error.response?.status);
-        console.error('Response data:', error.response?.data);
+      // Swallow 404s to avoid noisy errors if API route is unavailable
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return { success: false };
       }
-      throw error;
+      return { success: false };
     }
   },
 
@@ -78,23 +85,23 @@ export const NotificationAPI = {
       }
       
       const response = await axios.put(
-        '/api/notifications/read-all',
+        `${app.baseURL}notification/read-all`,
         {},
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+            'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
+          },
+          withCredentials: false,
         }
       );
       return response.data;
     } catch (error: unknown) {
-      console.error('Error marking all notifications as read:', error);
-      if (axios.isAxiosError(error)) {
-        console.error('Response status:', error.response?.status);
-        console.error('Response data:', error.response?.data);
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return { success: false };
       }
-      throw error;
+      return { success: false };
     }
   },
 
@@ -110,11 +117,13 @@ export const NotificationAPI = {
         return 0; // Return 0 as fallback
       }
       
-      const response = await axios.get('/api/notifications/unread-count', {
+      const response = await axios.get(`${app.baseURL}notification/unread-count`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+          'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
+        },
+        withCredentials: false,
       });
       return response.data;
     } catch (error: unknown) {
@@ -141,23 +150,23 @@ export const NotificationAPI = {
       }
       
       const response = await axios.put(
-        `/api/notification/chat/${chatId}/read`,
+        `${app.baseURL}notification/chat/${chatId}/read`,
         {},
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+            'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
+          },
+          withCredentials: false,
         }
       );
       return response.data;
     } catch (error: unknown) {
-      console.error('Error marking chat notifications as read:', error);
-      if (axios.isAxiosError(error)) {
-        console.error('Response status:', error.response?.status);
-        console.error('Response data:', error.response?.data);
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return { success: false };
       }
-      throw error;
+      return { success: false };
     }
   }
 }; 

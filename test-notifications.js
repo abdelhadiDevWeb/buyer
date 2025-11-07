@@ -1,7 +1,12 @@
 // Test script to check notification data flow
 const axios = require('axios');
 
-const API_BASE_URL = 'http://localhost:3000';
+const DEV_API_BASE_URL = 'http://localhost:3000';
+const PROD_API_BASE_URL = 'https://mazadclick-server.onrender.com';
+// const LEGACY_API_BASE_URL = 'http://localhost:3000';
+
+const API_BASE_URL = process.env.API_BASE_URL || (process.env.NODE_ENV === 'development' ? DEV_API_BASE_URL : PROD_API_BASE_URL);
+
 const BUYER_API_KEY = process.env.NEXT_PUBLIC_KEY_API_BYUER || 'your-api-key-here';
 
 async function testNotifications() {

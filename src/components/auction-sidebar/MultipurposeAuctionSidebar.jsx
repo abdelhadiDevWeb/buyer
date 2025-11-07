@@ -1491,34 +1491,36 @@ const MultipurposeAuctionSidebar = () => {
                                                         {/* Quantity and Location Info */}
                                                         <div style={{
                                                             display: 'grid',
-                                                            gridTemplateColumns: '1fr 1fr',
+                                                            gridTemplateColumns: auction?.bidType === 'SERVICE' ? '1fr' : '1fr 1fr',
                                                             gap: '12px',
                                                             marginBottom: '16px',
                                                         }}>
+                                                            {auction?.bidType !== 'SERVICE' && (
+                                                                <div>
+                                                                    <p style={{
+                                                                        fontSize: '12px',
+                                                                        color: hasAuctionEnded ? '#888' : '#666',
+                                                                        margin: '0 0 4px 0',
+                                                                        fontWeight: '600',
+                                                                    }}>
+                                                                        Quantité
+                                                                    </p>
+                                                                    <p style={{
+                                                                        fontSize: '14px',
+                                                                        color: hasAuctionEnded ? '#888' : '#333',
+                                                                        margin: 0,
+                                                                        fontWeight: '500',
+                                                                    }}>
+                                                                        {auction.quantity || 'Non spécifiée'}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+
                                                             <div>
                                                                 <p style={{
                                                                     fontSize: '12px',
                                                                     color: hasAuctionEnded ? '#888' : '#666',
                                                                     margin: '0 0 4px 0',
-                                                                    fontWeight: '600',
-                                                                }}>
-                                                                    Quantité
-                                                                </p>
-                                                                <p style={{
-                                                                    fontSize: '14px',
-                                                                    color: hasAuctionEnded ? '#888' : '#333',
-                                                                    margin: 0,
-                                                                    fontWeight: '500',
-                                                                }}>
-                                                                    {auction.quantity || 'Non spécifiée'}
-                                                                </p>
-                                                            </div>
-
-                                                                <div>
-                                                                    <p style={{
-                                                                        fontSize: '12px',
-                                                                    color: hasAuctionEnded ? '#888' : '#666',
-                                                                        margin: '0 0 4px 0',
                                                                     fontWeight: '600',
                                                                 }}>
                                                                     Localisation
@@ -1527,12 +1529,23 @@ const MultipurposeAuctionSidebar = () => {
                                                                     fontSize: '14px',
                                                                     color: hasAuctionEnded ? '#888' : '#333',
                                                                     margin: 0,
-                                                                        fontWeight: '500',
+                                                                    fontWeight: '500',
                                                                     overflow: 'hidden',
                                                                     textOverflow: 'ellipsis',
                                                                     whiteSpace: 'nowrap',
                                                                 }}>
-                                                                    {auction.location || auction.wilaya || 'Non spécifiée'}
+                                                                    {(() => {
+                                                                      const place = auction.place || '';
+                                                                      const address = auction.address || '';
+                                                                      const location = auction.location || '';
+                                                                      const wilaya = auction.wilaya || '';
+                                                                      // For auctions, 'place' contains the full address
+                                                                      // Combine: place (full address), address, location, wilaya
+                                                                      const parts = [place, address, location, wilaya].filter(Boolean);
+                                                                      // Remove duplicates and join
+                                                                      const uniqueParts = [...new Set(parts)];
+                                                                      return uniqueParts.length > 0 ? uniqueParts.join(', ') : 'Non spécifiée';
+                                                                    })()}
                                                                 </p>
                                                             </div>
                                                         </div>

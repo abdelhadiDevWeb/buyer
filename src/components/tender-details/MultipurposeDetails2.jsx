@@ -493,6 +493,42 @@ const MultipurposeDetails2 = () => {
     fetchTenderBids();
   }, [tenderId]);
 
+  // Calculate current lowest bid price for display (works for both SERVICE and PRODUIT tender types)
+  const currentLowestBidPrice = useMemo(() => {
+    console.log('[Tender Price Display] Calculating current price:', {
+      tenderType: tenderData?.tenderType,
+      offersCount: offers?.length,
+      hasOffers: !!offers && offers.length > 0,
+      maxBudget: tenderData?.maxBudget
+    });
+    
+    if (!offers || offers.length === 0) {
+      // If no bids, use maxBudget as reference
+      const fallbackPrice = tenderData?.maxBudget || 0;
+      console.log('[Tender Price Display] No offers, using maxBudget:', fallbackPrice);
+      return fallbackPrice;
+    }
+    
+    // Extract bid amounts (works for both SERVICE and PRODUIT)
+    const bidAmounts = offers
+      .filter(bid => {
+        // Handle both bidAmount (for tender bids) and price (for regular offers)
+        const amount = bid.bidAmount || bid.price;
+        return amount != null && amount > 0;
+      })
+      .map(bid => bid.bidAmount || bid.price);
+    
+    if (bidAmounts.length === 0) {
+      const fallbackPrice = tenderData?.maxBudget || 0;
+      console.log('[Tender Price Display] No valid bid amounts, using maxBudget:', fallbackPrice);
+      return fallbackPrice;
+    }
+    
+    const lowestPrice = Math.min(...bidAmounts);
+    console.log('[Tender Price Display] Lowest bid found:', lowestPrice);
+    return lowestPrice;
+  }, [offers, tenderData]);
+
   // Fetch user's tender bids using TendersAPI
   const fetchMyTenderBids = async () => {
     if (!isLogged || !auth.tokens || !auth.user?._id) return;
@@ -757,56 +793,121 @@ const MultipurposeDetails2 = () => {
         return;
       }
 
-      // Get bid amount from the quantity input
-      const bidInput = document.querySelector(".quantity__input");
-      if (!bidInput || !bidInput.value) {
-        toast.error("Veuillez entrer un montant d'offre valide");
-        return;
+      // Check evaluation type
+      const isMieuxDisant = tenderData?.evaluationType === 'MIEUX_DISANT';
+      
+      let finalBidAmount = 0;
+      let proposal = '';
+
+      if (isMieuxDisant) {
+        // For MIEUX_DISANT: Get proposal text
+        const proposalTextarea = document.querySelector(".proposal-textarea");
+        if (!proposalTextarea || !proposalTextarea.value || proposalTextarea.value.trim().length < 10) {
+          toast.error("Veuillez rédiger une proposition détaillée (minimum 10 caractères)");
+          return;
+        }
+        proposal = proposalTextarea.value.trim();
+        console.log("[MultipurposeDetails2] Proposal text:", proposal);
+        
+        // For mieux disant, bid amount can be 0 or optional
+        finalBidAmount = 0;
+      } else {
+        // For MOINS_DISANT: Get bid amount from the quantity input
+        const bidInput = document.querySelector(".quantity__input");
+        if (!bidInput || !bidInput.value) {
+          toast.error("Veuillez entrer un montant d'offre valide");
+          return;
+        }
+
+        const bidAmountRaw = bidInput.value;
+        console.log("[MultipurposeDetails2] Raw bid amount:", bidAmountRaw);
+
+        // Clean the bid amount - remove formatting
+        let cleanBidAmount = bidAmountRaw;
+        
+        // Remove ",00 " suffix if present
+        cleanBidAmount = cleanBidAmount.replace(/,00\s*$/, "");
+        
+        // Remove all commas (thousands separators)
+        cleanBidAmount = cleanBidAmount.replace(/,/g, "");
+        
+        // Remove any currency symbols or extra spaces
+        cleanBidAmount = cleanBidAmount.replace(/[^\d.]/g, "");
+
+        console.log("[MultipurposeDetails2] Cleaned bid amount:", cleanBidAmount);
+
+        // Parse to number and validate
+        const numericBidAmount = parseFloat(cleanBidAmount);
+        
+        if (isNaN(numericBidAmount) || numericBidAmount <= 0) {
+          toast.error("Veuillez entrer un montant valide pour votre offre");
+          return;
+        }
+        
+        // Check minimum bid amount
+        if (numericBidAmount < 1) {
+          toast.error("Le montant minimum pour une offre est de 1 DA");
+          return;
+        }
+
+        // Round to avoid floating point issues
+        finalBidAmount = Math.round(numericBidAmount);
       }
 
-      const bidAmountRaw = bidInput.value;
-      console.log("[MultipurposeDetails2] Raw bid amount:", bidAmountRaw);
-
-      // Clean the bid amount - remove formatting
-      let cleanBidAmount = bidAmountRaw;
-      
-      // Remove ",00 " suffix if present
-      cleanBidAmount = cleanBidAmount.replace(/,00\s*$/, "");
-      
-      // Remove all commas (thousands separators)
-      cleanBidAmount = cleanBidAmount.replace(/,/g, "");
-      
-      // Remove any currency symbols or extra spaces
-      cleanBidAmount = cleanBidAmount.replace(/[^\d.]/g, "");
-
-      console.log("[MultipurposeDetails2] Cleaned bid amount:", cleanBidAmount);
-
-      // Parse to number and validate
-      const numericBidAmount = parseFloat(cleanBidAmount);
-      
-      if (isNaN(numericBidAmount) || numericBidAmount <= 0) {
-        toast.error("Veuillez entrer un montant valide pour votre offre");
-        return;
+      // For MOINS_DISANT tenders, validate that the bid is less than the current lowest bid
+      if (!isMieuxDisant) {
+        // Get current lowest bid from existing bids
+        let currentLowestBid = null;
+        
+        // Try to get bids from offers state (tender bids)
+        if (offers && offers.length > 0) {
+          // Find the lowest bid amount from existing bids
+          const bidAmounts = offers
+            .filter(bid => bid.bidAmount != null && bid.bidAmount > 0)
+            .map(bid => bid.bidAmount);
+          
+          if (bidAmounts.length > 0) {
+            currentLowestBid = Math.min(...bidAmounts);
+          }
+        }
+        
+        // If no bids in offers state, try fetching from API
+        if (currentLowestBid === null && tenderId) {
+          try {
+            const bidsResponse = await TendersAPI.getTenderBids(tenderId);
+            const bids = bidsResponse?.data || bidsResponse || [];
+            
+            if (bids.length > 0) {
+              const bidAmounts = bids
+                .filter(bid => bid.bidAmount != null && bid.bidAmount > 0)
+                .map(bid => bid.bidAmount);
+              
+              if (bidAmounts.length > 0) {
+                currentLowestBid = Math.min(...bidAmounts);
+              }
+            }
+          } catch (err) {
+            console.warn("Could not fetch current bids for validation:", err);
+          }
+        }
+        
+        // Validate that new bid is less than current lowest bid
+        if (currentLowestBid !== null && finalBidAmount >= currentLowestBid) {
+          toast.error(
+            `Votre offre doit être inférieure à la dernière offre actuelle de ${currentLowestBid.toLocaleString('fr-FR')} DA. Vous ne pouvez pas faire une offre supérieure ou égale à la dernière offre.`
+          );
+          return;
+        }
       }
-      
-      // Check minimum bid amount
-      if (numericBidAmount < 1) {
-        toast.error("Le montant minimum pour une offre est de 1 DA");
-        return;
-      }
-
-      // For tenders, only validate that the bid amount is positive
-      // No maximum or minimum limits - tenders accept any price
-
-      // Round to avoid floating point issues
-      const finalBidAmount = Math.round(numericBidAmount);
 
       console.log("[MultipurposeDetails2] Final bid amount:", finalBidAmount);
+      console.log("[MultipurposeDetails2] Proposal:", proposal);
       console.log("[MultipurposeDetails2] Tender data:", tenderData);
 
-      // Prepare the payload for tender bid (only send bidAmount, controller will set bidder and tenderOwner)
+      // Prepare the payload for tender bid
       const payload = {
         bidAmount: finalBidAmount,
+        ...(proposal && { proposal }), // Add proposal if it exists (for MIEUX_DISANT)
       };
 
       console.log("[MultipurposeDetails2] Sending tender bid payload:", payload);
@@ -842,11 +943,22 @@ const MultipurposeDetails2 = () => {
         }
         
         // Show success message
-        toast.success("Votre offre a été soumise avec succès !");
+        const successMessage = isMieuxDisant 
+          ? "Votre proposition a été envoyée avec succès !" 
+          : "Votre offre a été soumise avec succès !";
+        toast.success(successMessage);
         
         // Clear the input
-        if (bidInput) {
-          bidInput.value = "";
+        if (isMieuxDisant) {
+          const proposalTextarea = document.querySelector(".proposal-textarea");
+          if (proposalTextarea) {
+            proposalTextarea.value = "";
+          }
+        } else {
+          const bidInput = document.querySelector(".quantity__input");
+          if (bidInput) {
+            bidInput.value = "";
+          }
         }
         
         // Refresh the tender data after placing a bid
@@ -934,8 +1046,10 @@ const MultipurposeDetails2 = () => {
         console.log("Server error message:", serverMessage);
         
         // Handle specific error messages from server
-        if (serverMessage.includes('Bid amount must be lower than current lowest bid')) {
-          errorMessage = `Votre offre doit être inférieure à l'offre actuelle la plus basse. ${serverMessage}`;
+        if (serverMessage.includes('doit être inférieure à la dernière offre') || 
+            serverMessage.includes('Bid amount must be lower than current lowest bid')) {
+          // Use the server message directly as it already contains the formatted error
+          errorMessage = serverMessage;
         } else if (serverMessage.includes('Bid amount is below minimum acceptable price')) {
           errorMessage = `Le montant de votre offre est inférieur au prix minimum acceptable. ${serverMessage}`;
         } else if (serverMessage.includes('Tender is no longer accepting bids')) {
@@ -1943,12 +2057,14 @@ const MultipurposeDetails2 = () => {
                       <div className="auction-details-table mb-4">
                         <table className="table">
                           <tbody>
-                            <tr>
-                              <td className="fw-bold">Quantité</td>
-                              <td>
-                                {safeTenderData.quantity || "Non spécifiée"}
-                              </td>
-                            </tr>
+                            {safeTenderType !== 'SERVICE' && (
+                              <tr>
+                                <td className="fw-bold">Quantité</td>
+                                <td>
+                                  {safeTenderData.quantity || "Non spécifiée"}
+                                </td>
+                              </tr>
+                            )}
                             <tr>
                               <td className="fw-bold">Type d'appel d'offres</td>
                               <td>{safeTenderType}</td>
@@ -2053,24 +2169,137 @@ const MultipurposeDetails2 = () => {
                               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
                             </svg>
                             <div>
-                              <strong>Instructions pour l'appel d'offres :</strong>
+                              <strong>
+                                {tenderData?.evaluationType === 'MIEUX_DISANT' 
+                                  ? 'Instructions pour l\'appel d\'offres (Mieux disant) :' 
+                                  : 'Instructions pour l\'appel d\'offres (Moins disant) :'}
+                              </strong>
                               <ul style={{ margin: "4px 0 0 0", paddingLeft: "16px" }}>
-                                <li>Entrez le prix que vous proposez pour ce projet</li>
-                                <li>Vous pouvez proposer n'importe quel prix</li>
-                                <li>Le gagnant sera sélectionné par l'acheteur selon ses critères</li>
-                                <li>Aucune limite de prix - soumettez votre offre</li>
+                                {tenderData?.evaluationType === 'MIEUX_DISANT' ? (
+                                  <>
+                                    <li>Rédigez une proposition détaillée de votre offre</li>
+                                    <li>Incluez les détails techniques, avantages et garanties</li>
+                                    <li>Le gagnant sera sélectionné selon la meilleure proposition globale</li>
+                                    <li>Soyez précis et professionnel dans votre proposition</li>
+                                  </>
+                                ) : (
+                                  <>
+                                    <li>Entrez le prix que vous proposez pour ce projet</li>
+                                    <li>Le prix le plus bas remportera l'appel d'offres</li>
+                                    <li>Proposez un prix compétitif mais réaliste</li>
+                                    <li>Assurez-vous de pouvoir respecter le prix proposé</li>
+                                  </>
+                                )}
                               </ul>
                             </div>
                           </div>
                         )}
                         
-                        <div className="quantity-counter-and-btn-area">
-                          <HandleQuantity
-                            initialValue=""
-                            startingPrice={0}
-                            placeholder="Entrez n'importe quel prix"
-                          />
-                          <button
+                        {/* Show textarea for MIEUX_DISANT, input for MOINS_DISANT */}
+                        {(() => {
+                          console.log('🔍 [MultipurposeDetails2] Tender Evaluation Type Check:', {
+                            evaluationType: tenderData?.evaluationType,
+                            tenderDataKeys: tenderData ? Object.keys(tenderData) : [],
+                            hasTenderData: !!tenderData,
+                            fullTenderData: tenderData
+                          });
+                          return tenderData?.evaluationType === 'MIEUX_DISANT';
+                        })() ? (
+                          // MIEUX_DISANT: Proposal textarea with button
+                          <div style={{ width: "100%" }}>
+                            <textarea
+                              className="proposal-textarea"
+                              placeholder="Rédigez votre proposition détaillée ici..."
+                              style={{
+                                width: "100%",
+                                minHeight: "200px",
+                                padding: "16px",
+                                borderRadius: "12px",
+                                border: "2px solid #e0e0e0",
+                                fontSize: "15px",
+                                fontFamily: "inherit",
+                                resize: "vertical",
+                                marginBottom: "16px",
+                                outline: "none",
+                                transition: "all 0.3s ease",
+                              }}
+                              onFocus={(e) => {
+                                e.target.style.borderColor = "#0063b1";
+                                e.target.style.boxShadow = "0 0 0 3px rgba(0, 99, 177, 0.1)";
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.borderColor = "#e0e0e0";
+                                e.target.style.boxShadow = "none";
+                              }}
+                            />
+                            <button
+                              className="bid-btn-modern"
+                              onClick={isOwner ? undefined : handleBidClick}
+                              disabled={isOwner}
+                              style={{
+                                width: "100%",
+                                opacity: isOwner ? 0.5 : 1,
+                                cursor: isOwner ? "not-allowed" : "pointer",
+                                pointerEvents: isOwner ? "none" : "auto",
+                              }}
+                              title={
+                                isOwner
+                                  ? "Vous ne pouvez pas soumettre d'offre sur votre propre appel d'offres."
+                                  : "Envoyer votre proposition"
+                              }
+                            >
+                              <div className="btn-content">
+                                <span>Envoyer l'offre</span>
+                                <svg
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M14.4301 5.92993L20.5001 11.9999L14.4301 18.0699"
+                                    stroke="white"
+                                    strokeWidth="2"
+                                    strokeMiterlimit="10"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M3.5 12H20.33"
+                                    stroke="white"
+                                    strokeWidth="2"
+                                    strokeMiterlimit="10"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </div>
+                            </button>
+                          </div>
+                        ) : (
+                          // MOINS_DISANT: Price input with button
+                          <div className="quantity-counter-and-btn-area">
+                            <HandleQuantity
+                              initialValue={
+                                currentLowestBidPrice > 0 
+                                  ? currentLowestBidPrice 
+                                  : (tenderData?.maxBudget || 0)
+                              }
+                              startingPrice={
+                                currentLowestBidPrice > 0 
+                                  ? currentLowestBidPrice 
+                                  : (tenderData?.maxBudget || 0)
+                              }
+                              placeholder={
+                                currentLowestBidPrice > 0
+                                  ? `Prix actuel: ${currentLowestBidPrice.toLocaleString('fr-FR')} DA (proposez moins)`
+                                  : tenderData?.maxBudget && tenderData.maxBudget > 0
+                                    ? `Budget max: ${tenderData.maxBudget.toLocaleString('fr-FR')} DA`
+                                    : "Entrez votre prix"
+                              }
+                            />
+                            <button
                             className="bid-btn-modern"
                             onClick={isOwner ? undefined : handleBidClick} // Changed to show modal
                             disabled={isOwner}
@@ -2078,15 +2307,22 @@ const MultipurposeDetails2 = () => {
                               opacity: isOwner ? 0.5 : 1,
                               cursor: isOwner ? "not-allowed" : "pointer",
                               pointerEvents: isOwner ? "none" : "auto",
+                              marginTop: tenderData?.evaluationType === 'MIEUX_DISANT' ? "0" : "0",
                             }}
                             title={
                               isOwner
                                 ? "Vous ne pouvez pas soumettre d'offre sur votre propre appel d'offres."
-                                : "Soumettre votre offre"
+                                : tenderData?.evaluationType === 'MIEUX_DISANT' 
+                                  ? "Envoyer votre proposition"
+                                  : "Soumettre votre offre"
                             }
                           >
                             <div className="btn-content">
-                              <span>Soumettre une Offre</span>
+                              <span>
+                                {tenderData?.evaluationType === 'MIEUX_DISANT' 
+                                  ? "Envoyer l'offre" 
+                                  : "Soumettre une Offre"}
+                              </span>
                               <svg
                                 width="20"
                                 height="20"
@@ -2113,12 +2349,13 @@ const MultipurposeDetails2 = () => {
                               </svg>
                             </div>
                           </button>
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Professional User Special Access Box */}
-                    {isLogged && auth.user?.type === 'PROFESSIONAL' && (
+                    {/* Professional User Special Access Box - REMOVED FOR TENDERS (Only for auctions) */}
+                    {false && isLogged && auth.user?.type === 'PROFESSIONAL' && (
                       <div className="professional-access-box" style={{
                         marginTop: '24px',
                         padding: '24px',
@@ -2252,7 +2489,9 @@ const MultipurposeDetails2 = () => {
                               color: '#666',
                               fontSize: '12px',
                             }}>
-                              Quantité: {safeTenderData.quantity || "Non spécifiée"}
+                              {safeTenderType !== 'SERVICE' && (
+                                <>Quantité: {safeTenderData.quantity || "Non spécifiée"}</>
+                              )}
                             </p>
                           </div>
 
@@ -2510,7 +2749,7 @@ const MultipurposeDetails2 = () => {
                           
                           {/* Additional Details */}
                           <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-                            {safeQuantity && (
+                            {safeTenderType !== 'SERVICE' && safeQuantity && (
                               <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '8px' }}>
                                 <strong>Quantité:</strong> {safeQuantity}
                               </div>
@@ -3295,13 +3534,45 @@ const MultipurposeDetails2 = () => {
                                   </div>
                                   <div
                                     style={{
-                                      fontSize: "18px",
-                                      fontWeight: "700",
+                                      fontSize: tenderData?.evaluationType === 'MIEUX_DISANT' ? "14px" : "18px",
+                                      fontWeight: tenderData?.evaluationType === 'MIEUX_DISANT' ? "600" : "700",
                                       color: "#0063b1",
                                       flexShrink: 0,
+                                      maxWidth: tenderData?.evaluationType === 'MIEUX_DISANT' ? "200px" : "auto",
                                     }}
                                   >
-                                    {formatPrice(offer.price)}
+                                    {tenderData?.evaluationType === 'MIEUX_DISANT' ? (
+                                      <div
+                                        style={{
+                                          fontSize: "13px",
+                                          color: "#666",
+                                          textAlign: "right",
+                                          maxHeight: "60px",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                          display: "-webkit-box",
+                                          WebkitLineClamp: 3,
+                                          WebkitBoxOrient: "vertical",
+                                          lineHeight: "1.4",
+                                        }}
+                                        title={offer.proposal || 'Aucune proposition'}
+                                      >
+                                        {offer.proposal ? (
+                                          <>
+                                            <span style={{ fontWeight: "600", color: "#0063b1", fontSize: "11px", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
+                                              📝 Proposition
+                                            </span>
+                                            {offer.proposal}
+                                          </>
+                                        ) : (
+                                          <span style={{ fontStyle: "italic", color: "#999" }}>
+                                            Aucune proposition
+                                          </span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      formatPrice(offer.bidAmount || offer.price)
+                                    )}
                                   </div>
                                 </div>
                               ))}
@@ -3750,6 +4021,7 @@ const MultipurposeDetails2 = () => {
                                           }}
                                         >
                                           <div>
+                                            {safeTenderType !== 'SERVICE' && (
                                             <p
                                               style={{
                                                 fontSize: "12px",
@@ -3764,6 +4036,8 @@ const MultipurposeDetails2 = () => {
                                                 ? "Appel d'offres terminé"
                                                 : "Quantité"}
                                             </p>
+                                            )}
+                                            {safeTenderType !== 'SERVICE' && (
                                             <p
                                               style={{
                                                 fontSize: "14px",
@@ -3776,6 +4050,7 @@ const MultipurposeDetails2 = () => {
                                             >
                                               {tender.quantity || "Non spécifiée"}
                                             </p>
+                                            )}
                                           </div>
                                           <div
                                             style={{
@@ -4161,7 +4436,9 @@ const MultipurposeDetails2 = () => {
                 marginBottom: '15px',
                 lineHeight: '1.3',
               }}>
-                Confirmer votre offre
+                {tenderData?.evaluationType === 'MIEUX_DISANT' 
+                  ? 'Confirmer votre proposition' 
+                  : 'Confirmer votre offre'}
               </h3>
 
               <p style={{
@@ -4170,10 +4447,12 @@ const MultipurposeDetails2 = () => {
                 lineHeight: '1.6',
                 marginBottom: '20px',
               }}>
-                Êtes-vous sûr de vouloir soumettre cette offre ?
+                {tenderData?.evaluationType === 'MIEUX_DISANT' 
+                  ? 'Êtes-vous sûr de vouloir soumettre cette proposition ?' 
+                  : 'Êtes-vous sûr de vouloir soumettre cette offre ?'}
               </p>
 
-              {/* Bid Amount Display */}
+              {/* Bid Amount or Proposal Display */}
               <div style={{
                 background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
                 borderRadius: '12px',
@@ -4181,31 +4460,64 @@ const MultipurposeDetails2 = () => {
                 marginBottom: '20px',
                 border: '1px solid #e9ecef',
               }}>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#666',
-                  margin: '0 0 8px 0',
-                  fontWeight: '600',
-                }}>
-                  Montant de votre offre
-                </p>
-                <div style={{
-                  fontSize: '28px',
-                  fontWeight: '700',
-                  color: '#0063b1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                }}>
-                  <span id="modal-bid-amount">
-                    {(() => {
-                      const bidInput = document.querySelector(".quantity__input");
-                      return bidInput ? bidInput.value : '0';
-                    })()}
-                  </span>
-                  <span style={{ fontSize: '16px', color: '#666' }}>DA</span>
-                </div>
+                {tenderData?.evaluationType === 'MIEUX_DISANT' ? (
+                  <>
+                    <p style={{
+                      fontSize: '14px',
+                      color: '#666',
+                      margin: '0 0 8px 0',
+                      fontWeight: '600',
+                    }}>
+                      Votre proposition
+                    </p>
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#333',
+                      textAlign: 'left',
+                      maxHeight: '150px',
+                      overflowY: 'auto',
+                      padding: '12px',
+                      background: 'white',
+                      borderRadius: '8px',
+                      border: '1px solid #e0e0e0',
+                      whiteSpace: 'pre-wrap',
+                      wordWrap: 'break-word',
+                    }}>
+                      {(() => {
+                        const proposalTextarea = document.querySelector(".proposal-textarea");
+                        return proposalTextarea ? proposalTextarea.value : '';
+                      })()}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p style={{
+                      fontSize: '14px',
+                      color: '#666',
+                      margin: '0 0 8px 0',
+                      fontWeight: '600',
+                    }}>
+                      Montant de votre offre
+                    </p>
+                    <div style={{
+                      fontSize: '28px',
+                      fontWeight: '700',
+                      color: '#0063b1',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}>
+                      <span id="modal-bid-amount">
+                        {(() => {
+                          const bidInput = document.querySelector(".quantity__input");
+                          return bidInput ? bidInput.value : '0';
+                        })()}
+                      </span>
+                      <span style={{ fontSize: '16px', color: '#666' }}>DA</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <p style={{

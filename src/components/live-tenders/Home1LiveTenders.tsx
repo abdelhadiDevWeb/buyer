@@ -343,10 +343,10 @@ const Home1LiveTenders = () => {
   // Swiper settings
   const settings = useMemo(() => ({
     slidesPerView: "auto" as const,
-    speed: 1200,
+    speed: 800,
     spaceBetween: 25,
     autoplay: {
-      delay: 4000,
+      delay: 2500,
       disableOnInteraction: false,
       pauseOnMouseEnter: true,
     },
@@ -380,7 +380,11 @@ const Home1LiveTenders = () => {
         spaceBetween: 25,
       },
       1400: {
-        slidesPerView: 4,
+        slidesPerView: 5,
+        spaceBetween: 25,
+      },
+      1600: {
+        slidesPerView: 5,
         spaceBetween: 30,
       },
     },
@@ -798,7 +802,7 @@ const Home1LiveTenders = () => {
                           {/* Location and Quantity Info */}
                           <div style={{
                             display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
+                            gridTemplateColumns: tender?.tenderType === 'SERVICE' ? '1fr' : '1fr 1fr',
                             gap: '12px',
                             marginBottom: '16px',
                           }}>
@@ -837,45 +841,53 @@ const Home1LiveTenders = () => {
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
                               }}>
-                                {tender.location || tender.wilaya || 'Non spécifiée'}
+                                {(() => {
+                                  const address = (tender as any).address || '';
+                                  const location = tender.location || '';
+                                  const wilaya = tender.wilaya || '';
+                                  const parts = [address, location, wilaya].filter(Boolean);
+                                  return parts.length > 0 ? parts.join(', ') : 'Non spécifiée';
+                                })()}
                               </p>
                             </div>
 
-                            <div style={{
-                              background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
-                              borderRadius: '12px',
-                              padding: '12px',
-                              border: '1px solid #e9ecef',
-                              borderLeft: '4px solid #27F5CC',
-                              position: 'relative',
-                              overflow: 'hidden',
-                            }}>
+                            {tender?.tenderType !== 'SERVICE' && (
                               <div style={{
-                                position: 'absolute',
-                                top: 0,
-                                right: 0,
-                                width: '30px',
-                                height: '30px',
-                                background: 'linear-gradient(45deg, rgba(39, 245, 204, 0.1), rgba(0, 212, 170, 0.1))',
-                                borderRadius: '0 12px 0 100%',
-                              }}></div>
-                              <p style={{
-                                fontSize: '12px',
-                                color: '#666',
-                                margin: '0 0 4px 0',
-                                fontWeight: '600',
+                                background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                                borderRadius: '12px',
+                                padding: '12px',
+                                border: '1px solid #e9ecef',
+                                borderLeft: '4px solid #27F5CC',
+                                position: 'relative',
+                                overflow: 'hidden',
                               }}>
-                                📦 Quantité
-                              </p>
-                              <p style={{
-                                fontSize: '14px',
-                                color: '#333',
-                                margin: 0,
-                                fontWeight: '500',
-                              }}>
-                                {tender.quantity || 'Non spécifiée'}
-                              </p>
-                            </div>
+                                <div style={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  right: 0,
+                                  width: '30px',
+                                  height: '30px',
+                                  background: 'linear-gradient(45deg, rgba(39, 245, 204, 0.1), rgba(0, 212, 170, 0.1))',
+                                  borderRadius: '0 12px 0 100%',
+                                }}></div>
+                                <p style={{
+                                  fontSize: '12px',
+                                  color: '#666',
+                                  margin: '0 0 4px 0',
+                                  fontWeight: '600',
+                                }}>
+                                  📦 Quantité
+                                </p>
+                                <p style={{
+                                  fontSize: '14px',
+                                  color: '#333',
+                                  margin: 0,
+                                  fontWeight: '500',
+                                }}>
+                                  {tender.quantity || 'Non spécifiée'}
+                                </p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Description */}

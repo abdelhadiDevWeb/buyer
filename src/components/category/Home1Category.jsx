@@ -9,7 +9,10 @@ import { useTranslation } from 'react-i18next';
 
 const Home1Category = () => {
   const { t } = useTranslation();
+  const DEBUG_ASSET_TESTS = process.env.NEXT_PUBLIC_DEBUG_CATEGORY_ASSETS === 'true';
   const [categories, setCategories] = useState([]);
+  const [filterType, setFilterType] = useState('ALL'); // ALL | PRODUCT | SERVICE
+  const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -298,96 +301,31 @@ const Home1Category = () => {
       configObject: app
     });
     
-        // Test server connectivity and possible image paths
-        const testServerPaths = async () => {
-          const testPaths = [
-            app.baseURL,
-            `${app.baseURL}static/`,
-            `${app.baseURL}uploads/`,
-            `${app.baseURL}images/`,
-            `${app.baseURL}public/`,
-            `${app.baseURL}assets/`,
-            `${app.baseURL}media/`,
-            `${app.baseURL}files/`,
-          ];
-          
-          console.log('🔍 Testing server paths:');
-          for (const path of testPaths) {
-            try {
-              const response = await fetch(path, { method: 'HEAD' });
-              console.log(`✅ ${path} - Status: ${response.status}`);
-            } catch (error) {
-              console.log(`❌ ${path} - Error: ${error.message}`);
+        // Optional: server/image path tests (disabled by default)
+        if (DEBUG_ASSET_TESTS) {
+          const testServerPaths = async () => {
+            const testPaths = [
+              app.baseURL,
+              `${app.baseURL}static/`,
+              `${app.baseURL}uploads/`,
+              `${app.baseURL}images/`,
+              `${app.baseURL}public/`,
+              `${app.baseURL}assets/`,
+              `${app.baseURL}media/`,
+              `${app.baseURL}files/`,
+            ];
+            for (const path of testPaths) {
+              try { await fetch(path, { method: 'HEAD' }); } catch {}
             }
-          }
-          
-          // Test category API endpoint specifically
-          try {
-            const categoryResponse = await fetch(`${app.baseURL}category/tree`, { method: 'HEAD' });
-            console.log(`✅ Category API endpoint - Status: ${categoryResponse.status}`);
-          } catch (error) {
-            console.log(`❌ Category API endpoint - Error: ${error.message}`);
-          }
-          
-          // Test a sample image URL from the logs
-          const sampleImageUrl = 'https://api.mazad.click/static/1760435323858-20246619.jpg';
-          try {
-            console.log('🧪 Testing sample image URL:', sampleImageUrl);
-            const imageResponse = await fetch(sampleImageUrl, { method: 'HEAD' });
-            console.log(`🧪 Sample image test - Status: ${imageResponse.status}, OK: ${imageResponse.ok}`);
-            if (imageResponse.ok) {
-              console.log('🎉 Sample image is accessible!');
-            } else {
-              console.log('❌ Sample image is NOT accessible');
-            }
-          } catch (error) {
-            console.log(`❌ Sample image test failed: ${error.message}`);
-          }
-        };
-    
-        testServerPaths();
-        
-        // Direct image accessibility test
-        const testDirectImageAccess = async () => {
-          console.log('🧪 ===== DIRECT IMAGE ACCESS TEST =====');
-          const testUrl = 'https://api.mazad.click/static/1760437753581-5334461.jpg';
-          
-          try {
-            console.log('🧪 Testing direct access to:', testUrl);
-            
-            // Try fetch first
-            const fetchResponse = await fetch(testUrl, { method: 'HEAD' });
-            console.log('🧪 Fetch test result:', {
-              status: fetchResponse.status,
-              ok: fetchResponse.ok,
-              headers: Object.fromEntries(fetchResponse.headers.entries())
-            });
-            
-            // Try creating an image element
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            
-            img.onload = () => {
-              console.log('🎉 Image element loaded successfully!');
-              console.log('🎉 Image dimensions:', img.naturalWidth, 'x', img.naturalHeight);
-              console.log('🎉 Image src:', img.src);
-            };
-            
-            img.onerror = (error) => {
-              console.log('❌ Image element failed to load:', error);
-              console.log('❌ This indicates CORS or server issues');
-            };
-            
-            img.src = testUrl;
-            
-          } catch (error) {
-            console.log('❌ Direct image access test failed:', error);
-          }
-          
-          console.log('🧪 ===== END DIRECT IMAGE ACCESS TEST =====');
-        };
-        
-        testDirectImageAccess();
+            try { await fetch(`${app.baseURL}category/tree`, { method: 'HEAD' }); } catch {}
+          };
+          const testDirectImageAccess = async () => {
+            const testUrl = 'https://api.mazad.click/static/1760437753581-5334461.jpg';
+            try { await fetch(testUrl, { method: 'HEAD' }); } catch {}
+          };
+          testServerPaths();
+          testDirectImageAccess();
+        }
         
         const fetchCategories = async () => {
       try {
@@ -1104,8 +1042,22 @@ const Home1Category = () => {
     );
   };
 
-  const renderCategoryGrid = (categories) => {
-    return categories.map((category, index) => renderCategoryCard(category, index));
+  const renderCategoryGrid = (categoriesList) => {
+    // Apply filter by type if available
+    let filtered = categoriesList;
+    if (filterType !== 'ALL') {
+      filtered = categoriesList.filter((c) => {
+        const t = (c.type || c.categoryType || c.kind || '').toString().toUpperCase();
+        if (!t) {
+          // Fallback heuristics by name
+          const name = (c.name || '').toString().toLowerCase();
+          return filterType === 'SERVICE' ? name.includes('service') : !name.includes('service');
+        }
+        return filterType === 'SERVICE' ? t.includes('SERVICE') : t.includes('PRODUCT');
+      });
+    }
+    const limited = showAll ? filtered : filtered.slice(0, 5);
+    return limited.map((category, index) => renderCategoryCard(category, index));
   };
 
   if (loading) {
@@ -1178,16 +1130,24 @@ const Home1Category = () => {
           }}>
             Explore Categories
           </h2>
-          <p style={{
-            fontSize: '18px',
-            color: '#64748b',
-            maxWidth: '600px',
-            margin: '0 auto',
-            lineHeight: '1.6',
-            fontWeight: '500',
-          }}>
-            Discover amazing auctions across different categories and find exactly what you're looking for
-          </p>
+          {/* Filter chips */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '12px' }}>
+            {['ALL','PRODUCT','SERVICE'].map((k) => (
+              <button
+                key={k}
+                onClick={() => { setFilterType(k); setShowAll(false); }}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '999px',
+                  border: filterType===k ? 'none' : '1px solid rgba(0,99,177,0.25)',
+                  background: filterType===k ? 'linear-gradient(135deg, #0063b1, #00a3e0)' : 'transparent',
+                  color: filterType===k ? 'white' : '#0063b1',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >{k==='ALL'?'Tous':k==='PRODUCT'?'Produits':'Services'}</button>
+            ))}
+          </div>
         </div>
 
       </div>
@@ -1209,12 +1169,26 @@ const Home1Category = () => {
         {renderCategoryGrid(categories)}
       </div>
 
+      {/* View all button */}
+      <div style={{ textAlign:'center', marginTop:'20px' }}>
+        {!showAll && (
+          <button
+            onClick={() => setShowAll(true)}
+            style={{
+              padding: '12px 20px',
+              borderRadius: '12px',
+              border: '1px solid rgba(0,99,177,0.25)',
+              background: 'white',
+              color: '#0063b1',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >Voir tout</button>
+        )}
+      </div>
+
       {/* Mobile Carousel */}
-      <div style={{ 
-        display: 'none',
-        marginTop: '40px',
-        '@media (max-width: 768px)': { display: 'block' }
-      }}>
+      <div className="home1-mobile-carousel" style={{ marginTop: '40px' }}>
         <Swiper {...settings}>
           {categories.map((category, index) => (
             <SwiperSlide key={category._id || category.id}>
@@ -1226,6 +1200,8 @@ const Home1Category = () => {
 
       {/* Enhanced Global Styles */}
       <style jsx global>{`
+        .home1-mobile-carousel { display: none; }
+        @media (max-width: 768px) { .home1-mobile-carousel { display: block; } }
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }

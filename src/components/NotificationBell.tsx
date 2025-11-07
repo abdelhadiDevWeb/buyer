@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 import { BsBell, BsHammer, BsTrophy, BsExclamationCircle, BsChat } from 'react-icons/bs';

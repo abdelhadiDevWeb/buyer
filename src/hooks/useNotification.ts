@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { authStore } from '@/contexts/authStore';
 import { useCreateSocket } from '@/contexts/socket';
-import { getUnreadNotificationCount } from '@/utils/api';
+import { getUnreadNotificationCount, getNotifications } from '@/utils/api';
 
 interface Notification {
   _id: string;
@@ -53,30 +53,9 @@ export default function useNotification() {
       console.log('📥 Fetching notifications for user:', auth.user?._id);
       
       try {
-        const response = await fetch('/api/notifications/general', {
-          method: 'GET',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${auth.tokens.accessToken}`
-          }
-        });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            console.error('❌ Authentication failed (401) - token may be expired or invalid');
-            console.error('🔍 Token details:', {
-              hasToken: !!auth.tokens.accessToken,
-              tokenLength: auth.tokens.accessToken.length,
-              tokenStart: auth.tokens.accessToken.substring(0, 20) + '...'
-            });
-            // Try to refresh auth state
-            authStore.getState().refreshAuthState();
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const allNotifications = data.notifications || [];
+        // Use centralized API helper that handles 404s gracefully
+        const data = await getNotifications();
+        const allNotifications = (data && (data as any).notifications) ? (data as any).notifications : [];
         
         console.log('📥 General notifications from API:', allNotifications.length);
         console.log('📥 Full API response:', data);

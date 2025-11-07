@@ -4,7 +4,7 @@ import Header from "@/components/header/Header"
 import Home1Banner from "@/components/banner/Home1Banner";
 import Home1LiveAuction from "@/components/live-auction/Home1LiveAuction";
 import Home1LiveTenders from "@/components/live-tenders/Home1LiveTenders";
-import Home1Category from "@/components/category/Home1Category";
+// import Home1Category from "@/components/category/Home1Category"; // Commented out - not needed
 import ProfessionalAuctions from "@/components/professional-auctions/ProfessionalAuctions";
 import Footer from "@/components/footer/FooterWithErrorBoundary";
 import RequestProvider from "@/contexts/RequestContext";
@@ -17,9 +17,20 @@ import './style.css'
 import SocketProvider from "@/contexts/socket";
 import { useCreateSocket } from '@/contexts/socket';
 import { getSellerUrl } from '@/config';
+import app from '@/config';
 import { CategoryAPI } from '@/app/api/category';
+import { AuctionsAPI } from '@/app/api/auctions';
+import { TendersAPI } from '@/app/api/tenders';
 import { useRouter } from 'next/navigation';
 import ResponsiveTest from '@/components/common/ResponsiveTest';
+import { FaGavel } from 'react-icons/fa';
+
+const DEV_BACKEND_BASE_URL = 'http://localhost:3000/';
+const PROD_BACKEND_BASE_URL = 'https://mazadclick-server.onrender.com/';
+// const LEGACY_BACKEND_BASE_URL = 'http://localhost:3000/';
+
+const resolveBackendBaseUrl = () => (app.baseURL || (process.env.NODE_ENV === 'development' ? DEV_BACKEND_BASE_URL : PROD_BACKEND_BASE_URL));
+const resolveBackendHost = () => resolveBackendBaseUrl().replace(/\/$/, '');
 
 export default function Home() {
   const { initializeAuth, isLogged, auth } = useAuth();
@@ -32,11 +43,14 @@ export default function Home() {
   
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
   
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth <= 768;
+      const small = window.innerWidth < 480;
       setIsMobile(mobile);
+      setIsSmallScreen(small);
       
       // On mobile, immediately show all sections without animations
       if (mobile) {
@@ -57,13 +71,17 @@ export default function Home() {
   // State for dropdown menus
   const [auctionDropdownOpen, setAuctionDropdownOpen] = useState(false);
   const [tenderDropdownOpen, setTenderDropdownOpen] = useState(false);
+  const [venteDirectDropdownOpen, setVenteDirectDropdownOpen] = useState(false);
 
-  // State for category search
+  // State for search (categories, auctions, tenders)
   const [categories, setCategories] = useState<any[]>([]);
+  const [allAuctions, setAllAuctions] = useState<any[]>([]);
+  const [allTenders, setAllTenders] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLDivElement>(null);
 
@@ -90,12 +108,50 @@ export default function Home() {
 
   const handleCreateAuction = () => {
     setAuctionDropdownOpen(false);
-    window.open(getSellerUrl(), '_blank');
+    window.location.href = `${getSellerUrl()}dashboard/auctions/create`;
   };
 
   const handleCreateTender = () => {
     setTenderDropdownOpen(false);
-    window.open(getSellerUrl(), '_blank');
+    window.location.href = `${getSellerUrl()}dashboard/tenders/create`;
+  };
+
+  // Helper function to get category image URL
+  const getCategoryImageUrl = (category: any): string => {
+    // Try to get image from thumb.url, thumb.fullUrl, or other possible fields
+    const imageUrl = category.thumb?.url || 
+                     category.thumb?.fullUrl || 
+                     category.image || 
+                     category.thumbnail || 
+                     category.photo || 
+                     '';
+    
+    if (!imageUrl) {
+      return '/assets/images/cat.avif'; // Fallback image
+    }
+
+    // If it's already a full URL, return it as-is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      // Replace legacy hostnames with the current baseURL if needed
+      const normalizedBaseURL = resolveBackendHost();
+      const knownHosts = ['http://localhost:3000', 'https://mazadclick-server.onrender.com'];
+      return knownHosts.reduce((url, host) => url.replace(host, normalizedBaseURL), imageUrl);
+    }
+
+    // Clean the URL - remove leading slash if present
+    const cleanUrl = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+    
+    // Construct full URL from baseURL
+    const baseURL = resolveBackendHost();
+    
+    // First try: direct path with baseURL
+    // If the URL contains 'static', use it as-is
+    if (cleanUrl.includes('static/') || cleanUrl.startsWith('static/')) {
+      return `${baseURL}/${cleanUrl}`;
+    }
+    
+    // Try common paths - most likely: /static/filename
+    return `${baseURL}/static/${cleanUrl}`;
   };
 
   // Category search functions
@@ -115,44 +171,99 @@ export default function Home() {
     }
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     
     if (query.length > 0) {
-      const filtered = categories.filter((category: any) => 
-        category.name.toLowerCase().includes(query.toLowerCase())
-      );
-      setSearchResults(filtered);
+      setLoadingSearch(true);
+      try {
+        const lowerQuery = query.toLowerCase();
+        
+        // Search categories
+        const filteredCategories = categories.filter((category: any) => 
+          category.name.toLowerCase().includes(lowerQuery)
+        ).map(cat => ({ ...cat, type: 'category' }));
+        
+        // Search auctions by name/title
+        const filteredAuctions = allAuctions.filter((auction: any) => 
+          (auction.title || auction.name || '').toLowerCase().includes(lowerQuery)
+        ).map(auction => ({ ...auction, type: 'auction' }));
+        
+        // Search tenders by name/title
+        const filteredTenders = allTenders.filter((tender: any) => 
+          (tender.title || tender.name || '').toLowerCase().includes(lowerQuery)
+        ).map(tender => ({ ...tender, type: 'tender' }));
+        
+        // Combine all results
+        const combinedResults = [
+          ...filteredCategories,
+          ...filteredAuctions,
+          ...filteredTenders
+        ];
+        
+        setSearchResults(combinedResults);
       setShowSearchResults(true);
+      } catch (error) {
+        console.error('Error searching:', error);
+        setSearchResults([]);
+      } finally {
+        setLoadingSearch(false);
+      }
     } else {
       setSearchResults([]);
       setShowSearchResults(false);
     }
   };
 
-  const handleCategorySelect = (category: any) => {
-    setSearchQuery(category.name);
+  const handleSearchSelect = (item: any) => {
+    setSearchQuery(item.title || item.name || '');
     setShowSearchResults(false);
     
-    // Debug: Log the category and URL
-    console.log('Selected category:', category);
-    
-    // Navigate to category page (same as Explore Categories section)
-    const categoryId = category._id || category.id;
-    const categoryName = category.name;
+    // Navigate based on item type
+    if (item.type === 'category') {
+      const categoryId = item._id || item.id;
+      const categoryName = item.name;
     const categoryUrl = `/category?category=${categoryId}&name=${encodeURIComponent(categoryName)}`;
-    
-    console.log('Navigating to:', categoryUrl);
     router.push(categoryUrl);
+    } else if (item.type === 'auction') {
+      const auctionId = item._id || item.id;
+      router.push(`/auction-details/${auctionId}`);
+    } else if (item.type === 'tender') {
+      const tenderId = item._id || item.id;
+      router.push(`/tender-details/${tenderId}`);
+    }
   };
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchResults.length > 0) {
-      handleCategorySelect(searchResults[0]);
+      handleSearchSelect(searchResults[0]);
     }
   };
+
+  // Fetch auctions and tenders on component mount for search
+  useEffect(() => {
+    const fetchAuctionsAndTenders = async () => {
+      try {
+        const [auctionsRes, tendersRes] = await Promise.all([
+          AuctionsAPI.getAuctions().catch(() => ({ data: [] })),
+          TendersAPI.getActiveTenders().catch(() => [])
+        ]);
+        
+        // Handle different response structures
+        const auctions = auctionsRes?.data || auctionsRes || [];
+        const tenders = tendersRes?.data || tendersRes || [];
+        
+        setAllAuctions(Array.isArray(auctions) ? auctions : []);
+        setAllTenders(Array.isArray(tenders) ? tenders : []);
+      } catch (error) {
+        console.error('Error fetching auctions and tenders for search:', error);
+      }
+    };
+    
+    fetchAuctionsAndTenders();
+  }, []);
 
   // Fetch categories on component mount
   useEffect(() => {
@@ -168,6 +279,7 @@ export default function Home() {
       if (!target.closest('.dropdown-container')) {
         setAuctionDropdownOpen(false);
         setTenderDropdownOpen(false);
+        setVenteDirectDropdownOpen(false);
       }
       
       // Check if click is outside search results
@@ -272,7 +384,12 @@ export default function Home() {
 
         .hero-banner-section {
           position: relative;
-          overflow: hidden;
+          overflow: visible;
+          min-height: 700px;
+        }
+
+        .hero-content {
+          padding-bottom: 150px;
         }
 
         .hero-background {
@@ -775,41 +892,249 @@ export default function Home() {
         }
         
         /* Enhanced responsive design */
-        @media (max-width: 768px) {
+        /* Extra Small Devices (320px-479px) */
+        @media (max-width: 479px) {
           .container {
-            padding: 0 15px;
+            padding: 0 clamp(12px, 3vw, 16px);
           }
           
           .section-spacing {
-            margin-bottom: 40px;
+            margin-bottom: clamp(24px, 5vw, 32px);
+            padding: clamp(20px, 4vw, 32px) clamp(12px, 3vw, 20px);
+          }
+
+          .hero-banner-section {
+            padding: clamp(12px, 3vw, 20px) clamp(12px, 3vw, 16px) !important;
+            paddingTop: clamp(12px, 3vw, 20px) !important;
+            paddingBottom: clamp(140px, 24vw, 220px) !important;
+            min-height: 600px !important;
+            overflow: visible !important;
+          }
+
+          .hero-content {
+            padding-bottom: 120px !important;
+          }
+
+          .hero-content {
+            max-width: 100% !important;
+            padding: 0 clamp(8px, 2vw, 12px) !important;
+            padding-bottom: 120px !important;
+          }
+
+          .search-container {
+            max-width: 100% !important;
+            padding: 0 clamp(8px, 2vw, 12px) !important;
+          }
+
+          .hero-cta-buttons {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: clamp(14px, 3vw, 18px) !important;
+            marginTop: clamp(24px, 5vw, 36px) !important;
+          }
+
+          .dropdown-container {
+            max-width: 100% !important;
+          }
+
+          .dropdown-menu {
+            min-width: 100% !important;
+            width: 100% !important;
+            left: 0 !important;
+            right: auto !important;
+            transform: translateX(0) translateY(-10px) !important;
+          }
+
+          .dropdown-menu.open {
+            transform: translateX(0) translateY(0) !important;
+          }
+
+          .dropdown-menu::before {
+            left: 20% !important;
+          }
+
+          .dropdown-button {
+            padding: clamp(14px, 3vw, 18px) clamp(20px, 4vw, 28px) !important;
+          }
+
+          .dropdown-item {
+            padding: 12px 16px !important;
+            font-size: 14px !important;
+          }
+
+          .search-results {
+            max-height: clamp(200px, 50vh, 250px) !important;
+          }
+
+          .search-result-description {
+            display: none !important;
+          }
+        }
+
+        /* Small Devices (480px-639px) */
+        @media (min-width: 480px) and (max-width: 639px) {
+          .container {
+            padding: 0 clamp(14px, 2.5vw, 18px);
+          }
+
+          .hero-banner-section {
+            padding: clamp(16px, 3vw, 24px) clamp(16px, 3vw, 20px) !important;
+            paddingTop: clamp(16px, 3vw, 24px) !important;
+            paddingBottom: clamp(150px, 22vw, 240px) !important;
+            min-height: 650px !important;
+            overflow: visible !important;
+          }
+
+          .hero-content {
+            padding-bottom: 130px !important;
+          }
+
+          .hero-cta-buttons {
+            gap: clamp(16px, 3.5vw, 22px) !important;
+            marginTop: clamp(32px, 5.5vw, 44px) !important;
+          }
+
+          .dropdown-container {
+            max-width: 100% !important;
+          }
+
+          .search-result-description {
+            display: block !important;
+            max-width: clamp(80px, 20vw, 150px) !important;
+          }
+        }
+
+        /* Medium Devices (640px-767px) */
+        @media (min-width: 640px) and (max-width: 767px) {
+          .container {
+            padding: 0 clamp(16px, 2.5vw, 20px);
+          }
+
+          .hero-banner-section {
+            padding: clamp(20px, 3.5vw, 32px) clamp(20px, 3.5vw, 28px) !important;
+            paddingTop: clamp(20px, 3.5vw, 32px) !important;
+            paddingBottom: clamp(160px, 22vw, 260px) !important;
+            min-height: 680px !important;
+            overflow: visible !important;
+          }
+
+          .hero-content {
+            padding-bottom: 140px !important;
+          }
+
+          .hero-cta-buttons {
+            gap: clamp(18px, 3.5vw, 24px) !important;
+            marginTop: clamp(36px, 5.5vw, 48px) !important;
+          }
+
+          .dropdown-container {
+            max-width: 100% !important;
+          }
+
+          .search-result-description {
+            display: block !important;
+            max-width: clamp(120px, 22vw, 180px) !important;
+          }
+        }
+
+        /* Large Devices (768px-1023px) */
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .container {
+            padding: 0 clamp(18px, 2.5vw, 22px);
           }
           
-          /* Hero section responsive styles */
+          .section-spacing {
+            margin-bottom: clamp(32px, 4vw, 48px);
+          }
+          
           .hero-grid {
             grid-template-columns: 1fr !important;
-            gap: 40px !important;
-            text-align: center;
+            gap: clamp(32px, 4vw, 48px) !important;
           }
           
           .hero-trust-indicators {
-            grid-template-columns: 1fr !important;
-            gap: 16px !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: clamp(16px, 2.5vw, 24px) !important;
           }
           
           .hero-cta-buttons {
-            flex-direction: column !important;
-            align-items: center;
+            gap: clamp(18px, 3.5vw, 24px) !important;
+            marginTop: clamp(40px, 6vw, 52px) !important;
           }
-          
-          .hero-feature-card {
-            margin: 0 auto !important;
-            max-width: 320px !important;
+
+          .dropdown-container {
+            max-width: clamp(240px, 45vw, 280px) !important;
+          }
+
+          .search-result-description {
+            display: block !important;
+            max-width: clamp(140px, 22vw, 190px) !important;
+          }
+        }
+
+        /* Extra Large Devices (1024px-1279px) */
+        @media (min-width: 1024px) and (max-width: 1279px) {
+          .container {
+            padding: 0 clamp(20px, 2.5vw, 24px);
+          }
+
+          .hero-trust-indicators {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: clamp(20px, 3vw, 32px) !important;
+          }
+
+          .search-result-description {
+            display: block !important;
+            max-width: clamp(150px, 20vw, 200px) !important;
+          }
+        }
+
+        /* XXL Devices (1280px-1439px) */
+        @media (min-width: 1280px) and (max-width: 1439px) {
+          .container {
+            padding: 0 clamp(20px, 2vw, 24px);
+          }
+        }
+
+        /* Ultra Wide Screens (1440px+) */
+        @media (min-width: 1440px) {
+          .container {
+            max-width: 1600px;
+            padding: 0 clamp(24px, 2vw, 32px);
+          }
+
+          .hero-content {
+            max-width: 1600px !important;
+          }
+        }
+
+        /* Landscape Orientation */
+        @media (orientation: landscape) and (max-height: 500px) {
+          .hero-banner-section {
+            padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 24px) !important;
+            paddingTop: clamp(12px, 2vw, 20px) !important;
+            paddingBottom: clamp(130px, 20vw, 200px) !important;
+            min-height: 550px !important;
+            overflow: visible !important;
+          }
+
+          .hero-content {
+            padding-bottom: 110px !important;
+          }
+
+          .hero-cta-buttons {
+            marginTop: clamp(16px, 3vw, 24px) !important;
+            flex-direction: row !important;
           }
         }
         
         @media (max-width: 1024px) {
           .hero-floating-elements {
             display: none;
+          }
+          
+          .hero-banner-section {
+            overflow: visible !important;
           }
         }
         
@@ -948,33 +1273,52 @@ export default function Home() {
         }
 
         /* Dropdown Menu Styles */
+        /* Enhanced Dropdown Menu Styles */
         .dropdown-container {
           position: relative;
           display: inline-block;
+          flex: 1;
+          max-width: clamp(180px, 40vw, 260px);
         }
 
         .dropdown-menu {
-          position: static;
-          top: calc(100% + 10px);
-          left: 0;
-          right: 0;
-          background: rgba(15, 23, 42, 0.98);
+          position: absolute;
+          top: calc(100% + 12px);
+          left: 50%;
+          transform: translateX(-50%) translateY(-10px);
+          background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(147, 197, 253, 0.3);
-          border-radius: 16px;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+          border-radius: 20px;
+          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6),
+                      0 0 0 1px rgba(147, 197, 253, 0.1) inset;
           z-index: 9999;
-          overflow: hidden;
+          overflow: visible;
           opacity: 0;
-          transform: translateY(-10px);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           pointer-events: none;
           visibility: hidden;
+          min-width: 180px;
+          max-height: none;
+        }
+
+        .dropdown-menu::before {
+          content: '';
+          position: absolute;
+          top: -8px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 8px solid transparent;
+          border-right: 8px solid transparent;
+          border-bottom: 8px solid rgba(15, 23, 42, 0.98);
+          filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.2));
         }
 
         .dropdown-menu.open {
           opacity: 1;
-          transform: translateY(0);
+          transform: translateX(-50%) translateY(0);
           pointer-events: all;
           visibility: visible;
         }
@@ -982,12 +1326,34 @@ export default function Home() {
         .dropdown-item {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 16px 20px;
+          justify-content: center;
+          gap: 10px;
+          padding: 14px 20px;
           color: white;
           text-decoration: none;
-          transition: all 0.2s ease;
-          border-bottom: 1px solid rgba(147, 197, 253, 0.1);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border-bottom: 1px solid rgba(147, 197, 253, 0.08);
+          position: relative;
+          overflow: hidden;
+          font-weight: 700;
+          font-size: 15px;
+          text-align: center;
+        }
+
+        .dropdown-item::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 4px;
+          height: 100%;
+          background: linear-gradient(180deg, #0063b1, #00a3e0);
+          transform: scaleY(0);
+          transition: transform 0.3s ease;
+        }
+
+        .dropdown-item:hover::before {
+          transform: scaleY(1);
         }
 
         .dropdown-item:last-child {
@@ -995,22 +1361,73 @@ export default function Home() {
         }
 
         .dropdown-item:hover {
-          background: rgba(59, 130, 246, 0.2);
+          background: linear-gradient(90deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.15) 100%);
           color: #93c5fd;
+          padding-left: 28px;
+          transform: translateX(4px);
         }
 
         .dropdown-item svg {
-          width: 18px;
-          height: 18px;
+          width: 20px;
+          height: 20px;
           flex-shrink: 0;
+          transition: transform 0.3s ease;
+        }
+
+        .dropdown-item:hover svg {
+          transform: scale(1.15) rotate(5deg);
         }
 
         .dropdown-arrow {
-          transition: transform 0.3s ease;
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .dropdown-button.open .dropdown-arrow {
           transform: rotate(180deg);
+        }
+
+        /* CTA Button Enhancements */
+        .dropdown-button {
+          position: relative;
+          overflow: hidden;
+          width: 100%;
+        }
+
+        .dropdown-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+          transition: left 0.6s ease;
+        }
+
+        .dropdown-button:not(.disabled):hover::before {
+          left: 100%;
+        }
+
+        .dropdown-button:not(.disabled):active {
+          transform: scale(0.98) !important;
+        }
+
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 6px 20px rgba(0, 99, 177, 0.3);
+          }
+          50% {
+            box-shadow: 0 8px 28px rgba(0, 99, 177, 0.5);
+          }
+        }
+
+        @keyframes pulse-glow-green {
+          0%, 100% {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+          }
+          50% {
+            box-shadow: 0 8px 28px rgba(16, 185, 129, 0.5);
+          }
         }
 
         /* Enhanced floating elements for gradient background */
@@ -1202,6 +1619,7 @@ export default function Home() {
                   width: '100%',
                   maxWidth: '100vw',
                   overflowX: 'hidden',
+                  overflowY: 'visible',
                   paddingTop: 'env(safe-area-inset-top)',
                   paddingBottom: 'env(safe-area-inset-bottom)',
                 }}>
@@ -1211,192 +1629,39 @@ export default function Home() {
                     data-section="banner"
                     className="hero-banner-section"
                     style={{ 
-                      minHeight: '100vh',
                       position: 'relative',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 'clamp(40px, 8vw, 80px) clamp(16px, 4vw, 20px)',
-                      paddingTop: 'clamp(80px, 15vw, 120px)',
-                      paddingBottom: 'clamp(40px, 8vw, 80px)',
+                      overflow: 'visible',
+                      padding: 'clamp(20px, 4vw, 40px) clamp(20px, 4vw, 40px)',
+                      paddingTop: 'clamp(20px, 4vw, 40px)',
+                      paddingBottom: 'clamp(180px, 20vw, 280px)',
                       width: '100%',
                       maxWidth: '100vw',
-                      
+                      background: 'white',
+                      minHeight: '700px',
                     }}
                   >
-                    {/* Smooth Animated Gradient Background */}
-                    <div 
-                      className="hero-background"
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                         background: `linear-gradient(
-                          135deg,
-                           #0f172a 0%,
-                          #1e293b 25%,
-                          #1e40af 50%,
-                          #3b82f6 75%,
-                          #60a5fa 100%
-                        )`,
-                        backgroundSize: '200% 200%',
-                        animation: isMobile ? 'none' : 'smoothGradient 20s ease-in-out infinite',
-                        zIndex: 1,
-                      }}
-                    />
-                    
-                    {/* Elegant Overlay */}
-                    <div 
-                      className="hero-overlay"
-                      style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                         background: `linear-gradient(
-                           135deg,
-                          rgba(15, 23, 42, 0.7) 0%,
-                          rgba(30, 41, 59, 0.5) 50%,
-                          rgba(59, 130, 246, 0.3) 100%
-                        )`,
-                        zIndex: 2,
-                        opacity: 0.8,
-                      }}
-                    />
-                    
-                    {/* Elegant Floating Elements */}
-                    {!isMobile && (
-                      <>
-                        <div className="floating-blob" style={{
-                      position: 'absolute',
-                          top: '15%',
-                          right: '10%',
-                          width: '180px',
-                          height: '180px',
-                          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
-                          borderRadius: '50%',
-                      zIndex: 1,
-                          animation: 'gentleFloat 8s ease-in-out infinite',
-                    }} />
-                    
-                        <div className="floating-blob" style={{
-                      position: 'absolute',
-                          bottom: '25%',
-                          left: '8%',
-                          width: '120px',
-                          height: '120px',
-                          background: 'radial-gradient(circle, rgba(96, 165, 250, 0.12) 0%, transparent 70%)',
-                          borderRadius: '50%',
-                      zIndex: 1,
-                          animation: 'gentleFloat 12s ease-in-out infinite reverse',
-                          animationDelay: '4s',
-                    }} />
-                      </>
-                    )}
-
-                    {/* Floating Elements with Simple Animations */}
-                    <div className="floating-elements" style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      pointerEvents: 'none',
-                      zIndex: 2,
-                      display: isMobile ? 'none' : 'block',
-                    }}>
-                      {/* Subtle Floating Particles */}
-                      {Array.from({ length: 4 }).map((_, i) => (
-                        <div 
-                          key={i}
-                          className="floating-particle"
-                          style={{
-                            top: `${25 + i * 15}%`,
-                            left: `${20 + i * 15}%`,
-                            width: `${4 + i}px`,
-                            height: `${4 + i}px`,
-                            background: `rgba(147, 197, 253, 0.4)`,
-                            borderRadius: '50%',
-                            animationDelay: `${i * 2}s`,
-                            animation: 'gentleFloat 6s ease-in-out infinite',
-                          }}
-                        />
-                      ))}
-
-                      <div className="floating-card" style={{
-                        position: 'absolute',
-                        top: '20%',
-                        right: '15%',
-                        width: '60px',
-                        height: '60px',
-                        borderRadius: '50%',
-                        animation: 'gentleFloat 10s ease-in-out infinite',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                      }}>
-                        <div style={{
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: '50%',
-                          background: 'rgba(147, 197, 253, 0.6)',
-                          animation: 'gentleFloat 4s ease-in-out infinite',
-                        }} />
-                      </div>
-                      
-                      <div className="floating-card" style={{
-                        position: 'absolute',
-                        bottom: '30%',
-                        left: '12%',
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        animation: 'gentleFloat 8s ease-in-out infinite reverse',
-                        animationDelay: '2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'rgba(255, 255, 255, 0.08)',
-                        backdropFilter: 'blur(8px)',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                      }}>
-                        <div style={{
-                          width: '12px',
-                          height: '12px',
-                          borderRadius: '50%',
-                          background: 'rgba(96, 165, 250, 0.5)',
-                          animation: 'gentleFloat 3s ease-in-out infinite',
-                        }} />
-                      </div>
-                    </div>
-
                     {/* Main Content */}
                     <div className="hero-content" style={{
                       position: 'relative',
                       zIndex: 3,
                       maxWidth: '1400px',
                       margin: '0 auto',
-                      padding: '40px 20px',
+                      padding: '0',
+                      paddingBottom: '150px',
                       textAlign: 'center',
-                      color: 'white',
                       width: '100%',
                       overflowX: 'hidden',
+                      overflowY: 'visible',
                     }}>
                       {/* Category Search */}
                       <div 
                         className="search-container"
                         style={{
                           position: 'relative',
-                          maxWidth: '500px',
-                          margin: '0 auto 32px auto',
+                          maxWidth: 'clamp(300px, 90vw, 500px)',
+                          margin: '0 auto clamp(12px, 2vw, 16px) auto',
                           width: '100%',
+                          padding: '0 clamp(12px, 3vw, 20px)',
                         }}
                       >
                         <form onSubmit={handleSearchSubmit}>
@@ -1404,29 +1669,29 @@ export default function Home() {
                             position: 'relative',
                             display: 'flex',
                           alignItems: 'center',
-                          background: 'rgba(255, 255, 255, 0.15)',
-                          backdropFilter: 'blur(10px)',
-                          border: '1px solid rgba(255, 255, 255, 0.3)',
-                          borderRadius: '50px',
-                            padding: '4px',
+                          background: 'rgba(0, 0, 0, 0.05)',
+                          border: '1px solid rgba(0, 0, 0, 0.1)',
+                          borderRadius: 'clamp(30px, 8vw, 50px)',
+                            padding: 'clamp(2px, 1vw, 4px)',
                             transition: 'all 0.3s ease',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
-                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+                            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.08)';
+                            e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.2)';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+                            e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)';
                           }}>
                             {/* Search Icon */}
                             <div style={{
-                              padding: '12px 16px',
+                              padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
+                              flexShrink: 0,
                             }}>
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <svg width="clamp(18px, 4vw, 20px)" height="clamp(18px, 4vw, 20px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="11" cy="11" r="8"/>
                                 <path d="M21 21l-4.35-4.35"/>
                               </svg>
@@ -1436,7 +1701,9 @@ export default function Home() {
                             <input
                               ref={searchInputRef}
                               type="text"
-                              placeholder="Rechercher par catégorie..."
+                              placeholder={isSmallScreen 
+                                ? "Rechercher..." 
+                                : "Rechercher des enchères, soumissions ou catégories..."}
                               value={searchQuery}
                               onChange={handleSearchChange}
                               style={{
@@ -1444,10 +1711,11 @@ export default function Home() {
                                 background: 'transparent',
                                 border: 'none',
                                 outline: 'none',
-                                color: 'white',
-                          fontSize: '16px',
-                                padding: '12px 0',
+                                color: '#1e293b',
+                          fontSize: 'clamp(14px, 3vw, 16px)',
+                                padding: 'clamp(8px, 2vw, 12px) 0',
                                 fontWeight: '500',
+                                minWidth: 0,
                               }}
                               onFocus={() => {
                                 if (searchResults.length > 0) {
@@ -1455,36 +1723,6 @@ export default function Home() {
                                 }
                               }}
                             />
-                            
-                            {/* Search Button */}
-                            {/* <button
-                              type="submit"
-                              style={{
-                                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                                border: 'none',
-                                borderRadius: '50px',
-                                padding: '12px 20px',
-                                margin: '4px',
-                          color: 'white',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.05)';
-                                e.currentTarget.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)';
-                                e.currentTarget.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
-                              }}
-                            >
-                              Rechercher
-                            </button> */}
                           </div>
                         </form>
 
@@ -1500,7 +1738,7 @@ export default function Home() {
                               right: '0',
                               background: 'rgba(255, 255, 255, 0.95)',
                               backdropFilter: 'blur(20px)',
-                              border: '1px solid rgba(255, 255, 255, 0.3)',
+                              border: '1px solid rgba(0, 0, 0, 0.1)',
                               borderRadius: '16px',
                               marginTop: '8px',
                               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
@@ -1509,20 +1747,27 @@ export default function Home() {
                               overflowY: 'auto',
                             }}
                           >
-                            {searchResults.map((category: any, index: number) => (
-                              <div
-                                key={category._id}
-                                onClick={() => handleCategorySelect(category)}
-                                style={{
-                                  padding: '16px 20px',
-                                  cursor: 'pointer',
-                                  borderBottom: index < searchResults.length - 1 ? '1px solid rgba(0, 0, 0, 0.1)' : 'none',
-                                  transition: 'all 0.3s ease',
-                                  color: '#1e293b',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '12px',
-                                }}
+                            {searchResults.map((item: any, index: number) => {
+                              const itemName = item.name || item.title || '';
+                              const itemId = item._id || item.id || index;
+                              const isCategory = item.type === 'category';
+                              const isAuction = item.type === 'auction';
+                              const isTender = item.type === 'tender';
+                              
+                              return (
+                                <div
+                                  key={`${item.type}-${itemId}`}
+                                  onClick={() => handleSearchSelect(item)}
+                                  style={{
+                                    padding: 'clamp(12px, 2.5vw, 16px) clamp(14px, 3vw, 20px)',
+                                    cursor: 'pointer',
+                                    borderBottom: index < searchResults.length - 1 ? '1px solid rgba(0, 0, 0, 0.1)' : 'none',
+                                    transition: 'all 0.3s ease',
+                                    color: '#1e293b',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 'clamp(8px, 2vw, 12px)',
+                                  }}
                                 onMouseEnter={(e) => {
                                   e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
                                   e.currentTarget.style.color = '#2563eb';
@@ -1532,31 +1777,80 @@ export default function Home() {
                                   e.currentTarget.style.color = '#1e293b';
                                 }}
                               >
+                                  {isCategory && (
+                                    item.thumb?.url || item.thumb?.fullUrl || item.image ? (
+                                      <img
+                                        src={getCategoryImageUrl(item)}
+                                        alt={item.name}
+                                        style={{
+                                          width: 'clamp(20px, 4vw, 24px)',
+                                          height: 'clamp(20px, 4vw, 24px)',
+                                          borderRadius: 'clamp(4px, 1vw, 6px)',
+                                          objectFit: 'cover',
+                                          border: '1px solid rgba(0, 0, 0, 0.1)',
+                                          flexShrink: 0,
+                                        }}
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.src = '/assets/images/cat.avif';
+                                        }}
+                                      />
+                                    ) : (
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                                   <polyline points="9,22 9,12 15,12 15,22"/>
                         </svg>
-                                <span style={{ fontWeight: '500' }}>{category.name}</span>
-                                {category.description && (
-                                  <span style={{ 
-                                    fontSize: '12px', 
-                                    color: '#64748b',
-                                    marginLeft: 'auto',
-                                    maxWidth: '200px',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                  }}>
-                                    {category.description}
+                                    )
+                                  )}
+                                  {isAuction && (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM17 13H13V17H11V13H7V11H11V7H13V11H17V13Z"/>
+                                    </svg>
+                                  )}
+                                  {isTender && (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M9 12l2 2 4-4"/>
+                                      <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.09 0 2.13.2 3.1.56"/>
+                                      <path d="M21 3l-6 6-4-4"/>
+                                    </svg>
+                                  )}
+                                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <span style={{ fontWeight: '500' }}>{itemName}</span>
+                                    <span style={{ 
+                                      fontSize: '11px', 
+                                      color: '#64748b',
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.5px',
+                                    }}>
+                                      {isCategory && 'Catégorie'}
+                                      {isAuction && 'Enchère'}
+                                      {isTender && 'Soumission'}
+                                    </span>
+                                  </div>
+                                  {(item.description || item.category?.name) && (
+                                    <span style={{ 
+                                      fontSize: 'clamp(10px, 2vw, 12px)', 
+                                      color: '#64748b',
+                                      marginLeft: 'auto',
+                                      maxWidth: 'clamp(100px, 25vw, 200px)',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      display: 'none', // Hide on very small screens
+                                    }}
+                                    className="search-result-description"
+                                    >
+                                      {item.description || item.category?.name}
                                   </span>
                                 )}
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
 
                         {/* No Results Message */}
-                        {showSearchResults && searchResults.length === 0 && searchQuery.length > 0 && (
+                        {showSearchResults && searchResults.length === 0 && searchQuery.length > 0 && !loadingSearch && (
                           <div style={{
                             position: 'absolute',
                             top: '100%',
@@ -1564,7 +1858,7 @@ export default function Home() {
                             right: '0',
                             background: 'rgba(255, 255, 255, 0.95)',
                             backdropFilter: 'blur(20px)',
-                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            border: '1px solid rgba(0, 0, 0, 0.1)',
                             borderRadius: '16px',
                             marginTop: '8px',
                             padding: '20px',
@@ -1572,197 +1866,109 @@ export default function Home() {
                             color: '#64748b',
                             zIndex: 1000,
                           }}>
-                            Aucune catégorie trouvée pour "{searchQuery}"
+                            Aucun résultat trouvé pour "{searchQuery}"
+                          </div>
+                        )}
+                        
+                        {/* Loading Message */}
+                        {loadingSearch && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '0',
+                            right: '0',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            backdropFilter: 'blur(20px)',
+                            border: '1px solid rgba(0, 0, 0, 0.1)',
+                            borderRadius: '16px',
+                            marginTop: '8px',
+                            padding: '20px',
+                            textAlign: 'center',
+                            color: '#64748b',
+                            zIndex: 1000,
+                          }}>
+                            Recherche en cours...
                           </div>
                         )}
                       </div>
 
-                      {/* Enhanced Main Headline */}
-                      <h1 
-                        className="hero-headline"
-                        style={{
-                          fontSize: 'clamp(3rem, 6vw, 5.5rem)',
-                          fontWeight: '900',
-                          lineHeight: '1.1',
-                          marginBottom: '32px',
-                          marginTop: '32px',
-                          color: 'white',
-                          textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-                          cursor: 'default',
-                        }}
-                      >
-                        La première plateforme B2B innovante{' '}
-                        <span style={{
-                          color: 'white',
-                          fontWeight: '900',
-                        }}>
-                          d'enchères et de soumissions
-                        </span>
-                        <br />
-                        <span style={{
-                          color: 'white',
-                          fontWeight: '900',
-                        }}>
-                          en ligne
-                        </span>
-                      </h1>
+                      {/* Category Carousel Banner */}
+                      <Home1Banner />
 
-                      {/* Subtitle */}
-                      <p 
-                        className="hero-subtitle"
-                        style={{
-                          fontSize: '1.4rem',
-                          color: 'rgba(255, 255, 255, 0.9)',
-                          lineHeight: '1.6',
-                          marginBottom: '48px',
-                          marginTop: '24px',
-                          maxWidth: '700px',
-                          marginLeft: 'auto',
-                          marginRight: 'auto',
-                          textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-                          padding: '0 20px',
-                        }}
-                      >
-                        Découvrez Mazad Click, la première application B2B d'enchères et de soumissions dédiée aux entreprises algériennes.
-                        <br /><br />
-                        Une solution moderne pour acheter, vendre et collaborer plus vite, en toute transparence.
-                        <br /><br />
-                        Avec Mazad Click, accélérez vos opportunités et boostez votre business.
-                      </p>
-
-                      {/* CTA Buttons */}
+                      {/* CTA Buttons - Order: Tenders, Vente Direct, Auctions */}
                       <div 
                         className="hero-cta-buttons"
                         style={{
                           display: 'flex',
-                          gap: '24px',
-                          marginBottom: '64px',
-                          marginTop: '32px',
+                          gap: 'clamp(12px, 3vw, 20px)',
+                          marginTop: 'clamp(24px, 5vw, 48px)',
+                          marginBottom: 'clamp(40px, 8vw, 80px)',
                           flexWrap: 'wrap',
                           justifyContent: 'center',
-                          padding: '0 20px',
+                          padding: '0 clamp(12px, 3vw, 20px)',
+                          width: '100%',
+                          position: 'relative',
+                          zIndex: 10,
                         }}
                       >
-                        {/* Auctions Dropdown */}
+                        {/* 1. TENDERS - Green with Envelope Icon */}
                         <div className="dropdown-container">
-                        <button
-                            onClick={() => {
-                              console.log('Auction button clicked, current state:', auctionDropdownOpen);
-                              setAuctionDropdownOpen(!auctionDropdownOpen);
-                            }}
-                            className={`dropdown-button primary-cta ${auctionDropdownOpen ? 'open' : ''}`}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            background: 'var(--primary-gradient)',
-                            backgroundSize: '200% 200%',
-                            color: 'white',
-                            padding: '20px 40px',
-                            borderRadius: '50px',
-                            border: 'none',
-                            fontSize: '18px',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            boxShadow: 'var(--shadow-lg)',
-                            transition: 'var(--transition)',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            animation: 'gradientShift 3s ease infinite',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-6px) scale(1.05)';
-                            e.currentTarget.style.boxShadow = 'var(--shadow-xl)';
-                            e.currentTarget.style.filter = 'brightness(1.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                            e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                            e.currentTarget.style.filter = 'brightness(1)';
-                          }}
-                        >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM17 13H13V17H11V13H7V11H11V7H13V11H17V13Z"/>
-                          </svg>
-                            Auctions
-                            <svg className="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M6 9l6 6 6-6"/>
-                            </svg>
-                        </button>
-
-                          <div 
-                            className={`dropdown-menu ${auctionDropdownOpen ? 'open' : ''}`}
-                            style={{
-                              marginTop: '10px',
-                              minWidth: '200px',
-                              zIndex: 9999,
-                              // Temporary debugging - remove this line
-                              display: auctionDropdownOpen ? 'block' : 'none',
-                            }}
-                          >
-                            <button className="dropdown-item" onClick={handleAuctionViewAll}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                                <polyline points="9,22 9,12 15,12 15,22"/>
-                              </svg>
-                              View All Auctions
-                            </button>
-                            <button className="dropdown-item" onClick={handleCreateAuction}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14,2 14,8 20,8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
-                                <polyline points="10,9 9,9 8,9"/>
-                              </svg>
-                              Create Auction
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Tenders Dropdown */}
-                        <div className="dropdown-container">
-                        <button
+                          <button
                             onClick={() => {
                               console.log('Tender button clicked, current state:', tenderDropdownOpen);
                               setTenderDropdownOpen(!tenderDropdownOpen);
                             }}
-                            className={`dropdown-button secondary-cta glass-morphism ${tenderDropdownOpen ? 'open' : ''}`}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            backdropFilter: 'blur(20px)',
-                            color: 'white',
-                            padding: '20px 36px',
-                            borderRadius: '50px',
-                            border: '2px solid rgba(147, 197, 253, 0.3)',
-                            fontSize: '16px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'var(--transition)',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                            e.currentTarget.style.borderColor = 'rgba(147, 197, 253, 0.6)';
-                            e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                            e.currentTarget.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.3)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                            e.currentTarget.style.borderColor = 'rgba(147, 197, 253, 0.3)';
-                            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M9 12l2 2 4-4"/>
-                            <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.09 0 2.13.2 3.1.56"/>
-                            <path d="M21 3l-6 6-4-4"/>
-                          </svg>
-                            Tenders
-                            <svg className="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            className={`dropdown-button tender-cta ${tenderDropdownOpen ? 'open' : ''}`}
+                            style={{
+                              display: 'inline-flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 'clamp(8px, 2vw, 12px)',
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)',
+                              backgroundSize: '200% 200%',
+                              color: 'white',
+                              padding: 'clamp(16px, 3.5vw, 28px) clamp(24px, 5vw, 40px)',
+                              borderRadius: 'clamp(18px, 4vw, 24px)',
+                              border: '2px solid rgba(255,255,255,0.25)',
+                              fontSize: 'clamp(15px, 3.2vw, 19px)',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+                              transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                              position: 'relative',
+                              overflow: 'hidden',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                              animation: 'gradient-shift 4s ease infinite',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-8px) scale(1.08)';
+                              e.currentTarget.style.boxShadow = '0 16px 40px rgba(16, 185, 129, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.15) inset';
+                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                              e.currentTarget.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) inset';
+                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                            }}
+                          >
+                            <div style={{
+                              background: 'rgba(255, 255, 255, 0.15)',
+                              padding: 'clamp(8px, 2vw, 12px)',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                            }}>
+                              {/* Envelope Icon for Tenders */}
+                              <svg width="clamp(24px, 4.5vw, 32px)" height="clamp(24px, 4.5vw, 32px)" viewBox="0 0 24 24" fill="white">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                              </svg>
+                            </div>
+                            <span style={{color:'white', fontSize: 'inherit', fontWeight: 800}}>Tenders</span>
+                            <svg className="dropdown-arrow" width="clamp(14px, 3vw, 18px)" height="clamp(14px, 3vw, 18px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                               <path d="M6 9l6 6 6-6"/>
                             </svg>
                           </button>
@@ -1770,30 +1976,178 @@ export default function Home() {
                           <div 
                             className={`dropdown-menu ${tenderDropdownOpen ? 'open' : ''}`}
                             style={{
-                              marginTop: '10px',
-                              minWidth: '200px',
                               zIndex: 9999,
-                              // Temporary debugging - remove this line
                               display: tenderDropdownOpen ? 'block' : 'none',
                             }}
                           >
                             <button className="dropdown-item" onClick={handleTenderViewAll}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                                <polyline points="9,22 9,12 15,12 15,22"/>
+                              {/* Eye Icon for View */}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
                               </svg>
-                              View All Tenders
+                              Voir
                             </button>
                             <button className="dropdown-item" onClick={handleCreateTender}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14,2 14,8 20,8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
-                                <polyline points="10,9 9,9 8,9"/>
+                              {/* Plus Icon for Create */}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
                               </svg>
-                              Create Tender
-                        </button>
+                              Créer
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 2. VENTE DIRECT - Grey/Inactive with Store Icon and "Coming Soon" */}
+                        <div className="dropdown-container">
+                          <button
+                            disabled
+                            className="dropdown-button vente-direct-cta disabled"
+                            style={{
+                              display: 'inline-flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 'clamp(8px, 2vw, 12px)',
+                              background: 'linear-gradient(135deg, #94a3b8 0%, #64748b 50%, #475569 100%)',
+                              backgroundSize: '200% 200%',
+                              color: 'white',
+                              padding: 'clamp(16px, 3.5vw, 28px) clamp(24px, 5vw, 40px)',
+                              borderRadius: 'clamp(18px, 4vw, 24px)',
+                              border: '2px solid rgba(255,255,255,0.15)',
+                              fontSize: 'clamp(15px, 3.2vw, 19px)',
+                              fontWeight: 800,
+                              cursor: 'not-allowed',
+                              boxShadow: '0 8px 24px rgba(71, 85, 105, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+                              transition: 'all 0.4s ease',
+                              position: 'relative',
+                              overflow: 'hidden',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                              opacity: 0.85,
+                            }}
+                          >
+                            <div style={{
+                              background: 'rgba(255, 255, 255, 0.12)',
+                              padding: 'clamp(8px, 2vw, 12px)',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                            }}>
+                              {/* Store Icon for Vente Direct */}
+                              <svg width="clamp(24px, 4.5vw, 32px)" height="clamp(24px, 4.5vw, 32px)" viewBox="0 0 24 24" fill="white">
+                                <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
+                              </svg>
+                            </div>
+                            <span style={{color:'white', fontSize: 'inherit', fontWeight: 800}}>Vente Direct</span>
+                            <span style={{
+                              fontSize: 'clamp(10px, 2.2vw, 13px)',
+                              fontWeight: 700,
+                              color: 'rgba(255, 255, 255, 0.95)',
+                              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15))',
+                              padding: '5px 14px',
+                              borderRadius: '16px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '1px',
+                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                            }}>
+                              🔜 Coming Soon
+                            </span>
+                          </button>
+                        </div>
+
+                        {/* 3. AUCTIONS - Blue with Hammer Icon */}
+                        <div className="dropdown-container">
+                          <button
+                            onClick={() => {
+                              console.log('Auction button clicked, current state:', auctionDropdownOpen);
+                              setAuctionDropdownOpen(!auctionDropdownOpen);
+                            }}
+                            className={`dropdown-button auction-cta ${auctionDropdownOpen ? 'open' : ''}`}
+                            style={{
+                              display: 'inline-flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 'clamp(8px, 2vw, 12px)',
+                              background: 'linear-gradient(135deg, #0063b1 0%, #005299 50%, #004080 100%)',
+                              backgroundSize: '200% 200%',
+                              color: 'white',
+                              padding: 'clamp(16px, 3.5vw, 28px) clamp(24px, 5vw, 40px)',
+                              borderRadius: 'clamp(18px, 4vw, 24px)',
+                              border: '2px solid rgba(255,255,255,0.25)',
+                              fontSize: 'clamp(15px, 3.2vw, 19px)',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              boxShadow: '0 8px 24px rgba(0, 99, 177, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+                              transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                              position: 'relative',
+                              overflow: 'hidden',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                              animation: 'gradient-shift 4s ease infinite',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-8px) scale(1.08)';
+                              e.currentTarget.style.boxShadow = '0 16px 40px rgba(0, 99, 177, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.15) inset';
+                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 99, 177, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) inset';
+                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                            }}
+                          >
+                            <div style={{
+                              background: 'rgba(255, 255, 255, 0.15)',
+                              padding: 'clamp(8px, 2vw, 12px)',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                            }}>
+                              {/* Gavel/Hammer Icon for Auctions */}
+                              <FaGavel 
+                                style={{ 
+                                  fontSize: 'clamp(24px, 4.5vw, 32px)',
+                                  color: 'white'
+                                }} 
+                              />
+                            </div>
+                            <span style={{color:'white', fontSize: 'inherit', fontWeight: 800}}>Auctions</span>
+                            <svg className="dropdown-arrow" width="clamp(14px, 3vw, 18px)" height="clamp(14px, 3vw, 18px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                          </button>
+
+                          <div 
+                            className={`dropdown-menu ${auctionDropdownOpen ? 'open' : ''}`}
+                            style={{
+                              zIndex: 9999,
+                              display: auctionDropdownOpen ? 'block' : 'none',
+                            }}
+                          >
+                            <button className="dropdown-item" onClick={handleAuctionViewAll}>
+                              {/* Eye Icon for View */}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                              Voir
+                            </button>
+                            <button className="dropdown-item" onClick={handleCreateAuction}>
+                              {/* Plus Icon for Create */}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                              </svg>
+                              Créer
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -1915,7 +2269,7 @@ export default function Home() {
                       transition: isMobile ? 'none' : 'all 0.8s ease-out',
                     }}
                   >
-                    <Home1Category />
+                    {/* <Home1Category /> */}
                   </section>
                   
                   {/* Section Divider with Animation */}

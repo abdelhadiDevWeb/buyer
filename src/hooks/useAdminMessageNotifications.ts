@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCreateSocket } from '@/contexts/socket';
 import { authStore } from '@/contexts/authStore';
+import app from '@/config';
 
 interface AdminNotification {
   _id: string;
@@ -68,10 +69,13 @@ export function useAdminMessageNotifications() {
       const userId = currentAuth.user._id;
       const token = currentAuth.tokens.accessToken;
       
-      const response = await fetch('/api/notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, token })
+      const response = await fetch(`${app.baseURL}notification/general`, {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
+        },
       });
       
       if (response.ok) {
@@ -256,11 +260,12 @@ export function useAdminMessageNotifications() {
       // Make API call to mark as read
       const { auth } = authStore.getState();
       if (auth?.tokens?.accessToken) {
-        const response = await fetch(`/api/notifications/${notificationId}/read`, {
+        const response = await fetch(`${app.baseURL}notification/${notificationId}/read`, {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${auth.tokens.accessToken}`
+            'Authorization': `Bearer ${auth.tokens.accessToken}`,
+            'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
           }
         });
 

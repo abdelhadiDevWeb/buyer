@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useCreateSocket } from '@/contexts/socket';
+import app from '@/config';
 
 interface GeneralNotification {
   _id: string;
@@ -72,11 +73,14 @@ export function useNotifications() {
       const token = tokens.accessToken;
       console.log('Hook: Found auth', { userId, hasToken: !!token });
       
-      // Fetch notifications from API
-      const response = await fetch('/api/notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, token })
+      // Fetch notifications from backend (general)
+      const response = await fetch(`${app.baseURL}notification/general`, {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
+        },
       });
       
       console.log('Hook: API response status:', response.status);
@@ -90,7 +94,7 @@ export function useNotifications() {
       const data = await response.json();
       console.log('Hook: Received data:', data);
       
-      const formattedNotifications = data.notifications.map((notification: GeneralNotification) => ({
+      const formattedNotifications = (data.notifications || []).map((notification: GeneralNotification) => ({
         ...notification,
         formattedDate: formatDate(notification.createdAt)
       }));

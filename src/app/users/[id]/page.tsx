@@ -7,12 +7,20 @@ import Footer from "@/components/footer/Footer";
 import { AxiosInterceptor } from '@/app/api/AxiosInterceptor';
 import useAuth from '@/hooks/useAuth';
 import { UserAPI, USER_TYPE } from "@/app/api/users";
+import app from "@/config";
+
+const DEV_BACKEND_HOST = 'http://localhost:3000';
+const PROD_BACKEND_HOST = 'https://mazadclick-server.onrender.com';
+// const LEGACY_BACKEND_HOST = 'http://localhost:3000';
+
+const resolveBackendHost = () => (app.baseURL?.replace(/\/$/, '') || (process.env.NODE_ENV === 'development' ? DEV_BACKEND_HOST : PROD_BACKEND_HOST));
 
 interface User {
   _id?: string;
   firstName: string;
   lastName: string;
   email: string;
+  entreprise?: string;
   avatar?: string;
   photoURL?: string;
   type: USER_TYPE;
@@ -27,6 +35,8 @@ interface User {
   location?: string;
   description?: string;
   verificationStatus?: string;
+  isVerified?: boolean;
+  isCertified?: boolean;
   isRecommended?: boolean; 
   history: {
     date: string;
@@ -83,13 +93,17 @@ export default function UserDetailsPage() {
           recommendedResellers.map((u: any) => u._id) : 
           ((recommendedResellers as any)?.data || []).map((u: any) => u._id);
 
-        const isRecommended = recProfIds.includes((userData as any)._id) || recResellerIds.includes((userData as any)._id);
+        // Prioritize isRecommended from API response, fallback to recommended list comparison
+        const hasRecommendedFromAPI = Boolean((userData as any).isRecommended);
+        const isInRecommendedList = recProfIds.includes((userData as any)._id) || recResellerIds.includes((userData as any)._id);
+        const isRecommended = hasRecommendedFromAPI || isInRecommendedList;
 
         const transformedUser: User = {
           _id: (userData as any)._id,
           firstName: (userData as any).firstName || 'Unknown',
           lastName: (userData as any).lastName || '',
           email: (userData as any).email || 'No email',
+          entreprise: (userData as any).entreprise || (userData as any).companyName || undefined,
           avatar: (userData as any).photoURL || (userData as any).avatar?.url || (userData as any).avatar,
           photoURL: (userData as any).photoURL,
           type: (userData as any).type || (userData as any).accountType || USER_TYPE.CLIENT,
@@ -104,10 +118,20 @@ export default function UserDetailsPage() {
           location: (userData as any).location,
           description: (userData as any).description,
           verificationStatus: (userData as any).verificationStatus || ((userData as any).isVerified ? 'verified' : 'unverified'),
-          isRecommended: Boolean((userData as any).isRecommended || isRecommended),
+          isVerified: Boolean((userData as any).isVerified),
+          isCertified: Boolean((userData as any).isCertified),
+          isRecommended: Boolean(isRecommended),
           history: (userData as any).history || []
         };
-        console.log('Transformed user with recommended status:', transformedUser);
+        console.log('🔍 User data debug:', {
+          rawUserData: userData,
+          rate: (userData as any).rate,
+          rating: transformedUser.rating,
+          isRecommended: isRecommended,
+          isCertified: (userData as any).isCertified,
+          isVerified: (userData as any).isVerified,
+          transformedUser
+        });
         setUser(transformedUser);
       } else {
         console.error('No user data received');
@@ -130,6 +154,10 @@ export default function UserDetailsPage() {
   }, [userId, initializeAuth, fetchUserDetails]);
 
   const getUserFullName = (user: User): string => {
+    // Display entreprise name if available, otherwise use first and last name
+    if (user.entreprise && user.entreprise.trim() !== '') {
+      return user.entreprise;
+    }
     return `${user.firstName} ${user.lastName}`.trim() || user.email;
   };
 
@@ -194,32 +222,21 @@ export default function UserDetailsPage() {
     switch (userType) {
       case USER_TYPE.PROFESSIONAL:
         return (
-          <div className="d-flex align-items-center flex-wrap gap-2">
-            <span className="badge d-flex align-items-center animated-badge" style={{ 
-              padding: '8px 12px', 
-              fontSize: '12px', 
-              fontWeight: '600',
-              background: 'linear-gradient(90deg, rgb(0, 99, 177), rgb(0, 163, 224))',
-              border: 'none',
-              color: 'white',
-              borderRadius: '20px'
-            }}>
-              <i className="bi bi-award me-1" style={{ fontSize: '10px' }}></i>
-              CERTIFIED
-            </span>
-            <span className="badge d-flex align-items-center animated-badge" style={{ 
-              padding: '8px 12px', 
-              fontSize: '12px', 
-              fontWeight: '600',
-              background: 'linear-gradient(90deg, #FFD700, #FFA500)', 
-              border: 'none',
-              color: 'white',
-              borderRadius: '20px'
-            }}>
-              <i className="bi bi-patch-check-fill me-1" style={{ fontSize: '10px' }}></i>
-              PRO
-            </span>
-          </div>
+          <span className="badge d-flex align-items-center animated-badge" style={{ 
+            padding: '8px 12px', 
+            fontSize: '12px', 
+            fontWeight: '600',
+            background: 'linear-gradient(90deg, #FFD700, #FFA500)', 
+            border: 'none',
+            color: 'white',
+            borderRadius: '20px',
+            transformStyle: 'preserve-3d',
+            backfaceVisibility: 'visible',
+            transformOrigin: '50% 50%'
+          }}>
+            <i className="bi bi-patch-check-fill me-1" style={{ fontSize: '10px' }}></i>
+            PRO
+          </span>
         );
       case USER_TYPE.RESELLER:
         return (
@@ -256,24 +273,25 @@ export default function UserDetailsPage() {
     }
   };
 
-  const getVerificationBadge = (status: string) => {
-    if (status === 'verified') {
-      return (
-        <span className="badge d-flex align-items-center animated-badge" style={{ 
-          padding: '8px 12px', 
-          fontSize: '12px', 
-          fontWeight: '600',
-          background: 'linear-gradient(90deg, #10B981, #059669)',
-          border: 'none',
-          color: 'white',
-          borderRadius: '20px'
-        }}>
-          <i className="bi bi-check-circle me-1" style={{ fontSize: '10px' }}></i>
-          VERIFIED
-        </span>
-      );
-    }
-    return null;
+  const getVerificationBadge = (status: string, isCertified?: boolean) => {
+    return (
+      <>
+        {status === 'verified' && (
+          <span className="badge d-flex align-items-center animated-badge me-2" style={{ 
+            padding: '8px 12px', 
+            fontSize: '12px', 
+            fontWeight: '600',
+            background: 'linear-gradient(90deg, #10B981, #059669)',
+            border: 'none',
+            color: 'white',
+            borderRadius: '20px'
+          }}>
+            <i className="bi bi-check-circle me-1" style={{ fontSize: '10px' }}></i>
+            VERIFIED
+          </span>
+        )}
+      </>
+    );
   };
 
   // Render recommended badge - Creative design with animation
@@ -458,7 +476,109 @@ export default function UserDetailsPage() {
     );
   }
 
-  const avatarSrc = (user.photoURL && user.photoURL.trim() !== "") || (user.avatar && user.avatar.trim() !== "") ? (user.photoURL || user.avatar) : "/assets/images/avatar.jpg";
+  // Get avatar URL with proper normalization
+  const getAvatarUrl = () => {
+    // Get API base URL from config - ensure it has proper format
+    let apiBaseUrl = resolveBackendHost();
+    // Remove trailing slash and ensure port is included
+    apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
+    // If baseURL is just 'http://localhost' without port, add :3000
+    if (/^https?:\/\/localhost$/.test(apiBaseUrl)) {
+      apiBaseUrl = apiBaseUrl.replace('localhost', 'localhost:3000');
+    }
+    
+    const devHostWithSlash = `${DEV_BACKEND_HOST}/`;
+    const devHostHttpsWithSlash = `${DEV_BACKEND_HOST.replace('http://', 'https://')}/`;
+    const prodHost = PROD_BACKEND_HOST;
+    
+    // Helper to normalize URL - converts to full URL
+    const normalizeUrl = (url: string): string => {
+      if (!url || url.trim() === "") return "";
+      let normalized = url.trim();
+      
+      // If it's already a full URL (http/https), fix it if needed
+      if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+        // Fix localhost URLs without port (http://localhost/... or https://localhost/...)
+        // Match http://localhost or https://localhost followed by / but not :port
+        normalized = normalized.replace(/^http:\/\/localhost\//, devHostWithSlash);
+        normalized = normalized.replace(/^https:\/\/localhost\//, devHostHttpsWithSlash);
+        
+        // Replace localhost:3000 with production API URL if needed (for production builds)
+        if (process.env.NODE_ENV === 'production') {
+          // normalized = normalized.replace(/http:\/\/localhost:3000/g, 'https://api.mazad.click');
+          normalized = normalized.split(DEV_BACKEND_HOST).join(prodHost);
+          normalized = normalized.split(DEV_BACKEND_HOST.replace('http://', 'https://')).join(prodHost);
+        }
+        return normalized;
+      }
+      
+      // If it starts with /static/, prepend API base URL
+      if (normalized.startsWith('/static/')) {
+        return `${apiBaseUrl}${normalized}`;
+      }
+      
+      // If it starts with / (but not /static/), prepend API base URL
+      if (normalized.startsWith('/')) {
+        return `${apiBaseUrl}${normalized}`;
+      }
+      
+      // Otherwise, construct full URL with /static/ prefix
+      return `${apiBaseUrl}/static/${normalized}`;
+    };
+    
+    // Try photoURL first (highest priority - server sets this)
+    if (user.photoURL && user.photoURL.trim() !== "") {
+      const url = normalizeUrl(user.photoURL);
+      if (url) return url;
+    }
+    
+    // Try avatar.fullUrl (server sets this)
+    if (user.avatar && typeof user.avatar === 'object' && !Array.isArray(user.avatar)) {
+      const avatarObj = user.avatar as any;
+      if (avatarObj.fullUrl && avatarObj.fullUrl.trim() !== "") {
+        const url = normalizeUrl(avatarObj.fullUrl);
+        if (url) return url;
+      }
+    }
+    
+    // Try avatar.url
+    if (user.avatar && typeof user.avatar === 'object' && !Array.isArray(user.avatar)) {
+      const avatarObj = user.avatar as any;
+      if (avatarObj.url && avatarObj.url.trim() !== "") {
+        const url = normalizeUrl(avatarObj.url);
+        if (url) return url;
+      }
+    }
+    
+    // Try avatar as string
+    if (user.avatar && typeof user.avatar === 'string' && user.avatar.trim() !== "") {
+      const url = normalizeUrl(user.avatar);
+      if (url) return url;
+    }
+    
+    // Try avatar.filename (construct URL)
+    if (user.avatar && typeof user.avatar === 'object' && !Array.isArray(user.avatar)) {
+      const avatarObj = user.avatar as any;
+      if (avatarObj.filename && avatarObj.filename.trim() !== "") {
+        return normalizeUrl(`/static/${avatarObj.filename}`);
+      }
+    }
+    
+    // Fallback to default avatar (relative path - Next.js will handle)
+    return "/assets/images/avatar.jpg";
+  };
+  
+  const avatarSrc = getAvatarUrl();
+  
+  // Debug logging
+  console.log('🖼️ User Details - Avatar Debug:', {
+    photoURL: user.photoURL,
+    avatar: user.avatar,
+    avatarSrc,
+    userAvatarType: typeof user.avatar,
+    isAvatarObject: user.avatar && typeof user.avatar === 'object' && !Array.isArray(user.avatar),
+    apiBaseUrl: app.baseURL
+  });
 
   return (
     <>
@@ -645,11 +765,152 @@ export default function UserDetailsPage() {
                 box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3) !important;
                 background-color: white !important;
               }
+              
+              /* Ensure card hover works for badge rotation - higher specificity */
+              .card.user-header-card:hover .badge-name-hover,
+              .user-header-card.card:hover .badge-name-hover {
+                animation: badge-rotate 1s linear infinite, badge-pulse 2s ease-in-out infinite !important;
+                transform-origin: 50% 50% !important;
+                transform-style: preserve-3d !important;
+                backface-visibility: visible !important;
+              }
 
               /* Stat Card Hover Animation */
               .stat-card-hover:hover {
                 transform: translateY(-5px) scale(1.02);
                 box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+              }
+
+              /* Gold Rate Badge Pulse Animation */
+              @keyframes pulse-subtle {
+                0%, 100% {
+                  transform: scale(1);
+                  opacity: 1;
+                }
+                50% {
+                  transform: scale(1.05);
+                  opacity: 0.95;
+                }
+              }
+
+              /* Badge Pulse and Hover Animation */
+              @keyframes badge-pulse {
+                0%, 100% {
+                  transform: scale(1);
+                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+                }
+                50% {
+                  transform: scale(1.08);
+                  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+                }
+              }
+
+              /* Badge Flip Animation for name badges */
+              @keyframes badge-rotate {
+                0% {
+                  transform: rotateY(0deg);
+                }
+                100% {
+                  transform: rotateY(360deg);
+                }
+              }
+
+              .badge-name-hover {
+                animation: badge-pulse 2s ease-in-out infinite;
+                transition: transform 0.3s ease, box-shadow 0.3s ease, animation 0.3s ease;
+                cursor: pointer;
+                transform-origin: 50% 50%;
+                transform-style: preserve-3d;
+                backface-visibility: visible;
+                perspective: 1000px;
+                will-change: transform;
+              }
+
+              /* Rotate badges beside name when card is hovered - MUST come before individual hover */
+              .card.user-header-card:hover .badge-name-hover,
+              .user-header-card.card:hover .badge-name-hover,
+              .user-header-card:hover .badge-name-hover {
+                animation: badge-rotate 1s linear infinite, badge-pulse 2s ease-in-out infinite !important;
+                transform-origin: 50% 50% !important;
+                transform-style: preserve-3d !important;
+                backface-visibility: visible !important;
+              }
+              
+              /* Also rotate nested elements (like PRO badge span inside badge-name-hover) when card is hovered */
+              .card.user-header-card:hover .badge-name-hover > .badge,
+              .card.user-header-card:hover .badge-name-hover > .animated-badge,
+              .card.user-header-card:hover .badge-name-hover > span,
+              .card.user-header-card:hover .badge-name-hover > i,
+              .card.user-header-card:hover .badge-name-hover > *,
+              .user-header-card:hover .badge-name-hover > .badge,
+              .user-header-card:hover .badge-name-hover > .animated-badge,
+              .user-header-card:hover .badge-name-hover > span,
+              .user-header-card:hover .badge-name-hover > i,
+              .user-header-card:hover .badge-name-hover > * {
+                animation: badge-rotate 1s linear infinite, badge-pulse 2s ease-in-out infinite !important;
+                transform-origin: 50% 50% !important;
+                transform-style: preserve-3d !important;
+                backface-visibility: visible !important;
+              }
+              
+              /* Force rotation on PRO badge specifically */
+              .card.user-header-card:hover .badge-name-hover .animated-badge,
+              .user-header-card:hover .badge-name-hover .animated-badge {
+                animation: badge-rotate 1s linear infinite, badge-pulse 2s ease-in-out infinite !important;
+                transform-style: preserve-3d !important;
+                backface-visibility: visible !important;
+                transform-origin: 50% 50% !important;
+              }
+
+              .badge-name-hover:hover {
+                animation: badge-rotate 1s linear infinite, badge-pulse 2s ease-in-out infinite !important;
+                transform: scale(1.15);
+                transform-origin: 50% 50% !important;
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+              }
+              
+              /* Ensure all badges inside badge-name-hover have 3d transform support */
+              .badge-name-hover > span,
+              .badge-name-hover > * {
+                transform-style: preserve-3d;
+                backface-visibility: visible;
+                transform-origin: 50% 50%;
+              }
+
+              /* Avatar Badge Pulse Animation */
+              @keyframes avatar-badge-pulse {
+                0%, 100% {
+                  transform: scale(1);
+                  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                }
+                50% {
+                  transform: scale(1.1);
+                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                }
+              }
+
+              /* Avatar Badge Flip Animation on Card Hover */
+              @keyframes avatar-badge-rotate {
+                0% {
+                  transform: rotateY(0deg);
+                }
+                100% {
+                  transform: rotateY(360deg);
+                }
+              }
+
+              .avatar-badge {
+                animation: avatar-badge-pulse 2s ease-in-out infinite;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                transform-origin: 50% 50%;
+                transform-style: preserve-3d;
+                backface-visibility: visible;
+              }
+
+              .user-header-card:hover .avatar-badge {
+                animation: avatar-badge-rotate 1s linear infinite !important;
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+                transform-origin: 50% 50%;
               }
             `}</style>
             
@@ -678,58 +939,197 @@ export default function UserDetailsPage() {
                 overflow: 'visible'
               }}
             >
-              {/* Recommended Badge */}
-              {renderRecommendedBadge()}
+              {/* Recommended Badge - Removed text badge, only showing circular icon badge on avatar */}
 
               <div className="card-body p-4">
                 <div className="row align-items-center">
                   <div className="col-md-3 text-center mb-3 mb-md-0">
-                    <div className="position-relative d-inline-block">
+                    <div className="position-relative d-inline-block" style={{ overflow: 'visible', perspective: '1000px' }}>
                       <div className="user-avatar" style={{
                         width: '150px',
                         height: '150px',
                         borderRadius: '50%',
                         overflow: 'hidden',
                         border: user.isRecommended ? '4px solid #667eea' : '4px solid #fff',
-                        boxShadow: user.isRecommended ? '0 4px 15px rgba(102, 126, 234, 0.4)' : '0 4px 15px rgba(0, 0, 0, 0.2)'
+                        boxShadow: user.isRecommended ? '0 4px 15px rgba(102, 126, 234, 0.4)' : '0 4px 15px rgba(0, 0, 0, 0.2)',
+                        position: 'relative',
+                        backgroundColor: '#f0f0f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                       }}>
                         <img
                           src={avatarSrc}
                           alt={getUserFullName(user)}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            objectFit: 'cover',
+                            objectPosition: 'center center',
+                            display: 'block',
+                            borderRadius: '50%'
+                          }}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.src = "/assets/images/avatar.jpg";
                           }}
                         />
                       </div>
+                      
+                      {/* Rate Badge - Top Right - Always visible */}
+                      <div className="avatar-badge rate-badge" style={{
+                        position: 'absolute',
+                        top: '-2px',
+                        right: '-2px',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '3px solid white',
+                        boxShadow: '0 3px 10px rgba(255, 215, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                        zIndex: 1000
+                      }}>
+                        <span style={{
+                          color: 'white',
+                          fontSize: '12px',
+                          fontWeight: '800',
+                          textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                          lineHeight: 1
+                        }}>
+                          +{user.rating || 0}
+                        </span>
+                      </div>
+
+                      {/* Recommended Badge - Top Left */}
+                      {user.isRecommended && (
+                        <div className="avatar-badge recommended-badge" style={{
+                          position: 'absolute',
+                          top: '-2px',
+                          left: '-2px',
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '3px solid white',
+                          boxShadow: '0 3px 10px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                          zIndex: 1000
+                        }}>
+                          <i className="bi bi-star-fill text-white" style={{ fontSize: '15px', filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' }}></i>
+                        </div>
+                      )}
+
+                      {/* Certified Badge - Bottom Left */}
+                      {user.isCertified && (
+                        <div className="avatar-badge certified-badge" style={{
+                          position: 'absolute',
+                          bottom: '-2px',
+                          left: '-2px',
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '3px solid white',
+                          boxShadow: '0 3px 10px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                          zIndex: 1000
+                        }}>
+                          <i className="bi bi-award-fill text-white" style={{ fontSize: '15px', filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' }}></i>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-9">
                     <div className="d-flex flex-wrap align-items-center mb-2">
-                      <h2 className="mb-0 me-3" style={{ fontWeight: '700', color: '#333', display: 'inline-flex', alignItems: 'center' }}>
+                      <h2 className="mb-0 me-3" style={{ fontWeight: '700', color: '#333', display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                         {getUserFullName(user)}
+                        {/* PRO Badge (User Type) - First */}
+                        <span className="badge-name-hover">
+                          {getUserTypeBadge(user.type)}
+                        </span>
+                        {/* Verification Badge - Second */}
+                        {user.isVerified && (
+                          <span 
+                            className="badge-name-hover"
+                            style={{
+                              display: 'inline-flex',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: '2px solid white',
+                              boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)',
+                              flexShrink: 0,
+                              transformStyle: 'preserve-3d',
+                              backfaceVisibility: 'visible',
+                              transformOrigin: '50% 50%'
+                            }} 
+                            title="Verified"
+                          >
+                            <i className="bi bi-check-circle-fill text-white" style={{ fontSize: '12px', fontWeight: 'bold' }}></i>
+                          </span>
+                        )}
+                        {/* Certified Badge - Third */}
+                        {user.isCertified && (
+                          <span 
+                            className="badge-name-hover"
+                            style={{
+                              display: 'inline-flex',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: '2px solid white',
+                              boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)',
+                              flexShrink: 0,
+                              transformStyle: 'preserve-3d',
+                              backfaceVisibility: 'visible',
+                              transformOrigin: '50% 50%'
+                            }} 
+                            title="Certified"
+                          >
+                            <i className="bi bi-award-fill text-white" style={{ fontSize: '12px', fontWeight: 'bold' }}></i>
+                          </span>
+                        )}
+                        {/* Recommended Badge - Fourth */}
+                        {user.isRecommended && (
+                          <span 
+                            className="badge-name-hover"
+                            style={{
+                              display: 'inline-flex',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: '2px solid white',
+                              boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)',
+                              flexShrink: 0,
+                              transformStyle: 'preserve-3d',
+                              backfaceVisibility: 'visible',
+                              transformOrigin: '50% 50%'
+                            }} 
+                            title="Recommended"
+                          >
+                            <i className="bi bi-star-fill text-white" style={{ fontSize: '12px', fontWeight: 'bold' }}></i>
+                          </span>
+                        )}
                       </h2>
-                      {getUserTypeBadge(user.type)}
-                      {getVerificationBadge(user.verificationStatus || 'unverified')}
-                      {getRecommendedBadgeForBadges()}
                     </div>
 
-                    {user.isRecommended && (
-                      <div className="mb-3">
-                        <div className="alert alert-info d-flex align-items-center" style={{ 
-                          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
-                          border: '1px solid rgba(102, 126, 234, 0.2)',
-                          borderRadius: '15px',
-                          padding: '12px 16px'
-                        }}>
-                          <i className="bi bi-star-fill me-2" style={{ color: '#FFD700', fontSize: '18px' }}></i>
-                          <span style={{ fontSize: '14px', fontWeight: '500', color: '#667eea' }}>
-                            This is a top-rated user recommended by our community!
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    {/* Recommended alert message removed - badge icon only */}
 
 
                     {user.location && (
@@ -738,21 +1138,6 @@ export default function UserDetailsPage() {
                         {user.location}
                       </p>
                     )}
-
-                    <div className="user-rating mb-3">
-                      <div className="d-flex align-items-center">
-                        <span className="me-2" style={{ fontSize: '16px', fontWeight: '500' }}>Rating:</span>
-                        <div className="d-flex align-items-center">
-                          {renderStars(user.rating)}
-                          <span className="ms-2" style={{ fontSize: '16px', fontWeight: '600', color: '#0063b1' }}>
-                            {user.rating.toFixed(1)} / 10
-                          </span>
-                          {user.isRecommended && (
-                            <i className="bi bi-star-fill ms-2" style={{ color: '#FFD700', fontSize: '16px' }} title="Recommended User"></i>
-                          )}
-                        </div>
-                      </div>
-                    </div>
 
                     <p className="text-muted mb-3" style={{ fontSize: '14px' }}>
                       <i className="bi bi-calendar-check me-2"></i>
@@ -946,7 +1331,7 @@ export default function UserDetailsPage() {
                 {activeTab === 'overview' && (
                   <div className="overview-tab">
                     <div className="row">
-                      <div className="col-md-8">
+                      <div className="col-12">
                         <h5 className="mb-4">Profile Information</h5>
                         <div className="profile-info">
                           <div className="row mb-3">
@@ -987,20 +1372,6 @@ export default function UserDetailsPage() {
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
-                      <div className="col-md-4">
-                        <h5 className="mb-4">Rating Overview</h5>
-                        <div className="rating-overview text-center">
-                          <div className="rating-score mb-3">
-                            <h2 style={{ fontSize: '3rem', fontWeight: '700', color: '#0063b1' }}>
-                              {user.rating.toFixed(1)}<span style={{ fontSize: '1.5rem', color: '#666' }}>/10</span>
-                            </h2>
-                            <div className="stars mb-2">
-                              {renderStars(user.rating)}
-                            </div>
-                            <p className="text-muted">Overall Rating</p>
-                          </div>
                         </div>
                       </div>
                     </div>

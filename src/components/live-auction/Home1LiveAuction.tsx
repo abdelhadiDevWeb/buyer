@@ -47,6 +47,7 @@ interface Auction {
   wilaya?: string;
   description?: string;
   biddersCount?: number;
+  bidType?: 'PRODUCT' | 'SERVICE';
   // --- Image properties for enhanced image loading ---
   images?: string[];
   image?: string;
@@ -449,10 +450,10 @@ const Home1LiveAuction = () => {
   // Swiper settings
   const settings = useMemo(() => ({
     slidesPerView: "auto" as const,
-    speed: 1200,
+    speed: 800,
     spaceBetween: 25,
     autoplay: {
-      delay: 4000,
+      delay: 2500,
       disableOnInteraction: false,
       pauseOnMouseEnter: true,
     },
@@ -486,7 +487,11 @@ const Home1LiveAuction = () => {
         spaceBetween: 25,
       },
       1400: {
-        slidesPerView: 4,
+        slidesPerView: 5,
+        spaceBetween: 25,
+      },
+      1600: {
+        slidesPerView: 5,
         spaceBetween: 30,
       },
     },
@@ -905,7 +910,7 @@ const Home1LiveAuction = () => {
                           {/* Location and Quantity Info */}
                           <div style={{
                             display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
+                            gridTemplateColumns: auction?.bidType === 'SERVICE' ? '1fr' : '1fr 1fr',
                             gap: '12px',
                             marginBottom: '16px',
                           }}>
@@ -944,10 +949,22 @@ const Home1LiveAuction = () => {
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
                               }}>
-                                {auction.location || auction.wilaya || 'Non spécifiée'}
+                                {(() => {
+                                  const place = (auction as any).place || '';
+                                  const address = (auction as any).address || '';
+                                  const location = auction.location || '';
+                                  const wilaya = auction.wilaya || '';
+                                  // For auctions, 'place' contains the full address
+                                  // Combine: place (full address), address, location, wilaya
+                                  const parts = [place, address, location, wilaya].filter(Boolean);
+                                  // Remove duplicates and join
+                                  const uniqueParts = [...new Set(parts)];
+                                  return uniqueParts.length > 0 ? uniqueParts.join(', ') : 'Non spécifiée';
+                                })()}
                               </p>
                             </div>
 
+                            {auction?.bidType !== 'SERVICE' && (
                             <div style={{
                               background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
                               borderRadius: '12px',
@@ -983,6 +1000,7 @@ const Home1LiveAuction = () => {
                                 {auction.quantity || 'Non spécifiée'}
                               </p>
                             </div>
+                            )}
                           </div>
 
                           {/* Description */}

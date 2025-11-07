@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import app from '@/config';
 
 export enum NotificationType {
   BID_CREATED = 'BID_CREATED',
@@ -54,13 +55,14 @@ export function useFilteredNotifications() {
       
       console.log('[FILTERED-NOTIFICATIONS] Fetching for user:', userId);
       
-      // Call the existing API endpoint
-      const response = await fetch('/api/notifications', {
-        method: 'POST',
+      // Fetch from backend general notifications
+      const response = await fetch(`${app.baseURL}notification/general`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
         },
-        body: JSON.stringify({ userId, token })
       });
       
       if (!response.ok) {
@@ -138,12 +140,13 @@ export function useFilteredNotifications() {
       const { tokens } = JSON.parse(auth);
       const token = tokens.accessToken;
       
-      // Update on backend using existing API
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
-        method: 'POST',
+      // Update on backend
+      const response = await fetch(`${app.baseURL}notification/${notificationId}/read`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
         },
       });
       

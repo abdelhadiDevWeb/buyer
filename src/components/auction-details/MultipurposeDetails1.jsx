@@ -1593,33 +1593,37 @@ const MultipurposeDetails1 = () => {
                                 {formatPrice(safeCurrentPrice)}
                               </td>
                             </tr>
-                            <tr>
-                              <td className="fw-bold">Quantité disponible</td>
-                              <td>
-                                <span style={{
-                                  color: '#0063b1',
-                                  fontWeight: '600',
-                                  fontSize: '16px'
-                                }}>
-                                  {auctionData?.quantity || "Non spécifiée"}
-                                </span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className="fw-bold">Prix total (Prix actuel × Quantité)</td>
-                              <td>
-                                <span style={{
-                                  color: '#28a745',
-                                  fontWeight: '700',
-                                  fontSize: '18px'
-                                }}>
-                                  {auctionData?.quantity && auctionData?.quantity !== "Non spécifiée" 
-                                    ? formatPrice(safeCurrentPrice * parseInt(auctionData.quantity))
-                                    : formatPrice(safeCurrentPrice)
-                                  }
-                                </span>
-                              </td>
-                            </tr>
+                            {auctionData?.bidType !== 'SERVICE' && (
+                              <tr>
+                                <td className="fw-bold">Quantité disponible</td>
+                                <td>
+                                  <span style={{
+                                    color: '#0063b1',
+                                    fontWeight: '600',
+                                    fontSize: '16px'
+                                  }}>
+                                    {auctionData?.quantity || "Non spécifiée"}
+                                  </span>
+                                </td>
+                              </tr>
+                            )}
+                            {auctionData?.bidType !== 'SERVICE' && (
+                              <tr>
+                                <td className="fw-bold">Prix total (Prix actuel × Quantité)</td>
+                                <td>
+                                  <span style={{
+                                    color: '#28a745',
+                                    fontWeight: '700',
+                                    fontSize: '18px'
+                                  }}>
+                                    {auctionData?.quantity && auctionData?.quantity !== "Non spécifiée" 
+                                      ? formatPrice(safeCurrentPrice * parseInt(auctionData.quantity))
+                                      : formatPrice(safeCurrentPrice)
+                                    }
+                                  </span>
+                                </td>
+                              </tr>
+                            )}
                             <tr>
                               <td className="fw-bold">Type d'enchère</td>
                               <td>{auctionData?.bidType || "PRODUCT"}</td>
@@ -1690,8 +1694,18 @@ const MultipurposeDetails1 = () => {
                         )}
                         <div className="quantity-counter-and-btn-area">
                           <HandleQuantity
-                            initialValue={formatPrice(safeCurrentPrice)}
-                            startingPrice={safeStartingPrice}
+                            initialValue={safeCurrentPrice || safeStartingPrice || 0}
+                            startingPrice={safeCurrentPrice || safeStartingPrice}
+                            placeholder={(() => {
+                              const lastOffer = Array.isArray(offers) && offers.length > 0
+                                ? (offers[offers.length - 1]?.price || offers[offers.length - 1]?.bidAmount)
+                                : null;
+                              const refPrice = lastOffer || safeCurrentPrice || safeStartingPrice || 0;
+                              if (refPrice > 0) {
+                                return `Dernière offre: ${Number(refPrice).toLocaleString('fr-FR')} DA`;
+                              }
+                              return "Entrez votre offre";
+                            })()}
                           />
                           <button
                             className="bid-btn-modern"
@@ -3125,7 +3139,18 @@ const MultipurposeDetails1 = () => {
                                             textOverflow: "ellipsis",
                                             whiteSpace: "nowrap",
                                           }}>
-                                            {auction.location || auction.wilaya || "Non spécifiée"}
+                                            {(() => {
+                                              const place = auction.place || '';
+                                              const address = auction.address || '';
+                                              const location = auction.location || '';
+                                              const wilaya = auction.wilaya || '';
+                                              // For auctions, 'place' contains the full address
+                                              // Combine: place (full address), address, location, wilaya
+                                              const parts = [place, address, location, wilaya].filter(Boolean);
+                                              // Remove duplicates and join
+                                              const uniqueParts = [...new Set(parts)];
+                                              return uniqueParts.length > 0 ? uniqueParts.join(', ') : 'Non spécifiée';
+                                            })()}
                                           </p>
                                         </div>
                                       </div>

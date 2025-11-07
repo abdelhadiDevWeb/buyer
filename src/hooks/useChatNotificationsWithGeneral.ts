@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useCreateSocket } from '@/contexts/socket';
 import { authStore } from '@/contexts/authStore';
+import app from '@/config';
 
 interface ChatNotification {
   _id: string;
@@ -65,10 +66,15 @@ export function useChatNotificationsWithGeneral() {
       const userId = currentAuth.user._id;
       const token = currentAuth.tokens.accessToken;
       
-      const response = await fetch('/api/chat-notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, token })
+      // If you have a separate chat messages endpoint, keep it.
+      // For chat-created notifications, we fetch via /notification/chat in the next call.
+      const response = await fetch(`${app.baseURL}notification/chat`, {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
+        },
       });
       
       if (response.ok) {
@@ -102,12 +108,13 @@ export function useChatNotificationsWithGeneral() {
       const userId = currentAuth.user._id;
       const token = currentAuth.tokens.accessToken;
       
-      const response = await fetch('/api/notifications/chat', {
+      const response = await fetch(`${app.baseURL}notification/chat`, {
         method: 'GET',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'x-access-key': process.env.NEXT_PUBLIC_KEY_API_BYUER as string,
+        },
       });
       
       if (response.ok) {

@@ -51,7 +51,18 @@ interface AvatarData {
 import app, { getSellerUrl } from '@/config';
 
 const API_BASE_URL = app.baseURL;
-const STATIC_URL = app.route;
+const API_BASE_URL_WITHOUT_TRAILING_SLASH = API_BASE_URL.replace(/\/$/, '');
+const DEV_BACKEND_HOST = 'http://localhost:3000';
+const PROD_BACKEND_HOST = 'https://mazadclick-server.onrender.com';
+// const LEGACY_BACKEND_HOST = 'http://localhost:3000';
+const KNOWN_BACKEND_HOSTS = [
+    DEV_BACKEND_HOST,
+    DEV_BACKEND_HOST.replace('http://', 'https://'),
+    'http://localhost',
+    'https://localhost',
+    PROD_BACKEND_HOST
+];
+const replaceLegacyHosts = (value: string) => KNOWN_BACKEND_HOSTS.reduce((output, host) => output.replace(host, API_BASE_URL_WITHOUT_TRAILING_SLASH), value);
 
 function ProfilePage() {
     const { t } = useTranslation();
@@ -91,12 +102,6 @@ function ProfilePage() {
 
     // Document field configurations
     const requiredDocuments = [
-        {
-            key: 'identityCard',
-            label: 'Carte d\'identité',
-            description: 'Document d\'identité officiel',
-            required: true
-        },
         {
             key: 'registreCommerceCarteAuto',
             label: 'RC/ Autres',
@@ -173,8 +178,9 @@ function ProfilePage() {
         if (typeof avatar === 'string') {
             // Handle string avatar (direct URL or path)
             if (avatar.startsWith('http')) {
-                // Full URL - replace localhost with production
-                return avatar.replace('http://localhost:3000', 'https://api.mazad.click');
+                // Full URL - replace known legacy hosts with the configured API base URL
+                // return avatar.replace('http://localhost:3000', API_BASE_URL.replace(/\/$/, ''));
+                return replaceLegacyHosts(avatar);
             } else {
                 // Relative path - ensure we use the correct base URL
                 const cleanPath = avatar.startsWith('/') ? avatar.substring(1) : avatar;
@@ -183,12 +189,14 @@ function ProfilePage() {
         }
 
         if (avatar?.fullUrl) {
-            return avatar.fullUrl.replace('http://localhost:3000', 'https://api.mazad.click');
+            // return avatar.fullUrl.replace('http://localhost:3000', API_BASE_URL.replace(/\/$/, ''));
+            return replaceLegacyHosts(avatar.fullUrl);
         }
 
         if (avatar?.url) {
             if (avatar.url.startsWith('http')) {
-                return avatar.url.replace('http://localhost:3000', 'https://api.mazad.click');
+                // return avatar.url.replace('http://localhost:3000', API_BASE_URL.replace(/\/$/, ''));
+                return replaceLegacyHosts(avatar.url);
             } else {
                 // Ensure proper URL construction
                 const cleanPath = avatar.url.startsWith('/') ? avatar.url.substring(1) : avatar.url;
@@ -263,6 +271,7 @@ function ProfilePage() {
                         rate: currentUser?.rate || 1,
                         isPhoneVerified: (currentUser as any)?.isPhoneVerified,
                         isVerified: (currentUser as any)?.isVerified,
+                        isCertified: (currentUser as any)?.isCertified,
                         isHasIdentity: currentUser?.isHasIdentity,
                         isActive: (currentUser as any)?.isActive,
                         isBanned: (currentUser as any)?.isBanned,
@@ -366,8 +375,13 @@ function ProfilePage() {
             type: file.type
         });
 
-        if (file.size > 5 * 1024 * 1024) {
-            enqueueSnackbar('File size must be less than 5MB', { variant: 'error' });
+        // Validate file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+            enqueueSnackbar('File size too large. Please select an image smaller than 5MB', { variant: 'error' });
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
             return;
         }
 
@@ -386,47 +400,94 @@ function ProfilePage() {
             formDataToUpload.append('avatar', file);
             const response = await UserAPI.uploadAvatar(formDataToUpload);
 
-            console.log('✅ Avatar upload response:', response);
-            console.log('📦 Avatar user data:', response?.user?.avatar);
+                console.log('✅ Avatar upload response:', response);
+                console.log('📦 Avatar user data:', response?.user?.avatar);
 
-            if (response && response.success) {
-                // Clear the input immediately to prevent re-triggering
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
+                if (response && response.success) {
+                    // Clear the input immediately to prevent re-triggering
+                    if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                    }
+
+                    // Get the updated user data
+                    const updatedUser = response.user || response.data;
+                    const responseWithAttachment = response as any; // Type assertion for attachment property
+                    console.log('✅ Avatar uploaded successfully. Updated user:', updatedUser);
+                    console.log('✅ Updated user avatar:', updatedUser?.avatar);
+                    console.log('✅ Response attachment:', (response as any)?.attachment);
+
+                    // Update auth state with new user data including avatar
+                    if (updatedUser) {
+                        const currentUser = auth.user;
+                        
+                        // Ensure avatar has proper URL format
+                        let avatarObj = updatedUser.avatar;
+                        
+                        // If response has attachment info, use it to construct proper avatar URL
+                        if (responseWithAttachment?.attachment) {
+                            const attachment = responseWithAttachment.attachment;
+                        const normalizedUrl = attachment.url?.startsWith('http') 
+                            ? attachment.url 
+                            : `${API_BASE_URL.replace(/\/$/, '')}${attachment.url?.startsWith('/') ? attachment.url : '/static/' + attachment.url}`;
+                        
+                        avatarObj = {
+                            _id: attachment._id,
+                            url: attachment.url,
+                            filename: attachment.filename,
+                            fullUrl: attachment.fullUrl ? normalizeUrl(attachment.fullUrl) : normalizedUrl
+                        };
+                    }
+                    
+                    // Construct photoURL from avatar if not present
+                    let photoURL = updatedUser.photoURL;
+                    if (!photoURL && avatarObj) {
+                        const avatar = avatarObj as any;
+                        if (avatar.fullUrl) {
+                            photoURL = normalizeUrl(avatar.fullUrl);
+                        } else if (avatar.url) {
+                            photoURL = normalizeUrl(avatar.url);
+                        } else if (avatar.filename) {
+                            photoURL = normalizeUrl(avatar.filename);
+                        }
+                    } else if (photoURL) {
+                        photoURL = normalizeUrl(photoURL);
+                    }
+                    
+                    const mergedUser = {
+                        ...currentUser,
+                        ...updatedUser,
+                        avatar: avatarObj || currentUser?.avatar,
+                        photoURL: photoURL || currentUser?.photoURL,
+                        type: (updatedUser.type || updatedUser.accountType || currentUser?.type || 'CLIENT') as any,
+                    };
+                    
+                    console.log('👤 Merged user with avatar:', mergedUser);
+                    console.log('👤 Merged user avatar:', mergedUser.avatar);
+                    console.log('👤 Merged user photoURL:', mergedUser.photoURL);
+                    
+                    set({
+                        user: mergedUser as any,
+                        tokens: auth.tokens
+                    });
                 }
 
-                // Force a cache-bust for the avatar
+                // Force a cache-bust for the avatar by updating the key
                 setAvatarKey(Date.now());
 
                 // Show success message
-                enqueueSnackbar(response.message || t("avatarUpdated"), { variant: "success" });
+                enqueueSnackbar(response.message || t("avatarUpdated") || "Avatar updated successfully", { variant: "success" });
 
-                // Log the actual URL being returned
-                const user = response.user || response.data;
-                const avatar = user?.avatar;
-                if (avatar?.url || avatar?.filename) {
-                    const actualUrl = avatar.url || `/static/${avatar.filename}`;
-                    console.log('🔗 Actual avatar URL from server:', actualUrl);
-                    
-                    // Test if the URL is accessible
-                    fetch(actualUrl.startsWith('http') ? actualUrl : `https://api.mazad.click${actualUrl}`)
-                        .then(res => {
-                            if (res.ok) {
-                                console.log('✅ Avatar URL is accessible');
-                            } else {
-                                console.warn('⚠️ Avatar URL returned status:', res.status);
-                            }
-                        })
-                        .catch(err => {
-                            console.warn('⚠️ Avatar URL test failed:', err);
-                        });
-                }
-
-                // Fetch fresh user data once, without triggering updates
+                // Fetch fresh user data to ensure consistency
+                setTimeout(async () => {
+                    try {
                 await fetchFreshUserData();
+                    } catch (err) {
+                        console.warn('⚠️ Error refreshing user data after avatar upload:', err);
+                    }
+                }, 500);
             } else {
                 console.error('❌ Upload response indicates failure:', response);
-                enqueueSnackbar('Avatar upload failed - no success response', { variant: "error" });
+                enqueueSnackbar(response?.message || 'Avatar upload failed - no success response', { variant: "error" });
             }
         } catch (error: any) {
             console.error('❌ Error uploading avatar:', error);
@@ -563,7 +624,7 @@ function ProfilePage() {
                             <i className="bi-info-circle-fill"></i>
                             <div className="modern-document-note-content">
                                 <h4>Documents Optionnels</h4>
-                                <p>Ajoutez ces documents si vous souhaitez être vérifié en tant que professionnel. Ils ne sont pas obligatoires mais peuvent accélérer le processus de vérification.</p>
+                                <p>Ajoutez ces documents si vous souhaitez être professionnel certified</p>
                             </div>
                         </div>
                     </div>
@@ -701,48 +762,93 @@ function ProfilePage() {
         );
     };
 
+    // Helper to normalize URL - always return full URL with correct port
+    const normalizeUrl = React.useCallback((url: string): string => {
+        if (!url || url.trim() === '') return '';
+        
+        // Clean up the URL first - remove trailing slashes and whitespace
+        const cleanUrl = url.trim();
+        
+        // If already a full HTTP/HTTPS URL, normalize it
+        if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+            // Replace localhost:3000 or localhost (without port) with API_BASE_URL
+            let normalized = replaceLegacyHosts(cleanUrl)
+                // .replace(/http:\/\/localhost:3000/g, API_BASE_URL.replace(/\/$/, ''))
+                .replace(/http:\/\/localhost\//g, API_BASE_URL_WITHOUT_TRAILING_SLASH + '/')
+                .replace(/https:\/\/localhost\//g, API_BASE_URL_WITHOUT_TRAILING_SLASH + '/');
+            
+            // If it still doesn't have the correct base, try to fix it
+            if (normalized.startsWith('http://localhost') || normalized.startsWith('https://localhost')) {
+                try {
+                    // Extract the path part
+                    const urlObj = new URL(cleanUrl);
+                    const path = urlObj.pathname;
+                    normalized = `${API_BASE_URL_WITHOUT_TRAILING_SLASH}${path}`;
+                } catch (e) {
+                    // If URL parsing fails, just use the cleaned URL
+                    console.warn('Failed to parse URL:', cleanUrl);
+                }
+            }
+            
+            return normalized;
+        }
+        
+        // If starts with /static/, prepend API_BASE_URL
+        if (cleanUrl.startsWith('/static/')) {
+            return `${API_BASE_URL_WITHOUT_TRAILING_SLASH}${cleanUrl}`;
+        }
+        
+        // If starts with / but not /static/, try /static/
+        if (cleanUrl.startsWith('/')) {
+            return `${API_BASE_URL_WITHOUT_TRAILING_SLASH}/static${cleanUrl}`;
+        }
+        
+        // If no leading slash, assume it's a filename and prepend /static/
+        return `${API_BASE_URL_WITHOUT_TRAILING_SLASH}/static/${cleanUrl}`;
+    }, []);
+
     // Construct avatar source with multiple fallback options
     const getAvatarSrc = () => {
         if (!auth.user) return "/assets/images/avatar.jpg";
         
         console.log('🖼️ Constructing avatar URL from:', auth.user);
+        console.log('🖼️ Avatar object:', auth.user.avatar);
+        console.log('🖼️ photoURL:', auth.user.photoURL);
         
         // Priority 1: photoURL (direct from backend)
         if (auth.user.photoURL && auth.user.photoURL.trim() !== "") {
-            const cleanUrl = auth.user.photoURL.replace('http://localhost:3000', 'https://api.mazad.click');
-            console.log('📸 Using photoURL:', cleanUrl);
-            return `${cleanUrl}?v=${avatarKey}`;
+            const cleanUrl = normalizeUrl(auth.user.photoURL);
+            if (cleanUrl && !cleanUrl.includes('mock-images')) {
+                console.log('📸 Using photoURL:', cleanUrl);
+                return `${cleanUrl}?v=${avatarKey}`;
+            }
         }
         
         // Priority 2: avatar object with fullUrl
         if (auth.user.avatar && 'fullUrl' in auth.user.avatar && auth.user.avatar.fullUrl) {
-            const avatarUrl = (auth.user.avatar as any).fullUrl.replace('http://localhost:3000', 'https://api.mazad.click');
-            console.log('📸 Using avatar.fullUrl:', avatarUrl);
-            return `${avatarUrl}?v=${avatarKey}`;
+            const avatarUrl = normalizeUrl((auth.user.avatar as any).fullUrl);
+            if (avatarUrl && !avatarUrl.includes('mock-images')) {
+                console.log('📸 Using avatar.fullUrl:', avatarUrl);
+                return `${avatarUrl}?v=${avatarKey}`;
+            }
         }
         
         // Priority 3: avatar.url
         if (auth.user.avatar?.url) {
-            let avatarUrl = auth.user.avatar.url;
-            if (!avatarUrl.startsWith('http')) {
-                if (avatarUrl.startsWith('/static/')) {
-                    avatarUrl = `${API_BASE_URL}${avatarUrl}`;
-                } else if (avatarUrl.startsWith('/')) {
-                    avatarUrl = `${API_BASE_URL}/static${avatarUrl}`;
-                } else {
-                    avatarUrl = `${API_BASE_URL}/static/${avatarUrl}`;
-                }
+            const avatarUrl = normalizeUrl(auth.user.avatar.url);
+            if (avatarUrl && !avatarUrl.includes('mock-images')) {
+                console.log('📸 Using avatar.url:', avatarUrl);
+                return `${avatarUrl}?v=${avatarKey}`;
             }
-            avatarUrl = avatarUrl.replace('http://localhost:3000', 'https://api.mazad.click');
-            console.log('📸 Using avatar.url:', avatarUrl);
-            return `${avatarUrl}?v=${avatarKey}`;
         }
         
         // Priority 4: avatar.filename
         if (auth.user.avatar?.filename) {
-            const avatarUrl = `${API_BASE_URL}/static/${auth.user.avatar.filename}`.replace('http://localhost:3000', 'https://api.mazad.click');
-            console.log('📸 Using avatar.filename:', avatarUrl);
-            return `${avatarUrl}?v=${avatarKey}`;
+            const avatarUrl = normalizeUrl(auth.user.avatar.filename);
+            if (avatarUrl && !avatarUrl.includes('mock-images')) {
+                console.log('📸 Using avatar.filename:', avatarUrl);
+                return `${avatarUrl}?v=${avatarKey}`;
+            }
         }
         
         // Priority 5: fallback
@@ -829,13 +935,16 @@ function ProfilePage() {
                                 }}
                             >
                                 <div className="avatar-container">
-                                    <motion.div
-                                        className="avatar-wrapper"
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <div className="avatar-frame">
-                                            <motion.img
+                                    <div className="avatar-wrapper" style={{ position: 'relative' }}>
+                                        <div className="avatar-frame" style={{
+                                            boxShadow: '0 0 0 2px #e5e7eb',
+                                            border: '4px solid #fff',
+                                            background: '#fff',
+                                            borderRadius: '50%',
+                                            padding: 0,
+                                            overflow: 'hidden'
+                                        }}>
+                                            <img
                                                 key={avatarKey}
                                                 src={avatarSrc}
                                                 alt="Profile"
@@ -843,68 +952,104 @@ function ProfilePage() {
                                                     width: '100%', 
                                                     height: '100%', 
                                                     objectFit: 'cover',
-                                                    borderRadius: '50%'
+                                                    borderRadius: '50%',
+                                                    display: 'block'
                                                 }}
+                                                loading="lazy"
                                                 onError={(e) => {
-                                                    const target = e.currentTarget;
+                                                    const target = e.currentTarget as HTMLImageElement;
                                                     const attemptedUrl = target.src;
                                                     
                                                     console.log('🖼️ Image failed to load:', attemptedUrl);
-                                                    console.log('🖼️ User avatar data:', auth.user?.avatar);
                                                     
-                                                    // Prevent infinite loop
-                                                    if (attemptedUrl.includes('avatar.jpg')) {
+                                                    // Prevent infinite loop - if already on fallback, stop
+                                                    if (attemptedUrl.includes('/assets/images/avatar.jpg') || attemptedUrl.endsWith('avatar.jpg')) {
+                                                        target.onerror = null;
                                                         return;
                                                     }
                                                     
-                                                    // Try alternative URL constructions
-                                                    if (auth.user?.avatar?.url && !attemptedUrl.includes('static')) {
-                                                        const cleanUrl = auth.user.avatar.url.startsWith('http') 
+                                                    // Try alternative URLs in order
+                                                    let nextUrl: string | null = null;
+                                                    
+                                                    // Try photoURL
+                                                    if (auth.user?.photoURL && !attemptedUrl.includes(auth.user.photoURL)) {
+                                                        nextUrl = auth.user.photoURL.startsWith('http') 
+                                                            ? auth.user.photoURL 
+                                                            : `${API_BASE_URL.replace(/\/$/, '')}${auth.user.photoURL.startsWith('/') ? auth.user.photoURL : '/' + auth.user.photoURL}`;
+                                                    }
+                                                    // Try avatar.url
+                                                    else if (auth.user?.avatar?.url && !attemptedUrl.includes(auth.user.avatar.url)) {
+                                                        nextUrl = auth.user.avatar.url.startsWith('http') 
                                                             ? auth.user.avatar.url 
-                                                            : `https://api.mazad.click${auth.user.avatar.url}`;
-                                                        console.log('🔄 Trying alternative URL:', cleanUrl);
-                                                        target.src = cleanUrl;
+                                                            : `${API_BASE_URL.replace(/\/$/, '')}${auth.user.avatar.url.startsWith('/') ? auth.user.avatar.url : '/static/' + auth.user.avatar.url}`;
+                                                    }
+                                                    // Try avatar.filename
+                                                    else if (auth.user?.avatar?.filename && !attemptedUrl.includes(auth.user.avatar.filename)) {
+                                                        nextUrl = `${API_BASE_URL.replace(/\/$/, '')}/static/${auth.user.avatar.filename}`;
+                                                    }
+                                                    
+                                                    if (nextUrl) {
+                                                        console.log('🔄 Trying alternative URL:', nextUrl);
+                                                        target.onerror = null; // Reset error handler
+                                                        target.src = `${nextUrl}?v=${Date.now()}`;
                                                         return;
                                                     }
                                                     
-                                                    // Try with filename
-                                                    if (auth.user?.avatar?.filename) {
-                                                        const filenameUrl = `https://api.mazad.click/static/${auth.user.avatar.filename}`;
-                                                        console.log('🔄 Trying filename URL:', filenameUrl);
-                                                        target.src = filenameUrl;
-                                                        return;
-                                                    }
-                                                    
-                                                    // Try localhost fallback for development
-                                                    if (attemptedUrl.includes('api.mazad.click') && !attemptedUrl.includes('localhost')) {
-                                                        const localhostUrl = attemptedUrl.replace('https://api.mazad.click', 'http://localhost:3000');
-                                                        console.log('🔄 Trying localhost fallback:', localhostUrl);
-                                                        target.src = localhostUrl;
-                                                        return;
-                                                    }
-                                                    
-                                                    // Show user-friendly message for production 404s
-                                                    if (attemptedUrl.includes('api.mazad.click')) {
-                                                        console.warn('⚠️ Avatar not available on production server. This is a deployment issue.');
-                                                        // You could show a toast notification here if needed
-                                                    }
-                                                    
-                                                    // Final fallback
+                                                    // Final fallback to default avatar
+                                                    console.log('🔄 Using fallback avatar');
                                                     target.onerror = null;
                                                     target.src = "/assets/images/avatar.jpg";
                                                 }}
                                                 onLoad={() => {
-                                                    // Avatar loaded successfully
+                                                    console.log('✅ Avatar loaded successfully');
                                                 }}
-                                                whileHover={{ scale: 1.1 }}
-                                                transition={{ duration: 0.3 }}
                                             />
-                                            <div className="avatar-ring"></div>
-                                            <div className="status-indicator online">
-                                                <div className="pulse-ring"></div>
-                                            </div>
                                         </div>
-
+                                        {/* Golden Rating Badge - Outside the image */}
+                                        {auth.user?.rate && auth.user.rate > 0 && (
+                                            <motion.div
+                                                className="rating-badge-avatar"
+                                                initial={{ opacity: 0, scale: 0 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '-8px',
+                                                    right: '-8px',
+                                                    background: 'transparent',
+                                                    borderRadius: '50%',
+                                                    width: 'auto',
+                                                    height: 'auto',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    zIndex: 10,
+                                                    cursor: 'default',
+                                                    padding: '4px'
+                                                }}
+                                            >
+                                                <motion.span
+                                                    animate={{
+                                                        scale: [1, 1.05, 1],
+                                                    }}
+                                                    transition={{
+                                                        duration: 2,
+                                                        repeat: Number.POSITIVE_INFINITY,
+                                                        ease: "easeInOut"
+                                                    }}
+                                                    style={{
+                                                        fontSize: '18px',
+                                                        fontWeight: '800',
+                                                        color: '#FFD700',
+                                                        textShadow: '0 0 10px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                                                        letterSpacing: '-0.5px',
+                                                        lineHeight: '1'
+                                                    }}
+                                                >
+                                                    +{Math.round(auth.user.rate)}
+                                                </motion.span>
+                                            </motion.div>
+                                        )}
                                         <input
                                             type="file"
                                             ref={fileInputRef}
@@ -934,7 +1079,7 @@ function ProfilePage() {
                                                 <i className="bi bi-camera-fill"></i>
                                             )}
                                         </motion.button>
-                                    </motion.div>
+                                    </div>
 
                                     <div className="avatar-info">
                                         <motion.h3
@@ -1011,255 +1156,39 @@ function ProfilePage() {
                                                         fontSize: '12px',
                                                         fontWeight: '600',
                                                         boxShadow: '0 2px 8px rgba(17, 153, 142, 0.3)',
-                                                        border: '1px solid rgba(255, 255, 255, 0.2)'
+                                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                        marginRight: '8px'
                                                     }}
                                                 >
                                                     <i className="bi bi-check-circle-fill" style={{ fontSize: '10px' }}></i>
                                                     <span>VERIFIED</span>
                                                 </motion.div>
                                             )}
-                                        </motion.div>
-
-                                        {/* Modern Star Rating Display */}
-                                        <motion.div
-                                            className="modern-star-rating-container"
-                                            initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            transition={{ duration: 0.8, delay: 1.3, type: "spring", stiffness: 120 }}
-                                        >
-                                            <div className="rating-header">
-                                                <motion.h4
-                                                    initial={{ opacity: 0, x: -20 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ delay: 1.5, duration: 0.6 }}
-                                                    className="rating-title"
-                                                >
-                                                    User rating
-                                                </motion.h4>
+                                            {/* Certified Badge */}
+                                            {(auth.user as any)?.isCertified && (
                                                 <motion.div
-                                                    className="rating-score"
-                                                    initial={{ opacity: 0, scale: 0 }}
+                                                    className="user-badge certified"
+                                                    initial={{ opacity: 0, scale: 0.8 }}
                                                     animate={{ opacity: 1, scale: 1 }}
-                                                    transition={{ delay: 1.6, type: "spring", stiffness: 200 }}
+                                                    transition={{ duration: 0.3, delay: 1.6 }}
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        padding: '4px 8px',
+                                                        background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                                                        color: 'white',
+                                                        borderRadius: '12px',
+                                                        fontSize: '12px',
+                                                        fontWeight: '600',
+                                                        boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+                                                        border: '1px solid rgba(255, 255, 255, 0.2)'
+                                                    }}
                                                 >
-                                                    <span className="score-number">{auth.user?.rate?.toFixed(1) || '0.0'}</span>
-                                                    <span className="score-total">/10.0</span>
+                                                    <i className="bi bi-award-fill" style={{ fontSize: '10px' }}></i>
+                                                    <span>CERTIFIED</span>
                                                 </motion.div>
-                                            </div>
-
-                                            <div className="modern-stars-container">
-                                                <div className="stars-background"></div>
-                                                <div className="stars-glow"></div>
-
-                                                <div className="rating-stars-modern">
-                                                    {auth.user?.rate && auth.user.rate > 0 ? (
-                                                        Array(10).fill(0).map((_, index) => {
-                                                            const userRate = auth.user?.rate || 0;
-                                                            const isStarFilled = index < Math.floor(userRate);
-                                                            const isPartialFill = index === Math.floor(userRate) && userRate % 1 > 0;
-                                                            const fillPercentage = isPartialFill ? (userRate % 1) * 100 : 0;
-
-                                                            return (
-                                                                <motion.div
-                                                                    key={index}
-                                                                    className="star-wrapper"
-                                                                    initial={{
-                                                                        opacity: 0,
-                                                                        scale: 0,
-                                                                        rotate: -180,
-                                                                        y: 50
-                                                                    }}
-                                                                    animate={{
-                                                                        opacity: 1,
-                                                                        scale: 1,
-                                                                        rotate: 0,
-                                                                        y: 0
-                                                                    }}
-                                                                    transition={{
-                                                                        delay: 1.7 + (index * 0.15),
-                                                                        duration: 0.8,
-                                                                        type: "spring",
-                                                                        stiffness: 150,
-                                                                        damping: 12
-                                                                    }}
-                                                                    whileHover={{
-                                                                        scale: 1.2,
-                                                                        rotate: 15,
-                                                                        y: -5,
-                                                                        transition: { duration: 0.3, type: "spring", stiffness: 400 }
-                                                                    }}
-                                                                >
-                                                                    {/* Star Background */}
-                                                                    <motion.div
-                                                                        className="star-background"
-                                                                        animate={isStarFilled ? {
-                                                                            scale: [1, 1.1, 1],
-                                                                            opacity: [0.3, 0.6, 0.3]
-                                                                        } : {}}
-                                                                        transition={{
-                                                                            duration: 2,
-                                                                            repeat: Number.POSITIVE_INFINITY,
-                                                                            delay: index * 0.2
-                                                                        }}
-                                                                    />
-
-                                                                    {/* Star Icon */}
-                                                                    <motion.i
-                                                                        className={`bi bi-star${isStarFilled ? '-fill' : ''} star-icon`}
-                                                                        animate={isStarFilled ? {
-                                                                            textShadow: [
-                                                                                "0 0 10px rgba(255, 215, 0, 0.5)",
-                                                                                "0 0 20px rgba(255, 215, 0, 0.8)",
-                                                                                "0 0 30px rgba(255, 215, 0, 0.6)",
-                                                                                "0 0 10px rgba(255, 215, 0, 0.5)"
-                                                                            ]
-                                                                        } : {}}
-                                                                        transition={{
-                                                                            duration: 3,
-                                                                            repeat: Number.POSITIVE_INFINITY,
-                                                                            delay: index * 0.3
-                                                                        }}
-                                                                    />
-
-                                                                    {/* Partial Fill Overlay */}
-                                                                    {isPartialFill && (
-                                                                        <motion.div
-                                                                            className="star-partial-fill"
-                                                                            initial={{ width: 0 }}
-                                                                            animate={{ width: `${fillPercentage}%` }}
-                                                                            transition={{
-                                                                                delay: 2.2 + (index * 0.1),
-                                                                                duration: 1,
-                                                                                ease: "easeOut"
-                                                                            }}
-                                                                        >
-                                                                            <i className="bi bi-star-fill star-icon partial" />
-                                                                        </motion.div>
-                                                                    )}
-
-                                                                    {/* Sparkle Effects */}
-                                                                    {isStarFilled && (
-                                                                        <>
-                                                                            <motion.div
-                                                                                className="star-sparkle sparkle-1"
-                                                                                animate={{
-                                                                                    scale: [0, 1, 0],
-                                                                                    rotate: [0, 180, 360],
-                                                                                    opacity: [0, 1, 0]
-                                                                                }}
-                                                                                transition={{
-                                                                                    duration: 2,
-                                                                                    repeat: Number.POSITIVE_INFINITY,
-                                                                                    delay: 2.5 + (index * 0.4)
-                                                                                }}
-                                                                            />
-                                                                            <motion.div
-                                                                                className="star-sparkle sparkle-2"
-                                                                                animate={{
-                                                                                    scale: [0, 1, 0],
-                                                                                    rotate: [360, 180, 0],
-                                                                                    opacity: [0, 0.8, 0]
-                                                                                }}
-                                                                                transition={{
-                                                                                    duration: 2.5,
-                                                                                    repeat: Number.POSITIVE_INFINITY,
-                                                                                    delay: 3 + (index * 0.3)
-                                                                                }}
-                                                                            />
-                                                                        </>
-                                                                    )}
-
-                                                                    {/* Shooting Star Effect */}
-                                                                    {isStarFilled && index === Math.floor(userRate) - 1 && (
-                                                                        <motion.div
-                                                                            className="shooting-star"
-                                                                            initial={{
-                                                                                x: -100,
-                                                                                y: -100,
-                                                                                opacity: 0,
-                                                                                rotate: 45
-                                                                            }}
-                                                                            animate={{
-                                                                                x: 100,
-                                                                                y: 100,
-                                                                                opacity: [0, 1, 0],
-                                                                                rotate: 45
-                                                                            }}
-                                                                            transition={{
-                                                                                duration: 2,
-                                                                                repeat: Number.POSITIVE_INFINITY,
-                                                                                repeatDelay: 5,
-                                                                                delay: 4
-                                                                            }}
-                                                                        />
-                                                                    )}
-                                                                </motion.div>
-                                                            );
-                                                        })
-                                                    ) : (
-                                                        <motion.div
-                                                            className="no-rating-modern"
-                                                            initial={{ opacity: 0, y: 20 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            transition={{ delay: 1.8 }}
-                                                        >
-                                                            <i className="bi bi-star-half"></i>
-                                                            <span>No rating available</span>
-                                                        </motion.div>
-                                                    )}
-                                                </div>
-
-                                                {/* Floating Particles */}
-                                                {auth.user?.rate && auth.user.rate > 0 && (
-                                                    <div className="rating-particles">
-                                                        {Array(8).fill(0).map((_, i) => (
-                                                            <motion.div
-                                                                key={i}
-                                                                className="particle"
-                                                                animate={{
-                                                                    y: [-20, -60, -20],
-                                                                    x: [0, Math.random() * 40 - 20, 0],
-                                                                    opacity: [0, 1, 0],
-                                                                    scale: [0, 1, 0]
-                                                                }}
-                                                                transition={{
-                                                                    duration: 3,
-                                                                    repeat: Number.POSITIVE_INFINITY,
-                                                                    delay: 3 + (i * 0.5),
-                                                                    ease: "easeInOut"
-                                                                }}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <motion.div
-                                                className="rating-progress-bar"
-                                                initial={{ width: 0, opacity: 0 }}
-                                                animate={{
-                                                    width: `${((auth.user?.rate || 0) / 5) * 100}%`,
-                                                    opacity: 1
-                                                }}
-                                                transition={{
-                                                    delay: 2.5,
-                                                    duration: 1.5,
-                                                    ease: "easeOut"
-                                                }}
-                                            >
-                                                <motion.div
-                                                    className="progress-glow"
-                                                    animate={{
-                                                        x: ["-100%", "100%"],
-                                                    }}
-                                                    transition={{
-                                                        duration: 2,
-                                                        repeat: Number.POSITIVE_INFINITY,
-                                                        repeatDelay: 3,
-                                                        delay: 3.5
-                                                    }}
-                                                />
-                                            </motion.div>
+                                            )}
                                         </motion.div>
 
                                         {/* User Type Badge */}
@@ -1960,4 +1889,4 @@ function ProfilePage() {
     );
 }
 
-export default ProfilePageWrapper
+export default ProfilePageWrapper;

@@ -11,9 +11,9 @@ const app = {
   // route: "http://localhost:3000",
   // baseURL: "http://localhost:3000/",
 
-  socket: 'https://mazadclick-server.onrender.com/',
-  route: "https://mazadclick-server.onrender.com",
-  baseURL: "https://mazadclick-server.onrender.com/",
+  socket: process.env.NEXT_PUBLIC_SOCKET_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000/' : 'https://mazadclick-server.onrender.com/'),
+  route: process.env.NEXT_PUBLIC_ROUTE_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://mazadclick-server.onrender.com'),
+  baseURL: process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000/' : 'https://mazadclick-server.onrender.com/'),
 
   // Frontend URLs - Dynamic based on environment
   frontendUrl: process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://buyer-mazad.vercel.app',
@@ -27,6 +27,7 @@ const app = {
 };
 
 export const API_BASE_URL = app.baseURL;
+export const API_BASE_URL_WITHOUT_TRAILING_SLASH = API_BASE_URL.replace(/\/$/, '');
 
 // Helper function to get the full frontend URL
 export const getFrontendUrl = (): string => {

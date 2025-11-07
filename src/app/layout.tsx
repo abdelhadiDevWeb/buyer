@@ -67,7 +67,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         <meta name="description" content="MazadClick - La première plateforme B2B d'enchères et de soumissions pour les entreprises algériennes" />
         <meta name="keywords" content="enchères, soumissions, B2B, entreprise, Algérie, MazadClick" />
-        <title>MazadClick-Buyer</title>
+        <title>MazadClick</title>
       </head>
       <body>
         <MobileOptimizer>

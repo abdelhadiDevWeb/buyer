@@ -1,5 +1,11 @@
 import { requests } from './utils';
 
+const DEV_API_BASE_URL = 'http://localhost:3000';
+const PROD_API_BASE_URL = 'https://mazadclick-server.onrender.com';
+// const LEGACY_API_BASE_URL = 'http://localhost:3000';
+
+const resolveApiBaseUrl = () => process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? DEV_API_BASE_URL : PROD_API_BASE_URL);
+
 interface Chat {
   id?: string;
   _id?: string; // Support both id formats as returned from different endpoints
@@ -182,7 +188,8 @@ export const ChatAPI = {
       }
       
       // Use direct fetch to bypass authentication for guest endpoints
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chat/find-guest-chat?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
+      const apiBaseUrl = resolveApiBaseUrl();
+      const url = `${apiBaseUrl}/chat/find-guest-chat?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
       console.log('🔍 Finding guest chat:', url);
       
       const response = await fetch(url, {

@@ -1,4 +1,11 @@
 import { requests } from "./utils";
+import { API_BASE_URL } from "@/config";
+
+const DEV_API_BASE_URL = 'http://localhost:3000';
+const PROD_API_BASE_URL = 'https://mazadclick-server.onrender.com';
+// const LEGACY_API_BASE_URL = 'http://localhost:3000';
+
+const resolveApiBaseUrl = () => process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? DEV_API_BASE_URL : PROD_API_BASE_URL);
 
 interface Message {
   _id: string;
@@ -38,6 +45,150 @@ interface ApiResponse<T> {
   message?: string;
   success: boolean;
 }
+
+const sendAuthenticatedMessage = async (messageData: SendMessageData): Promise<ApiResponse<Message>> => {
+  try {
+    console.log('📤 Sending message data (legacy method):', messageData);
+    
+    if (!messageData.idChat) {
+      console.error('❌ Missing idChat in message data');
+      throw new Error('Missing required field: idChat');
+    }
+    
+    if (!messageData.sender) {
+      console.error('❌ Missing sender in message data');
+      throw new Error('Missing required field: sender');
+    }
+    
+    if (!messageData.reciver) {
+      console.error('❌ Missing reciver in message data');
+      throw new Error('Missing required field: reciver');
+    }
+    
+    if (!messageData.message || !messageData.message.trim()) {
+      console.error('❌ Empty message in message data');
+      throw new Error('Message cannot be empty');
+    }
+    
+    // Try multiple endpoint variations
+    try {
+      // First try the most likely endpoint
+      console.log('📤 Trying primary endpoint: message/create');
+      const res = await requests.post('message/create', messageData);
+      console.log('✅ Message sent successfully via primary endpoint:', res);
+      if ('success' in res) {
+        return res as ApiResponse<Message>;
+      }
+      return {
+        success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+        data: (res as any)?.data?.data ?? (res as any)?.data,
+        message: (res as any)?.data?.message,
+      } as ApiResponse<Message>;
+    } catch (primaryError) {
+      console.log('⚠️ Primary message endpoint failed, trying alternative 1:', primaryError);
+      
+      try {
+        // Try second endpoint option
+        console.log('📤 Trying secondary endpoint: chat/messages');
+        const res = await requests.post('chat/messages', messageData);
+        console.log('✅ Message sent successfully via secondary endpoint:', res);
+        if ('success' in res) {
+          return res as ApiResponse<Message>;
+        }
+        return {
+          success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+          data: (res as any)?.data?.data ?? (res as any)?.data,
+          message: (res as any)?.data?.message,
+        } as ApiResponse<Message>;
+      } catch (secondaryError) {
+        console.log('⚠️ Secondary message endpoint failed, trying final option:', secondaryError);
+        
+        // Last attempt with different endpoint
+        console.log('📤 Trying final endpoint: messages');
+        const res = await requests.post('messages', messageData);
+        console.log('✅ Message sent successfully via final endpoint:', res);
+        if ('success' in res) {
+          return res as ApiResponse<Message>;
+        }
+        return {
+          success: (res as any)?.status >= 200 && (res as any)?.status < 300,
+          data: (res as any)?.data?.data ?? (res as any)?.data,
+          message: (res as any)?.data?.message,
+        } as ApiResponse<Message>;
+      }
+    }
+  } catch (error: unknown) {
+    console.error('❌ Error sending message - all endpoints failed:', error);
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status: number, data: any } };
+      if (axiosError.response) {
+        console.error('📡 Response status:', axiosError.response.status);
+        console.error('📡 Response data:', axiosError.response.data);
+      }
+    }
+    throw error;
+  }
+};
+
+const sendGuestMessage = async (guestData: {
+  message: string;
+  guestName: string;
+  guestPhone: string;
+  idChat?: string;
+}): Promise<ApiResponse<Message>> => {
+  try {
+    console.log('📤 Sending guest message (legacy method):', guestData);
+    
+    if (!guestData.message || !guestData.message.trim()) {
+      throw new Error('Message cannot be empty');
+    }
+    
+    if (!guestData.guestName || !guestData.guestName.trim()) {
+      throw new Error('Guest name is required');
+    }
+    
+    if (!guestData.guestPhone || !guestData.guestPhone.trim()) {
+      throw new Error('Guest phone is required');
+    }
+    
+    // Use direct fetch to bypass axios interceptors that might cause redirects
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || resolveApiBaseUrl()}/message/guest-message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-key': '64d2e8b7c3a9f1e5d8b2a4c6e9f0d3a5'
+        // No Authorization header - this is a public endpoint
+      },
+      body: JSON.stringify(guestData)
+    });
+    
+    console.log('📡 Guest message response status:', response.status);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Guest message sent successfully:', data);
+      return {
+        success: true,
+        data: data,
+        message: 'Guest message sent successfully'
+      };
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Guest message failed:', response.status, errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+  } catch (error: unknown) {
+    console.error('❌ Error sending guest message:', error);
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status: number, data: any } };
+      if (axiosError.response) {
+        console.error('📡 Response status:', axiosError.response.status);
+        console.error('📡 Response data:', axiosError.response.data);
+      }
+    }
+    throw error;
+  }
+};
 
 export const MessageAPI = {
   // Unified message sending - handles both authenticated and guest users
@@ -80,7 +231,8 @@ export const MessageAPI = {
         
         console.log('📤 Sending guest message:', guestData);
         
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/message/guest-message`, {
+        const apiBaseUrl = resolveApiBaseUrl();
+        const response = await fetch(`${apiBaseUrl}/message/guest-message`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -177,150 +329,14 @@ export const MessageAPI = {
   },
 
   // Legacy method for backward compatibility - authenticated users only
-  send: async (messageData: SendMessageData): Promise<ApiResponse<Message>> => {
-    try {
-      console.log('📤 Sending message data (legacy method):', messageData);
-      
-      if (!messageData.idChat) {
-        console.error('❌ Missing idChat in message data');
-        throw new Error('Missing required field: idChat');
-      }
-      
-      if (!messageData.sender) {
-        console.error('❌ Missing sender in message data');
-        throw new Error('Missing required field: sender');
-      }
-      
-      if (!messageData.reciver) {
-        console.error('❌ Missing reciver in message data');
-        throw new Error('Missing required field: reciver');
-      }
-      
-      if (!messageData.message || !messageData.message.trim()) {
-        console.error('❌ Empty message in message data');
-        throw new Error('Message cannot be empty');
-      }
-      
-      // Try multiple endpoint variations
-      try {
-        // First try the most likely endpoint
-        console.log('📤 Trying primary endpoint: message/create');
-        const res = await requests.post('message/create', messageData);
-        console.log('✅ Message sent successfully via primary endpoint:', res);
-        if ('success' in res) {
-          return res as ApiResponse<Message>;
-        }
-        return {
-          success: (res as any)?.status >= 200 && (res as any)?.status < 300,
-          data: (res as any)?.data?.data ?? (res as any)?.data,
-          message: (res as any)?.data?.message,
-        } as ApiResponse<Message>;
-      } catch (primaryError) {
-        console.log('⚠️ Primary message endpoint failed, trying alternative 1:', primaryError);
-        
-        try {
-          // Try second endpoint option
-          console.log('📤 Trying secondary endpoint: chat/messages');
-          const res = await requests.post('chat/messages', messageData);
-          console.log('✅ Message sent successfully via secondary endpoint:', res);
-          if ('success' in res) {
-            return res as ApiResponse<Message>;
-          }
-          return {
-            success: (res as any)?.status >= 200 && (res as any)?.status < 300,
-            data: (res as any)?.data?.data ?? (res as any)?.data,
-            message: (res as any)?.data?.message,
-          } as ApiResponse<Message>;
-        } catch (secondaryError) {
-          console.log('⚠️ Secondary message endpoint failed, trying final option:', secondaryError);
-          
-          // Last attempt with different endpoint
-          console.log('📤 Trying final endpoint: messages');
-          const res = await requests.post('messages', messageData);
-          console.log('✅ Message sent successfully via final endpoint:', res);
-          if ('success' in res) {
-            return res as ApiResponse<Message>;
-          }
-          return {
-            success: (res as any)?.status >= 200 && (res as any)?.status < 300,
-            data: (res as any)?.data?.data ?? (res as any)?.data,
-            message: (res as any)?.data?.message,
-          } as ApiResponse<Message>;
-        }
-      }
-    } catch (error: unknown) {
-      console.error('❌ Error sending message - all endpoints failed:', error);
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { status: number, data: any } };
-        if (axiosError.response) {
-          console.error('📡 Response status:', axiosError.response.status);
-          console.error('📡 Response data:', axiosError.response.data);
-        }
-      }
-      throw error;
-    }
-  },
+  sendLegacy: sendAuthenticatedMessage,
+  send: sendAuthenticatedMessage,
 
   // Legacy method for guest messages - backward compatibility
-  sendGuestMessage: async (guestData: {
-    message: string;
-    guestName: string;
-    guestPhone: string;
-    idChat?: string;
-  }): Promise<ApiResponse<Message>> => {
-    try {
-      console.log('📤 Sending guest message (legacy method):', guestData);
-      
-      if (!guestData.message || !guestData.message.trim()) {
-        throw new Error('Message cannot be empty');
-      }
-      
-      if (!guestData.guestName || !guestData.guestName.trim()) {
-        throw new Error('Guest name is required');
-      }
-      
-      if (!guestData.guestPhone || !guestData.guestPhone.trim()) {
-        throw new Error('Guest phone is required');
-      }
-      
-      // Use direct fetch to bypass axios interceptors that might cause redirects
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/message/guest-message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-access-key': '64d2e8b7c3a9f1e5d8b2a4c6e9f0d3a5'
-          // No Authorization header - this is a public endpoint
-        },
-        body: JSON.stringify(guestData)
-      });
-      
-      console.log('📡 Guest message response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Guest message sent successfully:', data);
-        return {
-          success: true,
-          data: data,
-          message: 'Guest message sent successfully'
-        };
-      } else {
-        const errorText = await response.text();
-        console.error('❌ Guest message failed:', response.status, errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-    } catch (error: unknown) {
-      console.error('❌ Error sending guest message:', error);
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { status: number, data: any } };
-        if (axiosError.response) {
-          console.error('📡 Response status:', axiosError.response.status);
-          console.error('📡 Response data:', axiosError.response.data);
-        }
-      }
-      throw error;
-    }
-  },
+  sendGuestMessageLegacy: sendGuestMessage,
+
+  // Send guest message (no authentication required)
+  sendGuestMessage,
 
   // Get all messages for a conversation
   getByConversation: async (chatId: string, options: any = {}, isGuest: boolean = false): Promise<ApiResponse<Message[]>> => {
@@ -328,7 +344,8 @@ export const MessageAPI = {
       // For guest users, use direct fetch to bypass authentication
       if (isGuest) {
         console.log('📤 Getting messages for guest user');
-        const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/message/getAll/${chatId}`;
+        const apiBaseUrl = resolveApiBaseUrl();
+        const url = `${apiBaseUrl}/message/getAll/${chatId}`;
         
         const response = await fetch(url, {
           method: 'GET',

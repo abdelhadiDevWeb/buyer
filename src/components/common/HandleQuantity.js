@@ -86,6 +86,15 @@ function HandleQuantity({ initialValue = 1, startingPrice = 0, placeholder = "" 
     setDisplayValue(formatPrice(state1.quantity));
   }, [state1.quantity]);
 
+  // Update when initialValue prop changes (for reactive updates)
+  useEffect(() => {
+    const newNumericValue = parseInitialValue(initialValue);
+    if (newNumericValue !== state1.quantity && newNumericValue > 0) {
+      dispatch1({ type: "SET", payload: newNumericValue });
+      setDisplayValue(formatPrice(newNumericValue));
+    }
+  }, [initialValue]);
+
   // Debug log to show increment value
   useEffect(() => {
     console.log('🔧 HandleQuantity initialized:', {
